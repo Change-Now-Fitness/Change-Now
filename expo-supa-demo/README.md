@@ -33,6 +33,16 @@ If you previously installed dependencies for an older SDK (for example SDK 52), 
 ```bash
 rm -rf node_modules package-lock.json
 npm install
+
+If you're running on Rutgers servers that you can't connect to from your phone, use tunnel:
+Run this to install tunnel package:
+
+npm install @expo/ngrok@4.1.0
+
+and add the --tunnel flag with npx expo start:
+
+npx expo start --tunnel
+
 npx expo install --fix
 ```
 
