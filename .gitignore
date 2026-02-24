@@ -13,3 +13,4 @@
 .externalNativeBuild
 .cxx
 local.properties
+openJdk-25.jdk/
