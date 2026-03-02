@@ -41,3 +41,6 @@ app-example
 # generated native folders
 /ios
 /android
+
+#cursor -sam
+.cursor/rules/rules.md

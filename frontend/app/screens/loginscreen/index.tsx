@@ -1,6 +1,8 @@
 import { Text, TextInput, View, StyleSheet, Pressable } from "react-native";
 import { useState } from "react";
 
+const API_URL = "http://localhost:4000";
+
 export default function LoginScreen() {
 
     
