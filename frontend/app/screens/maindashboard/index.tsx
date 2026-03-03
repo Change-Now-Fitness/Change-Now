@@ -1,5 +1,6 @@
 import { View, Text, TouchableOpacity, ScrollView } from "react-native";
 import { styles } from "./styles";
+import { Link } from "expo-router";
 
 export default function Dashboard() {
   return (
@@ -29,6 +30,9 @@ export default function Dashboard() {
         <Text style={styles.exerciseText}>Bench Press</Text>
       </TouchableOpacity>
 
+      <Link href= "/screens/selectedexercise">Manually jump into selectedexercise</Link>
+      <Link href= "/screens/customerexercise">Manually jump into customerexercise</Link>
+      <Link href= "/screens/userscreen">Manually jump into userscreen</Link>
     </ScrollView>
   );
 }

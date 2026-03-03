@@ -2,6 +2,7 @@ import { Text, TextInput, View, StyleSheet, Pressable } from "react-native";
 import { useState } from "react";
 import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
+import { Link } from 'expo-router';
 
 const API_URL = "http://localhost:4000";
 
@@ -84,6 +85,10 @@ export default function LoginScreen() {
             >
                <Text style = {styles.loginButtonText}>Sign Up</Text>
             </Pressable>
+
+            <Link href="/screens/maindashboard" style={{ color: 'white', marginTop: 20 }}>
+                  Manually jump into Dashboard
+            </Link>
         
         </View>
     );
