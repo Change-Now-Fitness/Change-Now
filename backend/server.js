@@ -1,10 +1,18 @@
 require('dotenv').config();
 
 const express = require('express');
+const authRouter = require("./routes/auth");
 const app = express();
-app.use(express.json());
+//my browser requires whitelisted address if api and frontend addresses are different
+const cors = require("cors");
+app.use(cors({
+    origin: "http://localhost:8081",
+}));
 
+app.use(express.json());
+app.use("/auth", authRouter);
 const pool = require('./dbconnection');
+
 
 
 //test route

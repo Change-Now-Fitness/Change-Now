@@ -8,6 +8,9 @@
 const argon2 = require("argon2");
 const pool = require('../dbconnection')
 const jwt = require('jsonwebtoken');
+
+const express = require("express");
+const router = express.Router();
 //secret code tbd, 'dev-secret' by defualt
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret'; 
 
@@ -26,7 +29,8 @@ const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
  * into .env
  * -Sam
  */
-app.post('/auth/signup', async (req, res) => {
+router.post('/signup', async (req, res) => {
+    const { email, password } = req.body;
     //ensure required fields filled, else returns json w error
     if (email == "" || password == "") {
         return res.status(400).json({ error: 'Email and Password required'});
@@ -37,13 +41,13 @@ app.post('/auth/signup', async (req, res) => {
             'SELECT id FROM users WHERE email = $1',
             [email]
         );
-        if (tryExistingEmail.length > 0) {
-            res.status(409).json({ error: 'Account already exists with this email'});
+        if (tryExistingEmail.rows.length > 0) {
+            return res.status(409).json({ error: 'Account already exists with this email'});
         }
         const passwordHash = await argon2.hash(password);
         const newAccount = await pool.query(
-            'INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURN id, email',
-            [email, passwordHash]
+            'INSERT INTO users (email, password_hash, first_name, last_name) VALUES ($1, $2, $3, $4) RETURNING id, email',
+            [email, passwordHash, 'first d', 'lastexample']
         );
         const user = newAccount.rows[0];
 
@@ -61,3 +65,5 @@ app.post('/auth/signup', async (req, res) => {
         res.status(500).json({ error: 'Server Error'});
     }
 });
+
+module.exports = router;

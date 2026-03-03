@@ -1,5 +1,6 @@
 To start the backend, ensure you're in the backend directory and then do:
 
+npm install
 node server.js
 
 if you have dependency issues, chatgpt it for now or check code, too lazy to add

@@ -1,5 +1,7 @@
 import { Text, TextInput, View, StyleSheet, Pressable } from "react-native";
 import { useState } from "react";
+import * as SecureStore from "expo-secure-store";
+import { Platform } from "react-native";
 
 const API_URL = "http://localhost:4000";
 
@@ -12,9 +14,42 @@ export default function LoginScreen() {
     const handleLogin = () => {
         console.log("Log in Clicked")
     }
-    const handleSignup= () => {
-        console.log("Sign up Clicked")
-    }
+    const handleSignup = async () => {
+        try {
+            const response = await fetch(`${API_URL}/auth/signup`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({email, password}),
+            });
+
+            const userData = await response.json();
+            
+            //if response isnt 200 - success
+            if (!response.ok) {
+                console.log('Signup Failed', userData);
+                return;
+            }
+            
+            if (Platform.OS != "web") {
+
+            await SecureStore.setItemAsync('authToken', userData.token);
+            console.log('Signup Success, token saved');
+
+            } else {
+                //currently we cant handle storing web tokens, only mobile
+                //maybe i will implement for testing purposes but for now skipping
+                console.log('Signup Successful, token not saved because not using mobile OS')
+            }
+
+            //Add nav for workout page
+
+
+        } catch (error) {
+            console.log('Network Error', error);
+        }
+    };
  
     
     return (
