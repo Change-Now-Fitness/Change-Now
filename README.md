@@ -50,4 +50,4 @@ npm install
 ```
 npx expo start
 ```
-Backend runs at: http://localhost:8081
+Frontend runs at: http://localhost:8081
