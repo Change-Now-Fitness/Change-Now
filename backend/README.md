@@ -17,7 +17,9 @@ backend/routes/auth.js
 has authentication (login/signup stuff)
 
 backend/dbconnections.js
+
 contains connection pool for the db, its the databaselayer
+
 
 
 
