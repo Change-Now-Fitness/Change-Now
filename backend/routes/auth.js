@@ -1,9 +1,12 @@
 
-//password hasher
+/**
+ * Dependencies
+ * argon2 - password hasher
+ * pool - connection layer for db
+ * jwt - token library
+ */
 const argon2 = require("argon2");
 const pool = require('../dbconnection')
-//token library
-
 const jwt = require('jsonwebtoken');
 //secret code tbd, 'dev-secret' by defualt
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret'; 
@@ -57,4 +60,4 @@ app.post('/auth/signup', async (req, res) => {
         console.error(error);
         res.status(500).json({ error: 'Server Error'});
     }
-})
+});
