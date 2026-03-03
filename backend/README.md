@@ -17,6 +17,6 @@ backend/routes/auth.js
 has authentication (login/signup stuff)
 
 backend/dbconnections.js
-has the connections pool that can be used to connect to the DB 
+has the connections test test test j tryna see if merge conflicts works on mac properly be used to connect to the DB 
 
 
