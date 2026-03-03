@@ -8,7 +8,21 @@ const jwt = require('jsonwebtoken');
 //secret code tbd, 'dev-secret' by defualt
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret'; 
 
-//auth
+/**
+ * User Signup Auth
+ * 
+ * Checks if the client json req has email and password fields filled,
+ * then checks if the email is already registered in the DB.
+ * 
+ * Hashes the password, then inserts new user credentials into DB.
+ * 
+ * Upon insertion, returns the user ID which is used to generate a Json Web Token
+ * from the user data, which is then sent back to the client with 7 day expiration
+ * 
+ * Currently the JWT secret token is just dev-secret but that should be changed and put
+ * into .env
+ * -Sam
+ */
 app.post('/auth/signup', async (req, res) => {
     //ensure required fields filled, else returns json w error
     if (email == "" || password == "") {
@@ -20,5 +34,27 @@ app.post('/auth/signup', async (req, res) => {
             'SELECT id FROM users WHERE email = $1',
             [email]
         );
+        if (tryExistingEmail.length > 0) {
+            res.status(409).json({ error: 'Account already exists with this email'});
+        }
+        const passwordHash = await argon2.hash(password);
+        const newAccount = await pool.query(
+            'INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURN id, email',
+            [email, passwordHash]
+        );
+        const user = newAccount.rows[0];
+
+        const token = jwt.sign(
+            {
+                userID: user.id, email: user.email
+            },
+            JWT_SECRET,
+            { expiresIn: '7d'}
+
+        );
+        res.json({token, user: {id: user.id, email: user.email}});
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Server Error'});
     }
 })
