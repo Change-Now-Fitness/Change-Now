@@ -34,9 +34,23 @@ export default function LoginScreen() {
             });
             const response = await request.json();
 
+            if (!response.ok) {
+                return console.log(response.error);
+            }
+            //store token from json in secure storage on client (keychain)
+            SecureStore.setItemAsync('token', response.token);
+            console.log('token stored');
+            const token = SecureStore.getItem('token');
+            console.log(`token is: ${token}`);
+            return console.log("Login Success!")
+
+            //navigate user to main dashboard and pass token
+
+
+
         
         } catch (error) {
-            console.log(error);
+            return console.log(error);
         }
 
         //send request and if response fails, put message

@@ -98,15 +98,6 @@ router.post('/login/', async (req, res) => {
     } catch (error) {
         return res.status(500).json("Server error");
     }
-
-    //query from db user email and get password hash if account exists
-
-    //check with argon 2 to see if password is correct
-
-    //generate key from user data if it's correct 
-    //send key back to user 
-
-    // if not, return error
 })
 
 module.exports = router;
