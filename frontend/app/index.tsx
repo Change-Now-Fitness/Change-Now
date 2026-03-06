@@ -7,12 +7,42 @@ const API_URL = "http://localhost:4000";
 
 export default function LoginScreen() {
 
+    /**
+     * to do:
+     * take first and last name in signup
+     * display error messages cleanly
+     */
+
     
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
 
-    const handleLogin = () => {
-        console.log("Log in Clicked")
+    const handleLogin = async () => {
+        //check if required fields are filled
+        if ( !setEmail || !setPassword ) {
+            return console.log('Error with credentails');
+        }
+
+        //take input and format into request
+        try {
+            const request = await fetch(`${API_URL}/auth/login`, {
+                method: 'POST',
+                headers: {
+                'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({email, password})
+            });
+            const response = await request.json();
+
+        
+        } catch (error) {
+            console.log(error);
+        }
+
+        //send request and if response fails, put message
+
+        //if response succeeds, take user token and navigate to dashboard 
+        //populate dashboard with token and use token to populate data
     }
     const handleSignup = async () => {
         try {
