@@ -51,3 +51,58 @@ npm install
 npx expo start
 ```
 Frontend runs at: http://localhost:8081
+
+---
+
+## Backend Deployment (AWS EC2) ☁️
+
+The backend is deployed on an AWS EC2 instance and managed using **PM2**.
+
+### Connect to the server
+
+ssh -i change-now-key.pem ec2-user@18.224.229.202
+
+
+### Navigate to the backend
+
+cd ~/Change-Now/backend
+
+
+### Pull latest backend changes
+
+cd ~/Change-Now
+git pull origin putting-backend-on-server
+cd backend
+
+
+### Install dependencies (if needed)
+
+npm install
+
+
+### Start the backend with PM2
+
+pm2 start server.js --name changenow-backend
+pm2 save
+
+
+### Restart the backend after updates
+
+pm2 restart changenow-backend
+
+
+### Check server status
+
+pm2 status
+
+
+### View logs
+
+pm2 logs changenow-backend
+
+
+---
+
+### Live Backend API
+
+http://18.224.229.202:4000
