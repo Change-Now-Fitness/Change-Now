@@ -46,7 +46,7 @@ cd frontend
 npm install
 ```
 
-### Run the backend
+### Run the frontend
 ```
 npx expo start
 ```
