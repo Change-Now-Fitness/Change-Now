@@ -1,34 +1,55 @@
-import { View, Text, TouchableOpacity, ScrollView } from "react-native";
+import { Text, TouchableOpacity, ScrollView } from "react-native";
+import { useRouter } from "expo-router";
 import { styles } from "./styles";
 
+const EXERCISES = [
+  { id: "lat-pulldown", name: "Lat Pulldown", icon: "🏋️" },
+  { id: "bench-press", name: "Bench Press", icon: "💪" },
+];
+
 export default function Dashboard() {
+  const router = useRouter();
+
+  const handleNewExercise = () => {
+    router.push("/screens/exercisetypeselection");
+  };
+
+  const handleSelectExercise = (name: string, id: string) => {
+    router.push({
+      pathname: "/screens/selectedexercise",
+      params: { name, id },
+    });
+  };
+
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      
-      {/* Title */}
-      <Text style={styles.header}>ChangeNow</Text>
+    <ScrollView
+      contentContainerStyle={styles.container}
+      showsVerticalScrollIndicator={false}
+    >
+      <Text style={styles.header}>Change Now</Text>
       <Text style={styles.welcome}>Welcome, User!</Text>
 
-      {/* New Exercise */}
       <Text style={styles.sectionTitle}>New Exercise</Text>
-
-      <TouchableOpacity style={styles.newExerciseCard}>
+      <TouchableOpacity
+        style={styles.newExerciseCard}
+        onPress={handleNewExercise}
+        activeOpacity={0.7}
+      >
         <Text style={styles.plus}>+</Text>
       </TouchableOpacity>
 
-      {/* Exercises */}
       <Text style={styles.sectionTitle}>Exercises</Text>
-
-      <TouchableOpacity style={styles.exerciseCard}>
-        <Text style={styles.exerciseIcon}>🏋️</Text>
-        <Text style={styles.exerciseText}>Lat Pulldown</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.exerciseCard}>
-        <Text style={styles.exerciseIcon}>💪</Text>
-        <Text style={styles.exerciseText}>Bench Press</Text>
-      </TouchableOpacity>
-
+      {EXERCISES.map((exercise) => (
+        <TouchableOpacity
+          key={exercise.id}
+          style={styles.exerciseCard}
+          onPress={() => handleSelectExercise(exercise.name, exercise.id)}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.exerciseIcon}>{exercise.icon}</Text>
+          <Text style={styles.exerciseText}>{exercise.name}</Text>
+        </TouchableOpacity>
+      ))}
     </ScrollView>
   );
 }

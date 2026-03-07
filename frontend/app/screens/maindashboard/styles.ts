@@ -2,26 +2,31 @@ import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
   container: {
-    padding: 20,
+    padding: 24,
+    paddingBottom: 40,
     backgroundColor: "#fff",
     flexGrow: 1,
   },
 
   header: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: "bold",
-    marginBottom: 5,
+    marginBottom: 6,
+    color: "#000",
+    letterSpacing: 0.5,
   },
 
   welcome: {
     fontSize: 18,
-    marginBottom: 20,
+    marginBottom: 28,
+    color: "#333",
   },
 
   sectionTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    marginBottom: 10,
+    marginBottom: 12,
+    color: "#000",
   },
 
   newExerciseCard: {
@@ -31,12 +36,14 @@ export const styles = StyleSheet.create({
     borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 25,
+    marginBottom: 28,
+    backgroundColor: "#fafafa",
   },
 
   plus: {
-    fontSize: 40,
-    fontWeight: "bold",
+    fontSize: 48,
+    fontWeight: "300",
+    color: "#000",
   },
 
   exerciseCard: {
@@ -46,17 +53,19 @@ export const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "#000",
     borderRadius: 12,
-    paddingHorizontal: 15,
-    marginBottom: 15,
+    paddingHorizontal: 16,
+    marginBottom: 14,
+    backgroundColor: "#fff",
   },
 
   exerciseIcon: {
-    fontSize: 28,
-    marginRight: 15,
+    fontSize: 32,
+    marginRight: 16,
   },
 
   exerciseText: {
     fontSize: 18,
     fontWeight: "500",
+    color: "#000",
   },
 });
