@@ -68,7 +68,36 @@ router.post('/signup', async (req, res) => {
 
 
 router.post('/login/', async (req, res) => {
-    
+    //take http request and get body of json, ensure fields not empty
+    const {email_input, password_input} = await req.body;
+    if (!email_input || !password_input) {
+        return res.status(400).json("Email or password fields are empty");
+    }
+
+    //connect to db
+    try {
+        const db_res = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
+        if (db_res.rows.length() < 1) {
+            return res.status(404).json("No user found with that email");
+        }
+
+        //flow state - get password hash from db_res
+        const hash = db_res.password_hash;
+
+        //validate password
+        if (await argon2.verify({hash, password_input} )) {
+            //with user data, create a token and send it back to the user 
+            const token = jwt.sign({
+                data: db_res.id
+            }, JWT_SECRET, { expiresIn: '1h'});
+            return res.status(200).json(token)
+
+        } else {
+            return res.status(403).json("Incorrect Username or Password");
+        }
+    } catch (error) {
+        return res.status(500).json("Server error");
+    }
 })
 
 module.exports = router;
