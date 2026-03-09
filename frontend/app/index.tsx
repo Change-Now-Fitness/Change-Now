@@ -3,7 +3,7 @@ import { useState } from "react";
 import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
 
-const API_URL = "http://18.224.229.202:4000";
+const API_URL = "http://localhost:4000";
 
 export default function LoginScreen() {
 
@@ -18,6 +18,7 @@ export default function LoginScreen() {
     const [password, setPassword] = useState("");
 
     const handleLogin = async () => {
+        console.log('log in clicked');
         //check if required fields are filled
         if ( !setEmail || !setPassword ) {
             return console.log('Error with credentails');
@@ -25,6 +26,7 @@ export default function LoginScreen() {
 
         //take input and format into request
         try {
+            console.log('request sent to server');
             const request = await fetch(`${API_URL}/auth/login`, {
                 method: 'POST',
                 headers: {
@@ -32,26 +34,30 @@ export default function LoginScreen() {
                 },
                 body: JSON.stringify({email, password})
             });
-            const response = await request.json();
-
-            if (!response.ok) {
-                return console.log(response.error);
+            if (!request.ok){
+                return console.log(`Error: ${request.status}`);
             }
-            //store token from json in secure storage on client (keychain)
-            SecureStore.setItemAsync('token', response.token);
-            console.log('token stored');
-            const token = SecureStore.getItem('token');
-            console.log(`token is: ${token}`);
-            return console.log("Login Success!")
+
+            console.log(`response code from frontend: ${request.status}`);
+            const json_response = await request.json();
+            const response = JSON.stringify(json_response);
+            console.log(`response: ${response}`);
+            console.log('response recieved');
+
+
+        } catch (error) {
+            return console.log(`error: ${error}`);
+        }
+
+        //store token from json in secure storage on client (keychain)
+        //SecureStore.setItemAsync('token', response.token);
+        //console.log('token stored');
+        //const token = SecureStore.getItem('token');
+        //console.log(`token is: ${token}`);
+        return console.log("Login Success!");
 
             //navigate user to main dashboard and pass token
 
-
-
-        
-        } catch (error) {
-            return console.log(error);
-        }
 
         //send request and if response fails, put message
 

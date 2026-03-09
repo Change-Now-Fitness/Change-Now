@@ -23,7 +23,7 @@ app.get('/', (req, res) => {
 //start server
 const port = process.env.PORT || 4000;
 
-app.listen(port, '0.0.0.0', () => {
+app.listen(port, '', () => {
     console.log(`Server listening on port ${port}`);
 });
 

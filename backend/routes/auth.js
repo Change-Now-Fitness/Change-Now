@@ -69,35 +69,43 @@ router.post('/signup', async (req, res) => {
 
 router.post('/login/', async (req, res) => {
     //take http request and get body of json, ensure fields not empty
-    const {email_input, password_input} = await req.body;
-    if (!email_input || !password_input) {
-        return res.status(400).json("Email or password fields are empty");
+    const {email, password} = await req.body;
+    console.log(`email inpiut: ${email}, pass input: ${password}`);
+    if (!email || !password) {
+        return res.status(400).json(
+            {error: `Email or password fields are empty, email: ${email}, password: ${password}`});
     }
-
     //connect to db
     try {
-        const db_res = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
-        if (db_res.rows.length() < 1) {
-            return res.status(404).json("No user found with that email");
+        const db_res = await pool.query('SELECT id, password_hash FROM users WHERE email = $1', [email]);
+        console.log('query done');
+        if (db_res.rows.length < 1) {
+            return res.status(404).json({error: "No user found with that email"});
         }
 
         //flow state - get password hash from db_res
-        const hash = db_res.password_hash;
+        const {id, password_hash} = db_res.rows[0]; 
+        console.log(`id and hash cashed`);
 
         //validate password
-        if (await argon2.verify({hash, password_input} )) {
+        if (await argon2.verify(password_hash, password)) {
             //with user data, create a token and send it back to the user 
+            console.log('password verified');
+            //console.log(`id: ${id}`);
             const token = jwt.sign({
-                data: db_res.id
+                user_id: `${id}`
             }, JWT_SECRET, { expiresIn: '1h'});
-            return res.status(200).json(token)
+            console.log('token made');
+            //console.log(`token: ${token}`);
+            return res.status(200).json({token: token});
 
         } else {
-            return res.status(403).json("Incorrect Username or Password");
+            console.log('pass verified failed');
+            return res.status(403).json({error: "Incorrect Username or Password"});
         }
     } catch (error) {
-        return res.status(500).json("Server error");
+        return res.status(500).json({error: "Server error"});
     }
-})
+});
 
 module.exports = router;
