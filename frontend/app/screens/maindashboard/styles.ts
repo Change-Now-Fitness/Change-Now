@@ -68,4 +68,22 @@ export const styles = StyleSheet.create({
     fontWeight: "500",
     color: "#000",
   },
+
+  customExerciseButton: {
+    marginTop: 8,
+    height: 56,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: "#000",
+    backgroundColor: "#000",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  customExerciseButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "700",
+    letterSpacing: 0.3,
+  },
 });

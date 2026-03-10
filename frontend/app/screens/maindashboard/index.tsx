@@ -11,7 +11,12 @@ export default function Dashboard() {
   const router = useRouter();
 
   const handleNewExercise = () => {
-    router.push("/screens/exercisetypeselection");
+    // Temporary: route to custom exercise until type selection page exists
+    router.push("/screens/customerexercise");
+  };
+
+  const handleAddCustomExercise = () => {
+    router.push("/screens/customerexercise");
   };
 
   const handleSelectExercise = (name: string, id: string) => {
@@ -50,6 +55,14 @@ export default function Dashboard() {
           <Text style={styles.exerciseText}>{exercise.name}</Text>
         </TouchableOpacity>
       ))}
+
+      <TouchableOpacity
+        style={styles.customExerciseButton}
+        onPress={handleAddCustomExercise}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.customExerciseButtonText}>Add Custom Exercise</Text>
+      </TouchableOpacity>
     </ScrollView>
   );
 }
