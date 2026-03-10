@@ -100,9 +100,12 @@ pm2 status
 
 pm2 logs changenow-backend
 
-
 ---
 
 ### Live Backend API
 
 http://18.224.229.202:4000
+
+### Bug Tracking
+
+The ChangeNow team makes use of the Issues feature on GitHub to track bugs and missing features. This is convenient because it keeps our checklist in the same place as our code, and enables us to assign team members to issues to keep track. To access it, select the Issues tab. 
