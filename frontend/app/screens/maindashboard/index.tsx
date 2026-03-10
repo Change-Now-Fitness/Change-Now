@@ -29,10 +29,6 @@ export default function Dashboard() {
         <Text style={styles.exerciseIcon}>💪</Text>
         <Text style={styles.exerciseText}>Bench Press</Text>
       </TouchableOpacity>
-
-      <Link href= "/screens/selectedexercise">Manually jump into selectedexercise</Link>
-      <Link href= "/screens/customerexercise">Manually jump into customerexercise</Link>
-      <Link href= "/screens/userscreen">Manually jump into userscreen</Link>
     </ScrollView>
   );
 }
