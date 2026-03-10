@@ -17,6 +17,10 @@ export default function LoginScreen() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
 
+    /**
+     * 
+     * @returns 
+     */
     const handleLogin = async () => {
         console.log('log in clicked');
         //check if required fields are filled
@@ -39,22 +43,20 @@ export default function LoginScreen() {
             }
 
             console.log(`response code from frontend: ${request.status}`);
-            const json_response = await request.json();
-            const response = JSON.stringify(json_response);
-            console.log(`response: ${response}`);
+            const java_obj_response = await request.json();
+            const json_response = JSON.stringify(java_obj_response);
+            console.log(`response: ${json_response}`);
             console.log('response recieved');
+            //store token from json in secure storage on client (keychain)
+            //SecureStore.setItemAsync('user_token', json_response);
+            return console.log("Login Success!, token stored (on mobile, not web)");
 
 
         } catch (error) {
             return console.log(`error: ${error}`);
         }
 
-        //store token from json in secure storage on client (keychain)
-        //SecureStore.setItemAsync('token', response.token);
-        //console.log('token stored');
-        //const token = SecureStore.getItem('token');
-        //console.log(`token is: ${token}`);
-        return console.log("Login Success!");
+
 
             //navigate user to main dashboard and pass token
 
