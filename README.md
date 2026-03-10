@@ -106,6 +106,8 @@ pm2 logs changenow-backend
 
 http://18.224.229.202:4000
 
-### Bug Tracking
+### Bug Tracking + Features
 
 The ChangeNow team makes use of the Issues feature on GitHub to track bugs and missing features. This is convenient because it keeps our checklist in the same place as our code, and enables us to assign team members to issues to keep track. To access it, select the Issues tab. 
+
+However, our main project schedule containing all future suggested features is in a master document and we're in the process of migrating this over to Issues. Issues is used mainly for our "current" checklist or features that are next in line. 
