@@ -70,7 +70,7 @@ router.post('/signup', async (req, res) => {
 router.post('/login/', async (req, res) => {
     //take http request and get body of json, ensure fields not empty
     const {email, password} = await req.body;
-    console.log(`email inpiut: ${email}, pass input: ${password}`);
+    console.log(`email input: ${email}, pass input: ${password}`);
     if (!email || !password) {
         return res.status(400).json(
             {error: `Email or password fields are empty, email: ${email}, password: ${password}`});
