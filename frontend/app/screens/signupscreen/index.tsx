@@ -71,12 +71,15 @@ export default function SignupScreen() {
 
           await SecureStore.setItemAsync('authToken', userData.token);
           console.log('Signup Success, token saved');
+          router.push("/screens/maindashboard");  
+
+
 
           } else {
               //currently we cant handle storing web tokens, only mobile
               //maybe i will implement for testing purposes but for now skipping
               console.log('Signup Successful, token not saved because not using mobile OS')
-              router.push("/");  
+              router.push("/screens/maindashboard");  
           }
 
           //Add nav for workout page
