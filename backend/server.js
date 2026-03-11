@@ -6,7 +6,7 @@ const app = express();
 //my browser requires whitelisted address if api and frontend addresses are different
 const cors = require("cors");
 app.use(cors({
-    origin: "http://localhost:8081",
+    origin: "http://18.224.229.202:4000",
 }));
 
 app.use(express.json());
@@ -23,7 +23,7 @@ app.get('/', (req, res) => {
 //start server
 const port = process.env.PORT || 4000;
 
-app.listen(port, '', () => {
+app.listen(port, '0.0.0.0', () => {
     console.log(`Server listening on port ${port}`);
 });
 
