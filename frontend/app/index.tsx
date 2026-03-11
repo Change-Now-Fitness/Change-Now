@@ -6,7 +6,7 @@ import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
 import { supabase } from '@/lib/supabase'; 
 
-const API_URL = "http://localhost:4000";
+const API_URL = "http://18.224.229.202:4000";
 
 export default function LoginScreen() {
 
