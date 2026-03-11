@@ -78,6 +78,7 @@ export default function LoginScreen() {
             console.log('response recieved');
             //store token from json in secure storage on client (keychain)
             //SecureStore.setItemAsync('user_token', json_response);
+            router.push('/screens/maindashboard'); 
             return console.log("Login Success!, token stored (on mobile, not web)");
 
 
