@@ -1,6 +1,10 @@
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { ScrollView, Text, TouchableOpacity, View,ActivityIndicator,StyleSheet } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { styles } from "./styles";
+import React, {useEffect,useState} from "react";
+import { Dimensions } from "react-native";
+import { LineChart } from "react-native-chart-kit";
+
 
 type WorkoutSet = {
   set: number;
@@ -12,6 +16,15 @@ type PreviousWorkout = {
   date: string;
   sets: WorkoutSet[];
 };
+
+type WorkoutData = {
+  day:string;
+  chest: number;
+  back: number;
+  legs: number;
+  shoulders: number;
+  arms: number;
+}
 
 const CURRENT_WORKOUT_SETS: WorkoutSet[] = [
   { set: 1, weight: 110, reps: 8 },
@@ -45,11 +58,42 @@ export default function SelectedExerciseScreen() {
       ? params.name
       : "Selected Exercise";
 
+  const fetchChartData = async () : Promise<WorkoutData[]> =>{
+
+    return new Promise((resolve) => {
+      setTimeout(()=>{
+        resolve([
+        { day: "Mon", chest: 250, back: 200, legs: 150, shoulders: 100, arms: 300 },
+        { day: "Tue", chest: 300, back: 220, legs: 180, shoulders: 130, arms: 280 },
+        { day: "Wed", chest: 280, back: 240, legs: 170, shoulders: 120, arms: 320 },
+        { day: "Thu", chest: 310, back: 210, legs: 190, shoulders: 140, arms: 290 },
+        { day: "Fri", chest: 260, back: 230, legs: 160, shoulders: 110, arms: 310 },
+        ]);
+      },1500);
+    });
+  }
+
+  const [data,setData] = useState<WorkoutData[]>([]);
+  const [loading,setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchChartData().then((res) => {
+      setData(res);
+      setLoading(false);
+    });
+  },[]);
+
+  if (loading || !data || data.length === 0) {
+    return (
+      <View>
+        <ActivityIndicator size="large" color="#0000ff" />
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
+
   return (
-    <ScrollView
-      style={styles.container}
-      showsVerticalScrollIndicator={false}
-    >
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.headerRow}>
         <TouchableOpacity
           onPress={() => router.back()}
@@ -63,9 +107,22 @@ export default function SelectedExerciseScreen() {
       </View>
 
       <View style={styles.chartCard}>
-        <Text style={styles.chartPlaceholderText}>
-          Progress chart (placeholder)
-        </Text>
+       <LineChart data={{labels: data.map(item => item.day),
+      datasets: [
+      { data: data.map(item => item.chest), color: () => "red" },
+      { data: data.map(item => item.back), color: () => "blue" },
+      { data: data.map(item => item.legs), color: () => "green" },
+      { data: data.map(item => item.shoulders), color: () => "orange" },
+      { data: data.map(item => item.arms), color: () => "purple" },
+    ],
+    legend: ["Chest", "Back", "Legs", "Shoulders", "Arms"],
+  }}
+  width={Dimensions.get("window").width - 40}
+  height={220}
+  chartConfig={{
+    color: () => 'white',
+  }}
+  bezier/>
       </View>
 
       <Text style={styles.sectionTitle}>Current Workout</Text>
