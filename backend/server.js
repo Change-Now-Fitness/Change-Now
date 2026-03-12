@@ -5,9 +5,7 @@ const authRouter = require("./routes/auth");
 const app = express();
 //my browser requires whitelisted address if api and frontend addresses are different
 const cors = require("cors");
-app.use(cors({
-    origin: "http://18.224.229.202:4000",
-}));
+app.use(cors()  );
 
 app.use(express.json());
 app.use("/auth", authRouter);
