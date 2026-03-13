@@ -40,6 +40,10 @@ if errorlevel 1 (
 )
 
 echo.
+echo Starting backend in a new terminal...
+start "ChangeNow Backend" cmd /k "cd /d %~dp0backend && npm start"
+
+echo.
 echo Starting Expo frontend...
 call npx expo start
 if errorlevel 1 (
