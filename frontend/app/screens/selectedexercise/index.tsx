@@ -1,9 +1,11 @@
+
 import { ScrollView, Text, TouchableOpacity, View,ActivityIndicator,StyleSheet } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { styles } from "./styles";
 import React, {useEffect,useState} from "react";
 import { Dimensions } from "react-native";
 import { LineChart } from "react-native-chart-kit";
+
 
 
 type WorkoutSet = {
@@ -17,6 +19,7 @@ type PreviousWorkout = {
   sets: WorkoutSet[];
 };
 
+
 type WorkoutData = {
   day:string;
   chest: number;
@@ -25,6 +28,7 @@ type WorkoutData = {
   shoulders: number;
   arms: number;
 }
+
 
 const CURRENT_WORKOUT_SETS: WorkoutSet[] = [
   { set: 1, weight: 110, reps: 8 },
@@ -123,6 +127,7 @@ export default function SelectedExerciseScreen() {
     color: () => 'white',
   }}
   bezier/>
+
       </View>
 
       <Text style={styles.sectionTitle}>Current Workout</Text>
@@ -172,3 +177,4 @@ export default function SelectedExerciseScreen() {
     </ScrollView>
   );
 }
+

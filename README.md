@@ -46,8 +46,68 @@ cd frontend
 npm install
 ```
 
-### Run the backend
+### Run the frontend
 ```
 npx expo start
 ```
 Frontend runs at: http://localhost:8081
+
+---
+
+## Backend Deployment (AWS EC2) ☁️
+
+The backend is deployed on an AWS EC2 instance and managed using **PM2**.
+
+### Connect to the server
+
+ssh -i change-now-key.pem ec2-user@18.224.229.202
+
+
+### Navigate to the backend
+
+cd ~/Change-Now/backend
+
+
+### Pull latest backend changes
+
+cd ~/Change-Now
+git pull origin putting-backend-on-server
+cd backend
+
+
+### Install dependencies (if needed)
+
+npm install
+
+
+### Start the backend with PM2
+
+pm2 start server.js --name changenow-backend
+pm2 save
+
+
+### Restart the backend after updates
+
+pm2 restart changenow-backend
+
+
+### Check server status
+
+pm2 status
+
+
+### View logs
+
+pm2 logs changenow-backend
+
+---
+
+### Live Backend API
+
+http://18.224.229.202:4000
+
+### Bug Tracking + Features
+
+The ChangeNow team makes use of the Issues feature on GitHub to track bugs and missing features. This is convenient because it keeps our checklist in the same place as our code, and enables us to assign team members to issues to keep track. To access it, select the Issues tab. 
+
+This is a new update, our main project schedule is in a master document and we're in the process of migrating this over to Issues. Issues is used mainly for our "current" checklist or features that are next in line. Some features that were implemented in the past have not been added to Issues.

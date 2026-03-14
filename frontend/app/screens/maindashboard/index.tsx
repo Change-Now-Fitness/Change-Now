@@ -55,6 +55,13 @@ export default function Dashboard() {
           <Text style={styles.exerciseText}>{exercise.name}</Text>
         </TouchableOpacity>
       ))}
+      <TouchableOpacity
+        style={styles.customExerciseButton}
+        onPress={handleAddCustomExercise}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.customExerciseButtonText}>Add Custom Exercise</Text>
+      </TouchableOpacity>
     </ScrollView>
   );
 }
