@@ -2,6 +2,7 @@ require('dotenv').config();
 
 const express = require('express');
 const authRouter = require("./routes/auth");
+const workoutRouter = require("./routes/workouts");
 const app = express();
 //my browser requires whitelisted address if api and frontend addresses are different
 const cors = require("cors");
@@ -12,7 +13,7 @@ app.use(cors({
 app.use(express.json());
 app.use("/auth", authRouter);
 const pool = require('./dbconnection');
-
+app.use("/workouts", workoutRouter)
 
 
 //test route

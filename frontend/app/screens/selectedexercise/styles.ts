@@ -1,9 +1,10 @@
 import { StyleSheet } from "react-native";
+import { useFonts, BebasNeue_400Regular } from '@expo-google-fonts/bebas-neue';
 
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#48494b",
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 32,
@@ -28,6 +29,7 @@ export const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: "bold",
+    color: "#fafafa",
     flex: 1,
     textAlign: "center",
     marginRight: 32,
@@ -52,6 +54,7 @@ export const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: "bold",
+    color: "#fafafa",
     marginBottom: 8,
     marginTop: 4,
   },
@@ -111,6 +114,41 @@ export const styles = StyleSheet.create({
 
   previousScroll: {
     maxHeight: 220,
+  },
+
+  addSetRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  paddingHorizontal: 16,
+  marginTop: 12,
+  marginBottom: 24,
+  gap: 8,
+  },
+
+  addSetInput: {
+    flex: 1,
+    minWidth: 0,        
+    borderWidth: 1,
+    borderColor: '#000000',
+    backgroundColor: "#ffffff",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 15,
+  },
+
+  addSetButton: {
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: '#222222',
+    flexShrink: 0,      
+  },
+
+  addSetButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 15,
   },
 });
 
