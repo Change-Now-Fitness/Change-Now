@@ -53,6 +53,8 @@ const EQUIPMENT_OPTIONS = [
   "cable",
 ];
 
+// Temporary data for UI.
+// Replace this with a backend fetch once the exercises table is populated.
 const PRESET_EXERCISES: Exercise[] = [
   {
     id: 1,
@@ -201,6 +203,9 @@ export default function ExerciseLibrary() {
   const showTwoColumnCards = width >= 960;
   const allExercises = [...PRESET_EXERCISES, ...customExercises];
   const normalizedSearchText = searchText.trim().toLowerCase();
+  // This mirrors the backend query shape at a small local-state level for now.
+  // When the API is wired in, this filtered grouping can move server-side or run
+  // against fetched data with the same exercise object contract.
   const exerciseSections = MUSCLE_GROUPS.map((group) => ({
     ...group,
     exercises: allExercises.filter((exercise) => {
@@ -227,6 +232,8 @@ export default function ExerciseLibrary() {
     sectionOffsets.current[muscleGroup] = event.nativeEvent.layout.y;
   };
 
+  // The sidebar uses measured section offsets so a tap can jump the main list
+  // to the matching muscle group without introducing nested routes/screens.
   const scrollToSection = (muscleGroup: string) => {
     setSelectedMuscleGroup(muscleGroup);
 
@@ -240,6 +247,8 @@ export default function ExerciseLibrary() {
   const handleScroll = (
     event: NativeSyntheticEvent<NativeScrollEvent>
   ) => {
+    // As the user scrolls, keep the sidebar highlight in sync with the section
+    // currently closest to the top of the viewport.
     const scrollY = event.nativeEvent.contentOffset.y + 40;
     const activeGroup = [...MUSCLE_GROUPS]
       .reverse()
@@ -278,11 +287,15 @@ export default function ExerciseLibrary() {
 
     nextExerciseId.current += 1;
 
+    // MVP behavior: append to local state so the flow works before the backend
+    // layer is connected. Replace this with POST /exercises and then
+    // merge/refresh from the API response once the real database path is ready.
     console.log("Custom exercise saved:", nextExercise);
     setCustomExercises((current) => [...current, nextExercise]);
     setSearchText("");
     closeModal();
 
+    // Wait for React to paint the new item before trying to scroll to its section.
     requestAnimationFrame(() => {
       scrollToSection(nextExercise.muscleGroup);
     });

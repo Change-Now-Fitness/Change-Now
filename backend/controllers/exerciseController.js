@@ -1,3 +1,5 @@
+// Temporary in-memory seed data.
+// Replace this with database reads once the exercises table is populated.
 const EXERCISE_SEED = [
   {
     id: 1,
@@ -118,6 +120,7 @@ const EXERCISE_SEED = [
   },
 ];
 
+// In-memory store for the scaffolded API. This resets whenever the server restarts.
 let exercises = [...EXERCISE_SEED];
 let nextExerciseId = EXERCISE_SEED.length + 1;
 
@@ -136,6 +139,7 @@ const normalizeValue = (value, fallback) => {
 // Query protocol scaffold:
 // GET /exercises?search=&muscleGroup=&type=&equipment=&includeCustom=&userId=
 // Every response uses the shared exercise shape expected by the frontend MVP.
+// Keep this contract aligned with the frontend when the real DB integration lands.
 const getExercises = (req, res) => {
   const search = normalizeValue(req.query.search, "");
   const muscleGroup = normalizeValue(req.query.muscleGroup, "");
@@ -200,10 +204,13 @@ const createExercise = (req, res) => {
     muscleGroup: normalizeValue(req.body.muscleGroup, "chest"),
     equipment: normalizeValue(req.body.equipment, "barbell"),
     isCustom: true,
+    // Replace this fallback with the authenticated user id once auth is wired
+    // through the exercise creation flow.
     userId: normalizeName(req.body.userId) || "mock-user-id",
   };
 
   nextExerciseId += 1;
+  // Replace this array push with a database insert and return the inserted row.
   exercises.push(nextExercise);
 
   return res.status(201).json(nextExercise);
@@ -224,6 +231,7 @@ const deleteExercise = (req, res) => {
     return res.status(404).json({ message: "Exercise not found" });
   }
 
+  // Replace this in-memory delete with a database delete scoped to the owner.
   exercises.splice(exerciseIndex, 1);
 
   return res.json({ message: "Exercise deleted successfully" });

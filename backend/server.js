@@ -12,6 +12,8 @@ app.use(cors({
 
 app.use(express.json());
 app.use("/auth", authRouter);
+// Exercise routes are scaffolded separately so the frontend can move to a real
+// API contract without changing its object shape later.
 app.use("/exercises", exerciseRoutes);
 const pool = require('./dbconnection');
 
