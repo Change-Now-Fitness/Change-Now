@@ -6,6 +6,7 @@ import { useFonts, BebasNeue_400Regular } from '@expo-google-fonts/bebas-neue';
 import { supabase } from '@/lib/supabase'; 
 
 
+
 const API_URL = "http://localhost:4000";
 
 export default function SignupScreen() {
@@ -20,6 +21,8 @@ export default function SignupScreen() {
 
   const loginScaleAnim = useRef(new Animated.Value(1)).current;
   const signupScaleAnim = useRef(new Animated.Value(1)).current;
+
+  const platform = Platform.OS;
 
   const [fontsLoaded] = useFonts({
         BebasNeue_400Regular,
@@ -56,7 +59,7 @@ export default function SignupScreen() {
               headers: {
                   'Content-Type': 'application/json',
               },
-              body: JSON.stringify({email, password}),
+              body: JSON.stringify({email, password, platform}),
           });
 
           const userData = await response.json();

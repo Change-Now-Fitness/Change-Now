@@ -30,7 +30,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
  * -Sam
  */
 router.post('/signup', async (req, res) => {
-    const { email, password } = req.body;
+    const { email, password, platform} = req.body;
     //ensure required fields filled, else returns json w error
     if (email == "" || password == "") {
         return res.status(400).json({ error: 'Email and Password required'});
@@ -59,6 +59,9 @@ router.post('/signup', async (req, res) => {
             { expiresIn: '7d'}
 
         );
+        if (platform == 'web') {
+            return res.cookie("token", )
+        }
         res.json({token, user: {id: user.id, email: user.email}});
     } catch (error) {
         console.error(error);
@@ -69,7 +72,7 @@ router.post('/signup', async (req, res) => {
 
 router.post('/login/', async (req, res) => {
     //take http request and get body of json, ensure fields not empty
-    const {email, password} = await req.body;
+    const {email, password, platform} = await req.body;
     console.log(`email input: ${email}, pass input: ${password}`);
     if (!email || !password) {
         return res.status(400).json(

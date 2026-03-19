@@ -28,6 +28,8 @@ export default function LoginScreen() {
     const loginScaleAnim = useRef(new Animated.Value(1)).current;
     const signupScaleAnim = useRef(new Animated.Value(1)).current;
 
+    const platform = Platform.OS;
+
     const [fontsLoaded] = useFonts({
         BebasNeue_400Regular,
     });
@@ -65,7 +67,7 @@ export default function LoginScreen() {
                 headers: {
                 'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({email, password})
+                body: JSON.stringify({email, password, platform})
             });
             if (!request.ok){
                 return console.log(`Error: ${request.status}`);
@@ -78,7 +80,7 @@ export default function LoginScreen() {
             console.log('response recieved');
             //store token from json in secure storage on client (keychain)
             // To fix issue on web
-            if (Platform.OS === 'web') {
+            if (platform === 'web') {
             localStorage.setItem('user_token', java_obj_response.token);
             } else {
             await SecureStore.setItemAsync('user_token', java_obj_response.token);
