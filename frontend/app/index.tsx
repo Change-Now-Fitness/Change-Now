@@ -30,6 +30,8 @@ export default function LoginScreen() {
 
     const platform = Platform.OS;
 
+    
+
     const [fontsLoaded] = useFonts({
         BebasNeue_400Regular,
     });

@@ -60,9 +60,18 @@ router.post('/signup', async (req, res) => {
 
         );
         if (platform == 'web') {
-            return res.cookie("token", )
+            return res.cookie("token", `${token}`,
+                {
+                    httpOnly: true,
+                    secure: true,
+                    sameSite: "lax",
+                    maxAge: 2 * 24 * 60 * 60
+                }
+            );
+        } else {
+            return res.json({token, user: {id: user.id, email: user.email}});
         }
-        res.json({token, user: {id: user.id, email: user.email}});
+
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Server Error'});
@@ -106,9 +115,11 @@ router.post('/login/', async (req, res) => {
             console.log('pass verified failed');
             return res.status(403).json({error: "Incorrect Username or Password"});
         }
+    
     } catch (error) {
         return res.status(500).json({error: "Server error"});
     }
+    
 });
 
 module.exports = router;
