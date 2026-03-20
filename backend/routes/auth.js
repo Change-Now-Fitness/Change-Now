@@ -119,7 +119,11 @@ router.post('/login/', async (req, res) => {
     } catch (error) {
         return res.status(500).json({error: "Server error"});
     }
-    
+
 });
 
+router.post('/requireAuth/', async (req, res) => {
+    let unvalidated_token = await req.body;
+    console.log(`unvalidated token request: ${unvalidated_token}`);
+});
 module.exports = router;

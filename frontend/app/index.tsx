@@ -1,10 +1,12 @@
 import { Text, TextInput, View, StyleSheet, Pressable, Animated } from "react-native";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "expo-router";
 import { useFonts, BebasNeue_400Regular } from '@expo-google-fonts/bebas-neue';
 import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
 import { supabase } from '@/lib/supabase'; 
+import { checkLogin, login } from "./services/auth";
+import { log } from "node:console";
 
 const API_URL = "http://localhost:4000";
 
@@ -30,7 +32,28 @@ export default function LoginScreen() {
 
     const platform = Platform.OS;
 
-    
+    const checkLoginStatus = async () => {
+
+        try {
+            const login_status = await checkLogin();
+            console.log(`login status: ${login_status}`);
+            if (login_status) {
+                router.replace('/screens/maindashboard');
+                return true;
+            } else {
+                console.log('check login returned false');
+                return false;
+            }
+        } catch (error) {
+            console.log(`error checking log in status ${error}`);
+            return false;
+        };
+    };
+
+    useEffect(() => {
+        checkLoginStatus();
+    }, []);
+        
 
     const [fontsLoaded] = useFonts({
         BebasNeue_400Regular,
@@ -54,6 +77,7 @@ export default function LoginScreen() {
         Animated.spring(signupScaleAnim, { toValue: 1, useNativeDriver: true }).start();
     };
 
+
     const handleLogin = async () => {
         console.log('log in clicked');
         //check if required fields are filled
@@ -61,49 +85,10 @@ export default function LoginScreen() {
             return console.log('Error with credentails');
         }
 
-        //take input and format into request
-        try {
-            console.log('request sent to server');
-            const request = await fetch(`${API_URL}/auth/login`, {
-                method: 'POST',
-                headers: {
-                'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({email, password, platform})
-            });
-            if (!request.ok){
-                return console.log(`Error: ${request.status}`);
-            }
-
-            console.log(`response code from frontend: ${request.status}`);
-            const java_obj_response = await request.json();
-            const json_response = JSON.stringify(java_obj_response);
-            console.log(`response: ${json_response}`);
-            console.log('response recieved');
-            //store token from json in secure storage on client (keychain)
-            // To fix issue on web
-            if (platform === 'web') {
-            localStorage.setItem('user_token', java_obj_response.token);
-            } else {
-            await SecureStore.setItemAsync('user_token', java_obj_response.token);
-            }
-            router.push('/screens/maindashboard'); 
-            return console.log("Login Success!, token stored (on mobile, not web)");
-
-
-        } catch (error) {
-            return console.log(`error: ${error}`);
-        }
 
 
 
-            //navigate user to main dashboard and pass token
 
-
-        //send request and if response fails, put message
-
-        //if response succeeds, take user token and navigate to dashboard 
-        //populate dashboard with token and use token to populate data
     }
     const handleSignup = async () => {
         router.push("/screens/signupscreen")
