@@ -15,8 +15,11 @@ export async function checkLogin() {
     console.log('login status checking...');
     if (platform == 'web') {
         try {
-            const response = await fetch(API_URL, {credentials: 'include'});
-            console.log('trying token');
+            const response = await fetch(`${API_URL}/auth/requireAuth`, {
+                method: 'POST',
+                credentials: 'include'
+            });
+            console.log(`trying token, token bool: ${JSON.stringify(response)}`);
             return response.ok;
         } catch (error) {
             console.log(`auth error: ${error}`);
@@ -31,15 +34,16 @@ export async function checkLogin() {
             };
 
             try {
-                const response = await fetch(API_URL, {
+                const response = await fetch(`${API_URL}/auth/requireAuth`, {
                     method: 'POST',
                     headers: {
                         'Content-Type':'application/json'
                     },
                     body: JSON.stringify(body),
-                })
+                });
+                
             } catch (error) {
-                console.log(`Bad token error: ${error}`);
+                console.log(`Bad token: ${error}`);
                 return false;
             }
 
@@ -49,12 +53,12 @@ export async function checkLogin() {
     }
 }
 
-export  async function login(email: string, password: string) {
+export async function login(email: string, password: string) {
     //take input and format into request
     try {
         console.log('request sent to server');
         const request = await fetch(`${API_URL}/auth/login`, {
-            method: 'POST',
+            method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
             },
@@ -70,6 +74,7 @@ export  async function login(email: string, password: string) {
         // To fix issue on web
         if (platform == 'web') {
             console.log('web login complete')
+
             return true;
         } else {
             const java_obj_response = await request.json();

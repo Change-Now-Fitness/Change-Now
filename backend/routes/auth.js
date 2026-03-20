@@ -1,10 +1,3 @@
-
-/**
- * Dependencies
- * argon2 - password hasher
- * pool - connection layer for db
- * jwt - token library
- */
 const argon2 = require("argon2");
 const pool = require('../dbconnection')
 const jwt = require('jsonwebtoken');
@@ -15,19 +8,8 @@ const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret'; 
 
 /**
- * User Signup Auth
- * 
- * Checks if the client json req has email and password fields filled,
- * then checks if the email is already registered in the DB.
- * 
- * Hashes the password, then inserts new user credentials into DB.
- * 
- * Upon insertion, returns the user ID which is used to generate a Json Web Token
- * from the user data, which is then sent back to the client with 7 day expiration
- * 
- * Currently the JWT secret token is just dev-secret but that should be changed and put
- * into .env
- * -Sam
+ * Takes credentials from client, encrypts a jwt token. 
+ * Next, it sends it back as cookie for web and raw jwt mobile
  */
 router.post('/signup', async (req, res) => {
     const { email, password, platform} = req.body;
@@ -78,8 +60,13 @@ router.post('/signup', async (req, res) => {
     }
 });
 
-
-router.post('/login/', async (req, res) => {
+/**
+ * Takes credentials from client and queries db for user with same email (id).
+ * If one exists, returns the password hash and compares it with the argon encyption key with
+ * the password input. Returns either cookie or raw JWT based on requestor OS. 
+ */
+router.get('/login/', async (req, res) => {
+    console.log('login serverside gateway reached');
     //take http request and get body of json, ensure fields not empty
     const {email, password, platform} = await req.body;
     console.log(`email input: ${email}, pass input: ${password}`);
@@ -109,16 +96,19 @@ router.post('/login/', async (req, res) => {
             }, JWT_SECRET, { expiresIn: '1h'});
             console.log('token made');
             //console.log(`token: ${token}`);
+            //30 sec token for testing
             if (platform == 'web') {
                 res.cookie('token', token, {
                     httpOnly: true,
-                    secure: true,
+                    //set secure to true when hosted fr
+                    secure: false,
                     sameSite: 'lax',
-                    maxAge: 2 * 24 * 60 * 60 * 1000
+                    maxAge: 30 * 1000
                 });
-                res.status(200).json({success: true});
+                console.log('cookie sent');
+                return res.status(200).json({success: true});
                 
-                return res;
+
             } else {
                 return res.status(200).json({token: token});
             }
@@ -135,8 +125,17 @@ router.post('/login/', async (req, res) => {
 
 });
 
+/**
+ * 'Middleware' (helper) function that checks if the user's tokens are valid,
+ * returns result to client
+ */
 router.post('/requireAuth/', async (req, res) => {
-    let unvalidated_token = await req.body;
-    console.log(`unvalidated token request: ${unvalidated_token}`);
+    console.log('requireAuth req recieved');
+    let unvalidated_token = await req.headers.cookie;
+    const tokenbody = JSON.stringify(unvalidated_token);
+    console.log(`unvalidated token request: ${req.headers.cookie}`);
+
+    return res.status(401).json({success: true, message: 'temp'});
 });
+
 module.exports = router;
