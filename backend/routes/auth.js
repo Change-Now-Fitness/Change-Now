@@ -109,7 +109,20 @@ router.post('/login/', async (req, res) => {
             }, JWT_SECRET, { expiresIn: '1h'});
             console.log('token made');
             //console.log(`token: ${token}`);
-            return res.status(200).json({token: token});
+            if (platform == 'web') {
+                res.cookie('token', token, {
+                    httpOnly: true,
+                    secure: true,
+                    sameSite: 'lax',
+                    maxAge: 2 * 24 * 60 * 60 * 1000
+                });
+                res.status(200).json({success: true});
+                
+                return res;
+            } else {
+                return res.status(200).json({token: token});
+            }
+
 
         } else {
             console.log('pass verified failed');

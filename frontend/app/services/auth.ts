@@ -71,7 +71,6 @@ export  async function login(email: string, password: string) {
         if (platform == 'web') {
             console.log('web login complete')
             return true;
-
         } else {
             const java_obj_response = await request.json();
             const json_response = JSON.stringify(java_obj_response);
