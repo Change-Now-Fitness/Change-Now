@@ -77,19 +77,25 @@ export default function LoginScreen() {
         Animated.spring(signupScaleAnim, { toValue: 1, useNativeDriver: true }).start();
     };
 
-
+    //uses auth/login helper function to log user into dashboard or return error
     const handleLogin = async () => {
         console.log('log in clicked');
-        //check if required fields are filled
         if ( !setEmail || !setPassword ) {
             return console.log('Error with credentails');
-        }
+        };
 
-
-
-
-
+        try {
+            const attemptLogin = await login(email, password);
+            if (attemptLogin) {
+                router.replace('/screens/maindashboard');
+                return;
+            } 
+            return;
+        } catch (error) {
+            return console.log(`error in frontend auth: ${error}`);
+        };
     }
+
     const handleSignup = async () => {
         router.push("/screens/signupscreen")
     };
