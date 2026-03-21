@@ -3,6 +3,7 @@ require('dotenv').config();
 const express = require('express');
 const authRouter = require("./routes/auth");
 const exerciseRoutes = require("./routes/exerciseRoutes");
+const workoutRouter = require("./routes/workouts");
 const app = express();
 //my browser requires whitelisted address if api and frontend addresses are different
 const cors = require("cors");
@@ -16,7 +17,7 @@ app.use("/auth", authRouter);
 // API contract without changing its object shape later.
 app.use("/exercises", exerciseRoutes);
 const pool = require('./dbconnection');
-
+app.use("/workouts", workoutRouter)
 
 
 //test route

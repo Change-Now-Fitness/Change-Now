@@ -3,8 +3,8 @@ import { useRouter } from "expo-router";
 import { styles } from "./styles";
 
 const EXERCISES = [
-  { id: "lat-pulldown", name: "Lat Pulldown", icon: "🏋️" },
-  { id: "bench-press", name: "Bench Press", icon: "💪" },
+  { id: "1", name: "Lat Pulldown", icon: "🏋️" },
+  { id: "2", name: "Bench Press", icon: "💪" },
 ];
 
 export default function Dashboard() {
@@ -21,7 +21,7 @@ export default function Dashboard() {
   const handleSelectExercise = (name: string, id: string) => {
     router.push({
       pathname: "/screens/selectedexercise",
-      params: { name, id },
+      params: { name, exerciseId: id.toString() },
     });
   };
 
