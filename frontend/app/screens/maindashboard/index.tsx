@@ -11,12 +11,11 @@ export default function Dashboard() {
   const router = useRouter();
 
   const handleNewExercise = () => {
-    // Temporary: route to custom exercise until type selection page exists
-    router.push("/screens/customerexercise");
+    router.push("/screens/exerciselibrary");
   };
 
   const handleAddCustomExercise = () => {
-    router.push("/screens/customerexercise");
+    router.push("/screens/exerciselibrary");
   };
 
   const handleSelectExercise = (name: string, id: string) => {
