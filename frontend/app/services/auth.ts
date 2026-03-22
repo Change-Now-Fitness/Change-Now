@@ -19,7 +19,8 @@ export async function checkLogin() {
                 method: 'POST',
                 credentials: 'include'
             });
-            console.log(`trying token, token bool: ${JSON.stringify(response)}`);
+            const data = await response.json();
+            console.log(`server repsonded with user ID:`, data.jwtoken.user_id);
             return response.ok;
         } catch (error) {
             console.log(`auth error: ${error}`);
@@ -29,17 +30,13 @@ export async function checkLogin() {
         //add mobile token check
         let checkToken = await SecureStore.getItemAsync('user_token');
         if (checkToken) {
-            const body = {
-                'Authorization': `Bearer ${checkToken}`
-            };
-
             try {
                 const response = await fetch(`${API_URL}/auth/requireAuth`, {
                     method: 'POST',
                     headers: {
-                        'Content-Type':'application/json'
+                        'Content-Type':'application/json',
+                        'Authorization': `Bearer ${checkToken}`
                     },
-                    body: JSON.stringify(body),
                 });
                 
             } catch (error) {
@@ -58,7 +55,8 @@ export async function login(email: string, password: string) {
     try {
         console.log('request sent to server');
         const request = await fetch(`${API_URL}/auth/login`, {
-            method: 'GET',
+            method: 'POST',
+            credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
             },
@@ -73,8 +71,7 @@ export async function login(email: string, password: string) {
         //store token from json in secure storage on client (keychain)
         // To fix issue on web
         if (platform == 'web') {
-            console.log('web login complete')
-
+            console.log('web login function comlete');
             return true;
         } else {
             const java_obj_response = await request.json();
@@ -89,4 +86,49 @@ export async function login(email: string, password: string) {
         console.log(`error: ${error}`);
         return false;
     }
+}
+
+export async function signUp(email: string, password: string) {
+    try {
+          const response = await fetch(`${API_URL}/auth/signup`, {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({email, password, platform}),
+          });
+
+          const userData = await response.json();
+          
+          //if response isnt 200 - success
+          if (!response.ok) {
+              console.log('Signup Failed', userData);
+              return false;
+          }
+          
+          if (Platform.OS != "web") {
+
+          await SecureStore.setItemAsync('authToken', userData.token);
+          console.log('Signup Success, token saved');
+          router.push("/screens/maindashboard");  
+          return false;
+
+
+
+          } else {
+              //currently we cant handle storing web tokens, only mobile
+              //maybe i will implement for testing purposes but for now skipping
+              console.log('Signup Successful, token not saved because not using mobile OS')
+              router.push("/screens/maindashboard");  
+              return false;
+          }
+
+          //Add nav for workout page
+
+
+      } catch (error) {
+          console.log('Network Error', error);
+          return false;
+      }
+
 }

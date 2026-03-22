@@ -65,7 +65,7 @@ router.post('/signup', async (req, res) => {
  * If one exists, returns the password hash and compares it with the argon encyption key with
  * the password input. Returns either cookie or raw JWT based on requestor OS. 
  */
-router.get('/login/', async (req, res) => {
+router.post('/login/', async (req, res) => {
     console.log('login serverside gateway reached');
     //take http request and get body of json, ensure fields not empty
     const {email, password, platform} = await req.body;
@@ -97,7 +97,7 @@ router.get('/login/', async (req, res) => {
             console.log('token made');
             //console.log(`token: ${token}`);
             //30 sec token for testing
-            if (platform == 'web') {
+            if (platform === 'web') {
                 res.cookie('token', token, {
                     httpOnly: true,
                     //set secure to true when hosted fr
@@ -130,12 +130,39 @@ router.get('/login/', async (req, res) => {
  * returns result to client
  */
 router.post('/requireAuth/', async (req, res) => {
+    const headers = await req.headers;
     console.log('requireAuth req recieved');
-    let unvalidated_token = await req.headers.cookie;
-    const tokenbody = JSON.stringify(unvalidated_token);
-    console.log(`unvalidated token request: ${req.headers.cookie}`);
+    //console.log(`headers: ${JSON.stringify(headers)}`)
 
-    return res.status(401).json({success: true, message: 'temp'});
+    if (headers.cookie) {
+        console.log('cookie');
+        const token = headers.cookie.substring(6);
+        console.log(`cookie found: ${token}`);
+        try {
+            const jwtoken = jwt.verify(token, JWT_SECRET);
+            console.log('user data sent back from verified cookie');
+            return res.status(200).json({jwtoken});
+        } catch (error) {
+            console.log('bad cookie');
+            return res.status(401).json({success: false, message: 'bad token'});
+        }
+    } else if (headers.authorization) {
+        console.log('found mobile token');
+        if (headers.authorization.substring(0,6) === 'Bearer') {
+            console.log('bearer located');
+            const token = headers.get('Authorization').substring(6);
+            try {
+                const verifiedToken = jwt.verify(token, JWT_SECRET);
+                console.log('token verified');
+                return res.status(200).json({verifiedToken});
+            } catch (error) {
+                return res.status(401).json({success: false, message: 'bad token'});
+            }
+        }
+    }
+    console.log('no token found');
+
+    return res.status(401).json({success: false, message: 'no valid cookie'});
 });
 
 module.exports = router;
