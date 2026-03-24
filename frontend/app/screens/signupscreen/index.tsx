@@ -3,7 +3,6 @@ import { Text, TextInput, View, StyleSheet, Pressable, Animated, Platform } from
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useFonts, BebasNeue_400Regular } from '@expo-google-fonts/bebas-neue';
-import { supabase } from '@/lib/supabase'; 
 import { signUp } from '../../../services/auth';
 
 
