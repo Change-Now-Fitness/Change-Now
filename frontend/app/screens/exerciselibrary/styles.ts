@@ -83,12 +83,15 @@ const styles = StyleSheet.create({
   },
 
   sidebar: {
-    width: 108,
+    width: "24%",
     backgroundColor: "#34393f",
     borderRadius: 20,
-    paddingVertical: 18,
-    paddingHorizontal: 10,
-    marginRight: 14,
+    marginRight: 8,
+  },
+
+  sidebarContent: {
+    paddingVertical: 16,
+    paddingHorizontal: 8,
   },
 
   sidebarHeading: {
@@ -123,7 +126,7 @@ const styles = StyleSheet.create({
   },
 
   exerciseScroll: {
-    flex: 1,
+    width: "74%",
     backgroundColor: "#31363b",
     borderRadius: 20,
   },
