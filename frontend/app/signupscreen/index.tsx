@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from "react";
 import { Text, TextInput, View, StyleSheet, Pressable, Animated, Platform } from "react-native";
 import { useRouter } from "expo-router";
@@ -9,137 +10,65 @@ import { supabase } from '@/lib/supabase';
 const API_URL = "http://localhost:4000";
 
 export default function SignupScreen() {
-  const router = useRouter();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, confirmSetPassword] = useState("");
-  const [error, setError] = useState("");
-
-  const [loginHovered, setLoginHovered] = useState(false);
-  const [signupHovered, setSignupHovered] = useState(false);
-
-  const loginScaleAnim = useRef(new Animated.Value(1)).current;
-  const signupScaleAnim = useRef(new Animated.Value(1)).current;
-
-  const [fontsLoaded] = useFonts({
-        BebasNeue_400Regular,
-    });
-
-    if (!fontsLoaded) {
-        return null;
-    }
-
-  const handleSignupPressIn = () => {
-      Animated.spring(signupScaleAnim, { toValue: 0.95, useNativeDriver: true }).start();
-  };
-  const handleSignupPressOut = () => {
-      Animated.spring(signupScaleAnim, { toValue: 1, useNativeDriver: true }).start();
-  };
 
   const handleSignup = async () => {
-    setError("");
-
-    // Confirm password check
-    if (password !== confirmPassword) {
-      setError("Passwords do not match");
-      return;
-    }
-
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters");
-      return;
-    }
-
     try {
-          const response = await fetch(`${API_URL}/auth/signup`, {
-              method: 'POST',
-              headers: {
-                  'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({email, password}),
-          });
+      const response = await fetch(`${API_URL}/auth/signup`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
 
-          const userData = await response.json();
-          
-          //if response isnt 200 - success
-          if (!response.ok) {
-              console.log('Signup Failed', userData);
-              return;
-          }
-          
-          if (Platform.OS != "web") {
+      const userData = await response.json();
 
-          await SecureStore.setItemAsync('authToken', userData.token);
-          console.log('Signup Success, token saved');
-          router.push("/screens/maindashboard");  
-
-
-
-          } else {
-              //currently we cant handle storing web tokens, only mobile
-              //maybe i will implement for testing purposes but for now skipping
-              console.log('Signup Successful, token not saved because not using mobile OS')
-              router.push("/screens/maindashboard");  
-          }
-
-          //Add nav for workout page
-
-
-      } catch (error) {
-          console.log('Network Error', error);
+      if (!response.ok) {
+        console.log("Signup failed", userData);
+        return;
       }
+
+      if (Platform.OS !== "web") {
+        await SecureStore.setItemAsync("authToken", userData.token);
+        console.log("Signup success, token saved");
+      } else {
+        console.log(
+          "Signup successful, token not saved because not using mobile OS"
+        );
+      }
+
+      // TODO: navigate to the next screen after successful signup
+    } catch (error) {
+      console.log("Network error", error);
     }
-    
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Sign Up</Text>
-        <View style = {styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          placeholderTextColor="#666"
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          keyboardType="email-address"
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          placeholderTextColor="#666"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Confirm Password"
-          placeholderTextColor="#666"
-          value={confirmPassword}
-          onChangeText={confirmSetPassword}
-          secureTextEntry
-        />
-      </View>
-
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
-
-
-      <Animated.View style={{ transform: [{scale: signupScaleAnim }]}}>
-        <Pressable 
-            style={({pressed}) => [
-              styles.signupButton,
-              signupHovered && styles.signupButtonHovered,
-              pressed && styles.signupButtonHovered,
-            ]}
-            onPress={handleSignup}
-            onPressIn={handleSignupPressIn}
-            onPressOut={handleSignupPressOut}
-            onHoverIn={() => setSignupHovered(true)}
-            onHoverOut={() => setSignupHovered(false)}
-            >
-          <Text style={styles.signupButtonText}>Create Account</Text>
-        </Pressable>
-      </Animated.View>
+      <TextInput
+        style={styles.input}
+        placeholder="Email"
+        placeholderTextColor="#666"
+        value={email}
+        onChangeText={setEmail}
+        autoCapitalize="none"
+        keyboardType="email-address"
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Password"
+        placeholderTextColor="#666"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+      />
+      <Pressable style={styles.signupButton} onPress={handleSignup}>
+        <Text style={styles.signupButtonText}>Create Account</Text>
+      </Pressable>
     </View>
   );
 }
@@ -157,12 +86,14 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     margin: 40,
     color: "#ffffff",
+
   },
   input: {
     backgroundColor: "#f5f5f5",
     color: "#000000",
     padding: 10,
     marginBottom: 20,
+
     width: "100%",
     borderRadius: 8,
   },
@@ -188,6 +119,7 @@ const styles = StyleSheet.create({
   signupButtonText: {
     fontSize: 20,
     fontWeight: "bold",
+
     fontFamily: 'BebasNeue_400Regular',
     color: "#f5f5f5",
   },
@@ -201,6 +133,5 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     width: "80%",        
     textAlign: "center",
-},
-});
-
+}
+})
