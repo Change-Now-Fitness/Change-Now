@@ -130,7 +130,7 @@ router.post('/login/', async (req, res) => {
 
 /**
  * 'Middleware' (helper) function that checks if the user's tokens are valid,
- * returns result to client
+ * returns result to client. Prepared for both cookies and jwt tokens.
  */
 router.post('/requireAuth/', async (req, res) => {
     const headers = await req.headers;
