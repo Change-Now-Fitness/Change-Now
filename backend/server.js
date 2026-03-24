@@ -9,6 +9,7 @@ const app = express();
 const cors = require("cors");
 app.use(cors({
     origin: "http://localhost:8081",
+    credentials: true
 }));
 
 app.use(express.json());

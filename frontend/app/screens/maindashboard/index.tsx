@@ -1,6 +1,8 @@
 import { Text, TouchableOpacity, ScrollView } from "react-native";
+import { useEffect } from "react";
 import { useRouter } from "expo-router";
 import { styles } from "./styles";
+import { checkLogin } from "../../../services/auth";
 
 const EXERCISES = [
   { id: "1", name: "Lat Pulldown", icon: "🏋️" },
@@ -9,6 +11,27 @@ const EXERCISES = [
 
 export default function Dashboard() {
   const router = useRouter();
+  const checkLoginStatus = async () => {
+
+    try {
+        const login_status = await checkLogin();
+        console.log(`login status: ${login_status}`);
+        if (login_status) {
+            return true;
+        } else {
+            console.log('check login returned false');
+            router.replace('/');
+            return false;
+        }
+    } catch (error) {
+        console.log(`error checking log in status ${error}`);
+        return false;
+    };
+};
+
+  useEffect(() => {
+      checkLoginStatus();
+  }, []);
 
   const handleNewExercise = () => {
     router.push("/screens/exerciselibrary");

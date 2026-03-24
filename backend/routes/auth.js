@@ -1,10 +1,3 @@
-
-/**
- * Dependencies
- * argon2 - password hasher
- * pool - connection layer for db
- * jwt - token library
- */
 const argon2 = require("argon2");
 const pool = require('../dbconnection')
 const jwt = require('jsonwebtoken');
@@ -15,22 +8,11 @@ const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret'; 
 
 /**
- * User Signup Auth
- * 
- * Checks if the client json req has email and password fields filled,
- * then checks if the email is already registered in the DB.
- * 
- * Hashes the password, then inserts new user credentials into DB.
- * 
- * Upon insertion, returns the user ID which is used to generate a Json Web Token
- * from the user data, which is then sent back to the client with 7 day expiration
- * 
- * Currently the JWT secret token is just dev-secret but that should be changed and put
- * into .env
- * -Sam
+ * Takes credentials from client, encrypts a jwt token. 
+ * Next, it sends it back as cookie for web and raw jwt mobile
  */
 router.post('/signup', async (req, res) => {
-    const { email, password } = req.body;
+    const { email, password, platform} = req.body;
     //ensure required fields filled, else returns json w error
     if (email == "" || password == "") {
         return res.status(400).json({ error: 'Email and Password required'});
@@ -53,23 +35,43 @@ router.post('/signup', async (req, res) => {
 
         const token = jwt.sign(
             {
-                userID: user.id, email: user.email
+                userID: user.id
             },
             JWT_SECRET,
-            { expiresIn: '7d'}
+            { expiresIn: '1h'}
 
         );
-        res.json({token, user: {id: user.id, email: user.email}});
+        if (platform === 'web') {
+            console.log(`token: ${token}`);
+
+            console.log('sending cookie, web');
+            res.cookie('token', token, {
+                    httpOnly: true,
+                    secure: false,
+                    sameSite: "lax",
+                    maxAge: 30 * 1000
+            });
+            return res.status(200).json({'success': true});
+
+        } else {
+            return res.json({token, user: {id: user.id, email: user.email}});
+        }
+
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Server Error'});
     }
 });
 
-
+/**
+ * Takes credentials from client and queries db for user with same email (id).
+ * If one exists, returns the password hash and compares it with the argon encyption key with
+ * the password input. Returns either cookie or raw JWT based on requestor OS. 
+ */
 router.post('/login/', async (req, res) => {
+    console.log('login serverside gateway reached');
     //take http request and get body of json, ensure fields not empty
-    const {email, password} = await req.body;
+    const {email, password, platform} = await req.body;
     console.log(`email input: ${email}, pass input: ${password}`);
     if (!email || !password) {
         return res.status(400).json(
@@ -97,15 +99,74 @@ router.post('/login/', async (req, res) => {
             }, JWT_SECRET, { expiresIn: '1h'});
             console.log('token made');
             //console.log(`token: ${token}`);
-            return res.status(200).json({token: token});
+            //30 sec token for testing
+            if (platform === 'web') {
+                res.cookie('token', token, {
+                    httpOnly: true,
+                    secure: false,
+                    sameSite: 'lax',
+                    maxAge: 30 * 1000
+                });
+                console.log('cookie sent');
+                return res.status(200).json({success: true});
+                
+
+            } else {
+                console.log('returning mobile token');
+                return res.status(200).json({token: token});
+            }
+
 
         } else {
             console.log('pass verified failed');
             return res.status(403).json({error: "Incorrect Username or Password"});
         }
+    
     } catch (error) {
         return res.status(500).json({error: "Server error"});
     }
+
+});
+
+/**
+ * 'Middleware' (helper) function that checks if the user's tokens are valid,
+ * returns result to client
+ */
+router.post('/requireAuth/', async (req, res) => {
+    const headers = await req.headers;
+    console.log('requireAuth req recieved');
+    const dprint = headers;
+    console.log(`headers: ${JSON.stringify(dprint)}`)
+
+    if (headers.cookie) {
+        console.log('cookie');
+        const token = headers.cookie.substring(6);
+        console.log(`cookie found: ${token}`);
+        try {
+            const jwtoken = jwt.verify(token, JWT_SECRET);
+            console.log('user data sent back from verified cookie');
+            return res.status(200).json({jwtoken});
+        } catch (error) {
+            console.log('bad cookie');
+            return res.status(401).json({success: false, message: 'bad token'});
+        }
+    } else if (headers.authorization) {
+        console.log('found mobile token');
+        if (headers.authorization.substring(0,6) === 'Bearer') {
+            console.log('bearer located');
+            const token = headers.get('Authorization').substring(6);
+            try {
+                const verifiedToken = jwt.verify(token, JWT_SECRET);
+                console.log('token verified');
+                return res.status(200).json({verifiedToken});
+            } catch (error) {
+                return res.status(401).json({success: false, message: 'bad token'});
+            }
+        }
+    }
+    console.log('no token found');
+
+    return res.status(401).json({success: false, message: 'no valid cookie'});
 });
 
 module.exports = router;
