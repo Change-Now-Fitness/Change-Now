@@ -6,6 +6,7 @@ import React, { useState, useEffect } from 'react';
 import { jwtDecode } from 'jwt-decode';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
+import { checkLogin } from '../../../services/auth';
 
 type WorkoutSet = {
   set: number;
@@ -68,17 +69,15 @@ export default function SelectedExerciseScreen() {
   const [userId, setUserId] = useState<number | null>(null);
 
   // Get the logged-in user's ID
+
   useEffect(() => {
   const loadUserId = async () => {
-    const token = Platform.OS === 'web'
-      ? localStorage.getItem('user_token')
-      : await SecureStore.getItemAsync('user_token');
-
-    if (!token) return;
-    const decoded: { user_id: string } = jwtDecode(token);
-    console.log('decoded userId:', decoded.user_id);
-    setUserId(parseInt(decoded.user_id));
+    const { success, user_id } = await checkLogin();
+    if (success) {
+      setUserId(parseInt(user_id));
+    }
   };
+
   loadUserId();
 }, []);
 
