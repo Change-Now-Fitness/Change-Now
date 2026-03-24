@@ -36,8 +36,8 @@ export default function LoginScreen() {
 
         try {
             const login_status = await checkLogin();
-            console.log(`login status: ${login_status}`);
-            if (login_status) {
+            console.log(`login status: ${login_status.success}`);
+            if (login_status.success == true) {
                 router.replace('/screens/maindashboard');
                 return true;
             } else {

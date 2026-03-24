@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import {
   KeyboardAvoidingView,
   LayoutChangeEvent,
@@ -15,6 +15,8 @@ import {
   useWindowDimensions,
 } from "react-native";
 import styles from "./styles";
+import { checkLogin } from '../../../services/auth';
+import { useRouter } from 'expo-router';
 
 type Exercise = {
   id: number;
@@ -189,6 +191,7 @@ const toLabel = (value: string) =>
     .join(" ");
 
 export default function ExerciseLibrary() {
+  const router = useRouter();
   const { width } = useWindowDimensions();
   const scrollRef = useRef<ScrollView | null>(null);
   const sectionOffsets = useRef<Record<string, number>>({});
@@ -199,6 +202,30 @@ export default function ExerciseLibrary() {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [customExercises, setCustomExercises] = useState<Exercise[]>([]);
   const [formState, setFormState] = useState<ExerciseForm>(INITIAL_FORM_STATE);
+
+  const checkLoginStatus = async () => {
+
+    try {
+      console.log('checking loggin on library');
+      const login_status = await checkLogin();
+      console.log(`login status: ${login_status}`);
+      if (login_status.success == true) {
+        console.log('ex lib user display id: ', login_status.user_id);
+        return true;
+      } else {
+        console.log('check login returned false');
+        router.replace('/');
+        return false;
+      }
+    } catch (error) {
+      console.log(`error checking log in status ${error}`);
+      return false;
+    };
+  };
+
+  useEffect(() => {
+    checkLoginStatus();
+  }, []);
 
   const showTwoColumnCards = width >= 960;
   const allExercises = [...PRESET_EXERCISES, ...customExercises];

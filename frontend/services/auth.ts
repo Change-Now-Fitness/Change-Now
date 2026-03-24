@@ -30,9 +30,10 @@ export async function checkLogin() {
             });
             const data = await response.json();
             console.log(`server repsonded with user ID:`, data);
-            return response.ok;
+            return {'success': response.ok, 'user_id': data.jwtoken.user_id};
         } catch (error) {
             console.log(`auth error: ${error}`);
+            return {'success': false, 'user_id': ''};
         }
 
     } else {
@@ -46,15 +47,16 @@ export async function checkLogin() {
                         'Authorization': `Bearer ${checkToken}`
                     },
                 });
+                return {'success': true, 'user_id': ''}
                 
             } catch (error) {
                 console.log(`Bad token: ${error}`);
-                return false;
+                return {'success': false, 'user_id': ''};
             }
 
         } 
         console.log('no token found');
-        return false;
+        return {'success': false, 'user_id': ''};
     }
 }
 
