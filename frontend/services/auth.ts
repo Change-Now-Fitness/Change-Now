@@ -1,14 +1,25 @@
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 /**
- * functions that allow for checking the log in status of a user quickly
+ * User authentication functions and middleware
+ * 
+ * Login and signup page functions route here and these functions will
+ * communicate with the backend to verify/upload/check cookies and
+ * credentials. 
+ * 
+ * Functions return a true or false based on success which can be used
+ * to use the "router" hook to change pages accordingly
  */
 
 const API_URL = 'http://localhost:4000';
 
 const platform = Platform.OS;
 
-//Checks if there is a valid token and returns boolean result
+/**
+ * Checks for valid token and returns boolean result
+ * 
+ * accepts browser cookies and jwt tokens for mobile
+ */
 export async function checkLogin() {
     console.log('login status checking...');
     if (platform == 'web') {
@@ -25,7 +36,6 @@ export async function checkLogin() {
         }
 
     } else {
-        //add mobile token check
         let checkToken = await SecureStore.getItemAsync('user_token');
         if (checkToken) {
             try {
@@ -48,8 +58,14 @@ export async function checkLogin() {
     }
 }
 
+/**
+ * Takes login input from login screen and sends it to backend auth
+ * end point to verify, returns boolean success result
+ * @param email 
+ * @param password 
+ * @returns 
+ */
 export async function login(email: string, password: string) {
-    //take input and format into request
     try {
         console.log('request sent to server');
         const request = await fetch(`${API_URL}/auth/login`, {
@@ -65,9 +81,6 @@ export async function login(email: string, password: string) {
             return false;
         }
 
-
-        //store token from json in secure storage on client (keychain)
-        // To fix issue on web
         if (platform == 'web') {
             console.log('web login function comlete');
             return true;
@@ -86,6 +99,13 @@ export async function login(email: string, password: string) {
     }
 }
 
+/**
+ * Takes input from signup page and based on OS, saves token for
+ * future login. Currently, the token lasts 30 sec for testing
+ * @param email 
+ * @param password 
+ * @returns 
+ */
 export async function signUp(email: string, password: string) {
     try {
         const response = await fetch(`${API_URL}/auth/signup`, {
