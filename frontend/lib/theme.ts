@@ -1,13 +1,13 @@
 export const colors = {
   // background color
-  bg: "#1a1a2e",         
-  bgCard: "#16213e",      
-  bgInput: "#0f3460",     
-  bgElevated: "#1a1a3e",  
+  bg: "#2b2f33",         
+  bgCard: "#2b2f33",      
+  bgInput: "#34393f",     
+  bgElevated: "#2b2f33",  
 
 
-  primary: "#48b233",     
-  primaryDark: "#1d4f10",  
+  primary: "#1db954",     
+  primaryDark: "#1db954",  
 
 
   text: "#ffffff",         
@@ -15,7 +15,7 @@ export const colors = {
   textMuted: "#6c6c80",   
 
 
-  border: "#2a2a4a",     
+  border: "#000000",     
   borderLight: "#3a3a5a",  
 
   
@@ -24,7 +24,7 @@ export const colors = {
   warning: "#ff9500",     
 
   
-  tabBg: "#16213e",
+  tabBg: "#2b2f33",
   tabActive: "#ffffff",
   tabInactive: "#6c6c80",
 };
