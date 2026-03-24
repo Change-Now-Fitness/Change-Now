@@ -1,11 +1,9 @@
 import { Platform } from 'react-native';
-import { useRouter} from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 /**
  * functions that allow for checking the log in status of a user quickly
  */
 
-const router = useRouter();
 const API_URL = 'http://localhost:4000';
 
 const platform = Platform.OS;
@@ -20,7 +18,7 @@ export async function checkLogin() {
                 credentials: 'include'
             });
             const data = await response.json();
-            console.log(`server repsonded with user ID:`, data.jwtoken.user_id);
+            console.log(`server repsonded with user ID:`, data);
             return response.ok;
         } catch (error) {
             console.log(`auth error: ${error}`);
@@ -90,13 +88,14 @@ export async function login(email: string, password: string) {
 
 export async function signUp(email: string, password: string) {
     try {
-          const response = await fetch(`${API_URL}/auth/signup`, {
-              method: 'POST',
-              headers: {
-                  'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({email, password, platform}),
-          });
+        const response = await fetch(`${API_URL}/auth/signup`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, password, platform }),
+        });
           console.log('post response true: ', response.ok);
           const userData = await response.json();
 
@@ -106,23 +105,23 @@ export async function signUp(email: string, password: string) {
               console.log('Signup Failed', userData);
               return false;
           }
-          
-          if (Platform.OS != "web") {
 
-          await SecureStore.setItemAsync('authToken', userData.token);
-          console.log('Signup Success, token saved');
-          router.push("/screens/maindashboard");  
-          return false;
+        if (platform != "web") {
 
+            await SecureStore.setItemAsync('authToken', userData.token);
+            console.log('Signup Success, jwt mobile token saved');
+            return true;
 
 
-          } else {
-              //currently we cant handle storing web tokens, only mobile
-              //maybe i will implement for testing purposes but for now skipping
-              console.log('Signup Successful, token not saved because not using mobile OS')
-              router.push("/screens/maindashboard");  
-              return false;
-          }
+
+        } else if (platform === 'web') {
+            console.log('webtoken found, signup successful, moving to dashboard');
+            return true;
+        }
+        else {
+            console.log('platform not found');
+            return false;
+        }
 
           //Add nav for workout page
 

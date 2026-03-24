@@ -41,6 +41,7 @@ export default function SignupScreen() {
   };
 
   const handleSignup = async () => {
+    console.log('trying signup');
     setError("");
 
     // Confirm password check
@@ -66,7 +67,8 @@ export default function SignupScreen() {
       console.log('failed');
       return console.log('frontend auth replied signup failed');
     } catch (error) {
-      console.log('signup failed', error);
+      return console.log('signup failed', error);
+      
     }
     
 

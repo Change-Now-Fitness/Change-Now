@@ -35,23 +35,22 @@ router.post('/signup', async (req, res) => {
 
         const token = jwt.sign(
             {
-                userID: user.id, email: user.email
+                userID: user.id
             },
             JWT_SECRET,
             { expiresIn: '1h'}
 
         );
-        if (platform == 'web') {
+        if (platform === 'web') {
+            console.log(`token: ${token}`);
 
-            console.log('sending cookie');
-            res.cookie("token", token,
-                {
+            console.log('sending cookie, web');
+            res.cookie('token', token, {
                     httpOnly: true,
                     secure: false,
                     sameSite: "lax",
                     maxAge: 30 * 1000
-                }
-            );
+            });
             return res.status(200).json({'success': true});
 
         } else {
@@ -104,7 +103,6 @@ router.post('/login/', async (req, res) => {
             if (platform === 'web') {
                 res.cookie('token', token, {
                     httpOnly: true,
-                    //set secure to true when hosted fr
                     secure: false,
                     sameSite: 'lax',
                     maxAge: 30 * 1000
@@ -114,6 +112,7 @@ router.post('/login/', async (req, res) => {
                 
 
             } else {
+                console.log('returning mobile token');
                 return res.status(200).json({token: token});
             }
 
@@ -136,7 +135,8 @@ router.post('/login/', async (req, res) => {
 router.post('/requireAuth/', async (req, res) => {
     const headers = await req.headers;
     console.log('requireAuth req recieved');
-    //console.log(`headers: ${JSON.stringify(headers)}`)
+    const dprint = headers;
+    console.log(`headers: ${JSON.stringify(dprint)}`)
 
     if (headers.cookie) {
         console.log('cookie');
