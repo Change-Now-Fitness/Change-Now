@@ -38,18 +38,22 @@ router.post('/signup', async (req, res) => {
                 userID: user.id, email: user.email
             },
             JWT_SECRET,
-            { expiresIn: '7d'}
+            { expiresIn: '1h'}
 
         );
         if (platform == 'web') {
-            return res.cookie("token", `${token}`,
+
+            console.log('sending cookie');
+            res.cookie("token", token,
                 {
                     httpOnly: true,
-                    secure: true,
+                    secure: false,
                     sameSite: "lax",
-                    maxAge: 2 * 24 * 60 * 60
+                    maxAge: 30 * 1000
                 }
             );
+            return res.status(200).json({'success': true});
+
         } else {
             return res.json({token, user: {id: user.id, email: user.email}});
         }

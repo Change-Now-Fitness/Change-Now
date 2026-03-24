@@ -2,7 +2,7 @@ import { Text, TouchableOpacity, ScrollView } from "react-native";
 import { useEffect } from "react";
 import { useRouter } from "expo-router";
 import { styles } from "./styles";
-import { checkLogin } from "./../../services/auth";
+import { checkLogin } from "../../../services/auth";
 
 const EXERCISES = [
   { id: "1", name: "Lat Pulldown", icon: "🏋️" },

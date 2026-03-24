@@ -4,7 +4,7 @@ import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useFonts, BebasNeue_400Regular } from '@expo-google-fonts/bebas-neue';
 import { supabase } from '@/lib/supabase'; 
-import { signUp } from '../../services/auth';
+import { signUp } from '../../../services/auth';
 
 
 
@@ -54,19 +54,21 @@ export default function SignupScreen() {
       return;
     }
 
-    const trySignup = async () => {
-      try {
-        const successBool = await signUp(email, password);
-        if (successBool) {
-          router.replace('/screens/maindashboard');
-          return console.log('signup successful');
-        } else {
-          return console.log('frontend auth replied signup failed');
-        }
-      } catch (error) {
-        console.log('signup failed', error);
+
+    try {
+      console.log('trying signup');
+      const successBool = await signUp(email, password);
+      console.log('successbool: ', successBool)
+      if (successBool) {
+        router.replace('/screens/maindashboard');
+        return console.log('signup successful');
       }
+      console.log('failed');
+      return console.log('frontend auth replied signup failed');
+    } catch (error) {
+      console.log('signup failed', error);
     }
+    
 
   }
     

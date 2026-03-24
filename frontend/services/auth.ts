@@ -97,8 +97,9 @@ export async function signUp(email: string, password: string) {
               },
               body: JSON.stringify({email, password, platform}),
           });
-
+          console.log('post response true: ', response.ok);
           const userData = await response.json();
+
           
           //if response isnt 200 - success
           if (!response.ok) {

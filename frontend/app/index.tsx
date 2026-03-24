@@ -5,7 +5,7 @@ import { useFonts, BebasNeue_400Regular } from '@expo-google-fonts/bebas-neue';
 import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
 import { supabase } from '@/lib/supabase'; 
-import { checkLogin, login } from "./services/auth";
+import { checkLogin, login } from "@/services/auth";
 import { log } from "node:console";
 
 const API_URL = "http://localhost:4000";
