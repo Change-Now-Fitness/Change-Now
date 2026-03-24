@@ -36,7 +36,9 @@ export const styles = StyleSheet.create({
   },
 
   chartCard: {
-    height: 160,
+
+    height: 280,
+
     borderWidth: 2,
     borderColor: "#000",
     borderRadius: 12,
@@ -45,12 +47,6 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#fafafa",
   },
-
-  chartPlaceholderText: {
-    fontSize: 14,
-    color: "#666",
-  },
-
   sectionTitle: {
     fontSize: 18,
     fontWeight: "bold",

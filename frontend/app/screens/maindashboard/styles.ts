@@ -68,7 +68,6 @@ export const styles = StyleSheet.create({
     fontWeight: "500",
     color: "#000",
   },
-
   customExerciseButton: {
     marginTop: 8,
     height: 56,

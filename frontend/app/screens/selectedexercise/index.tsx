@@ -1,3 +1,4 @@
+
 import { ActivityIndicator, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { styles } from "./styles";
@@ -6,6 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { jwtDecode } from 'jwt-decode';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
+
 
 type WorkoutSet = {
   set: number;
@@ -17,6 +19,7 @@ type PreviousWorkout = {
   date: string;
   sets: WorkoutSet[];
 };
+
 
 // const CURRENT_WORKOUT_SETS: WorkoutSet[] = [
 //   { set: 1, weight: 110, reps: 8 },
@@ -139,10 +142,7 @@ export default function SelectedExerciseScreen() {
   };
 
   return (
-    <ScrollView
-      style={styles.container}
-      showsVerticalScrollIndicator={false}
-    >
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.headerRow}>
         <TouchableOpacity
           onPress={() => router.back()}
@@ -156,9 +156,7 @@ export default function SelectedExerciseScreen() {
       </View>
 
       <View style={styles.chartCard}>
-        <Text style={styles.chartPlaceholderText}>
-          Progress chart (placeholder)
-        </Text>
+
       </View>
 
       <Text style={styles.sectionTitle}>Current Workout</Text>
