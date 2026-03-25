@@ -35,7 +35,7 @@ router.post('/signup', async (req, res) => {
 
         const token = jwt.sign(
             {
-                userID: user.id
+                user_id: user.id
             },
             JWT_SECRET,
             { expiresIn: '1h'}
@@ -140,9 +140,9 @@ router.post('/requireAuth/', async (req, res) => {
 
     if (headers.cookie) {
         console.log('cookie');
-        const token = headers.cookie.substring(6);
-        console.log(`cookie found: ${token}`);
         try {
+            const token = headers.cookie.substring(6);
+            console.log(`cookie found: ${token}`);
             const jwtoken = jwt.verify(token, JWT_SECRET);
             console.log('user data sent back from verified cookie');
             return res.status(200).json({jwtoken});
