@@ -1,5 +1,8 @@
 {
   "dependencies": {
     "expo-secure-store": "^55.0.8"
+  },
+  "devDependencies": {
+    "typescript": "~5.9.2"
   }
 }
