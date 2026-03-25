@@ -2,6 +2,11 @@
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL;
 console.log('BASE_URL:', BASE_URL);
 
+export interface ApiError {
+  status: number;
+  message: string;
+}
+
 export async function fetchCurrentSets(exerciseId: string, userId: number, date: string) {
   const res = await fetch(
     `${BASE_URL}/workouts/${exerciseId}/current?userId=${userId}&date=${date}`

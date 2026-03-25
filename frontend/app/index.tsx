@@ -4,9 +4,11 @@ import { useRouter } from "expo-router";
 import { useFonts, BebasNeue_400Regular } from '@expo-google-fonts/bebas-neue';
 import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
+
 import { supabase } from '@/lib/supabase'; 
 import { checkLogin, login } from "@/services/auth";
 import { log } from "node:console";
+
 
 const API_URL = "http://localhost:4000";
 
@@ -38,7 +40,7 @@ export default function LoginScreen() {
             const login_status = await checkLogin();
             console.log(`login status: ${login_status.success}`);
             if (login_status.success == true) {
-                router.replace('/screens/maindashboard');
+                router.replace('/screens/Tabscreens/maindashboard');
                 return true;
             } else {
                 console.log('check login returned false');
@@ -87,7 +89,7 @@ export default function LoginScreen() {
         try {
             const attemptLogin = await login(email, password);
             if (attemptLogin) {
-                router.replace('/screens/maindashboard');
+                router.replace('/screens/Tabscreens/maindashboard');
                 return;
             } 
             return;
@@ -97,7 +99,7 @@ export default function LoginScreen() {
     }
 
     const handleSignup = async () => {
-        router.push("/screens/signupscreen")
+        router.push("/signupscreen")
     };
  
     
@@ -121,8 +123,7 @@ export default function LoginScreen() {
                 placeholderTextColor = "#666"
                 value = {password}
                 onChangeText = {setPassword}
-                secureTextEntry
-            />
+                secureTextEntry/>
         </View>   
         
             <Animated.View style={{ transform: [{ scale: loginScaleAnim }] }}>
