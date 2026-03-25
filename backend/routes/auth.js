@@ -1,9 +1,12 @@
+
+
 const argon2 = require("argon2");
 const pool = require('../dbconnection')
 const jwt = require('jsonwebtoken');
 
 const express = require("express");
 const router = express.Router();
+const { preload_workouts } = require('../services/preload')
 //secret code tbd, 'dev-secret' by defualt
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret'; 
 
@@ -31,11 +34,18 @@ router.post('/signup', async (req, res) => {
             'INSERT INTO users (email, password_hash, first_name, last_name) VALUES ($1, $2, $3, $4) RETURNING id, email',
             [email, passwordHash, 'first d', 'lastexample']
         );
-        const user = newAccount.rows[0];
+        const user = newAccount.rows[0].id;
+
+        const preload = await preload_workouts(user);
+        if (preload.success) {
+            console.log('preload successful');
+        } else {
+            console.log('preload failure: ', preload.error)
+        }
 
         const token = jwt.sign(
             {
-                user_id: user.id
+                user_id: user
             },
             JWT_SECRET,
             { expiresIn: '1h'}
