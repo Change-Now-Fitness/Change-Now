@@ -1,12 +1,12 @@
 
 import { ActivityIndicator, ScrollView, Text, TextInput, TouchableOpacity, View, StyleSheet } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { fetchCurrentSets, addSet } from "../../../lib/api";
+import { fetchCurrentSets, addSet } from "../../lib/api";
 import React, { useState, useEffect } from 'react';
 import { jwtDecode } from 'jwt-decode';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
-import { checkLogin } from '../../../services/auth';
+import { checkLogin } from '../../services/auth';
 import { colors, spacing, fontSize, borderRadius } from "@/lib/theme";
 
 

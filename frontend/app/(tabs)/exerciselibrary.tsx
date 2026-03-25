@@ -16,7 +16,7 @@ import {
   StyleSheet
 } from "react-native";
 
-import { checkLogin } from '../../../services/auth';
+import { checkLogin } from '../../services/auth';
 import { useRouter } from 'expo-router';
 
 type Exercise = {

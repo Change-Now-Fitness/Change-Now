@@ -1,7 +1,7 @@
 import { Text, TouchableOpacity, ScrollView, StyleSheet,ActivityIndicator,View,} from "react-native";
 import { useEffect,useState } from "react";
 import { useRouter } from "expo-router";
-import { checkLogin } from "../../../services/auth";
+import { checkLogin } from "../../services/auth";
 import { colors, spacing, fontSize, borderRadius } from "@/lib/theme";
 
 
