@@ -1,11 +1,13 @@
 import { Text, TextInput, View, StyleSheet, Pressable, Animated } from "react-native";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "expo-router";
 import { useFonts, BebasNeue_400Regular } from '@expo-google-fonts/bebas-neue';
 import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
 
 import { supabase } from '@/lib/supabase'; 
+import { checkLogin, login } from "@/services/auth";
+import { log } from "node:console";
 
 
 const API_URL = "http://localhost:4000";
@@ -30,6 +32,31 @@ export default function LoginScreen() {
     const loginScaleAnim = useRef(new Animated.Value(1)).current;
     const signupScaleAnim = useRef(new Animated.Value(1)).current;
 
+    const platform = Platform.OS;
+
+    const checkLoginStatus = async () => {
+
+        try {
+            const login_status = await checkLogin();
+            console.log(`login status: ${login_status.success}`);
+            if (login_status.success == true) {
+                router.replace('/screens/Tabscreens/maindashboard');
+                return true;
+            } else {
+                console.log('check login returned false');
+                return false;
+            }
+        } catch (error) {
+            console.log(`error checking log in status ${error}`);
+            return false;
+        };
+    };
+
+    useEffect(() => {
+        checkLoginStatus();
+    }, []);
+        
+
     const [fontsLoaded] = useFonts({
         BebasNeue_400Regular,
     });
@@ -52,52 +79,25 @@ export default function LoginScreen() {
         Animated.spring(signupScaleAnim, { toValue: 1, useNativeDriver: true }).start();
     };
 
+    //uses auth/login helper function to log user into dashboard or return error
     const handleLogin = async () => {
         console.log('log in clicked');
-        //check if required fields are filled
         if ( !setEmail || !setPassword ) {
             return console.log('Error with credentails');
-        }
+        };
 
-        //take input and format into request
         try {
-            console.log('request sent to server');
-            const request = await fetch(`${API_URL}/auth/login`, {
-                method: 'POST',
-                headers: {
-                'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({email, password})
-            });
-            if (!request.ok){
-                return console.log(`Error: ${request.status}`);
-            }
-
-            console.log(`response code from frontend: ${request.status}`);
-            const java_obj_response = await request.json();
-            const json_response = JSON.stringify(java_obj_response);
-            console.log(`response: ${json_response}`);
-            console.log('response recieved');
-            //store token from json in secure storage on client (keychain)
-            //SecureStore.setItemAsync('user_token', json_response);
-            router.push('/screens/maindashboard'); 
-            return console.log("Login Success!, token stored (on mobile, not web)");
-
-
+            const attemptLogin = await login(email, password);
+            if (attemptLogin) {
+                router.replace('/screens/Tabscreens/maindashboard');
+                return;
+            } 
+            return;
         } catch (error) {
-            return console.log(`error: ${error}`);
-        }
-
-
-
-            //navigate user to main dashboard and pass token
-
-
-        //send request and if response fails, put message
-
-        //if response succeeds, take user token and navigate to dashboard 
-        //populate dashboard with token and use token to populate data
+            return console.log(`error in frontend auth: ${error}`);
+        };
     }
+
     const handleSignup = async () => {
         router.push("/signupscreen")
     };

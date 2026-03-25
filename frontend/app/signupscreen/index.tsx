@@ -1,74 +1,128 @@
-
 import React, { useState, useRef } from "react";
 import { Text, TextInput, View, StyleSheet, Pressable, Animated, Platform } from "react-native";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useFonts, BebasNeue_400Regular } from '@expo-google-fonts/bebas-neue';
-import { supabase } from '@/lib/supabase'; 
+import { signUp } from '../../services/auth';
+
 
 
 const API_URL = "http://localhost:4000";
 
 export default function SignupScreen() {
-
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, confirmSetPassword] = useState("");
+  const [error, setError] = useState("");
 
-  const handleSignup = async () => {
-    try {
-      const response = await fetch(`${API_URL}/auth/signup`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
+  const [loginHovered, setLoginHovered] = useState(false);
+  const [signupHovered, setSignupHovered] = useState(false);
 
-      const userData = await response.json();
+  const loginScaleAnim = useRef(new Animated.Value(1)).current;
+  const signupScaleAnim = useRef(new Animated.Value(1)).current;
 
-      if (!response.ok) {
-        console.log("Signup failed", userData);
-        return;
-      }
+  const platform = Platform.OS;
 
-      if (Platform.OS !== "web") {
-        await SecureStore.setItemAsync("authToken", userData.token);
-        console.log("Signup success, token saved");
-      } else {
-        console.log(
-          "Signup successful, token not saved because not using mobile OS"
-        );
-      }
+  const [fontsLoaded] = useFonts({
+        BebasNeue_400Regular,
+    });
 
-      // TODO: navigate to the next screen after successful signup
-    } catch (error) {
-      console.log("Network error", error);
+    if (!fontsLoaded) {
+        return null;
     }
+
+  const handleSignupPressIn = () => {
+      Animated.spring(signupScaleAnim, { toValue: 0.95, useNativeDriver: true }).start();
+  };
+  const handleSignupPressOut = () => {
+      Animated.spring(signupScaleAnim, { toValue: 1, useNativeDriver: true }).start();
   };
 
+  const handleSignup = async () => {
+    console.log('trying signup');
+    setError("");
+
+    // Confirm password check
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
+
+
+    try {
+      console.log('trying signup');
+      const successBool = await signUp(email, password);
+      console.log('successbool: ', successBool)
+      if (successBool) {
+        router.replace('/screens/Tabscreens/maindashboard');
+        return console.log('signup successful');
+      }
+      console.log('failed');
+      return console.log('frontend auth replied signup failed');
+    } catch (error) {
+      return console.log('signup failed', error);
+      
+    }
+    
+
+  }
+    
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Sign Up</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        placeholderTextColor="#666"
-        value={email}
-        onChangeText={setEmail}
-        autoCapitalize="none"
-        keyboardType="email-address"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        placeholderTextColor="#666"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-      <Pressable style={styles.signupButton} onPress={handleSignup}>
-        <Text style={styles.signupButtonText}>Create Account</Text>
-      </Pressable>
+        <View style = {styles.inputContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="Email"
+          placeholderTextColor="#666"
+          value={email}
+          onChangeText={setEmail}
+          autoCapitalize="none"
+          keyboardType="email-address"
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Password"
+          placeholderTextColor="#666"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Confirm Password"
+          placeholderTextColor="#666"
+          value={confirmPassword}
+          onChangeText={confirmSetPassword}
+          secureTextEntry
+        />
+      </View>
+
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+
+      <Animated.View style={{ transform: [{scale: signupScaleAnim }]}}>
+        <Pressable 
+            style={({pressed}) => [
+              styles.signupButton,
+              signupHovered && styles.signupButtonHovered,
+              pressed && styles.signupButtonHovered,
+            ]}
+            onPress={handleSignup}
+            onPressIn={handleSignupPressIn}
+            onPressOut={handleSignupPressOut}
+            onHoverIn={() => setSignupHovered(true)}
+            onHoverOut={() => setSignupHovered(false)}
+            >
+          <Text style={styles.signupButtonText}>Create Account</Text>
+        </Pressable>
+      </Animated.View>
     </View>
   );
 }
@@ -86,14 +140,12 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     margin: 40,
     color: "#ffffff",
-
   },
   input: {
     backgroundColor: "#f5f5f5",
     color: "#000000",
     padding: 10,
     marginBottom: 20,
-
     width: "100%",
     borderRadius: 8,
   },
@@ -119,7 +171,6 @@ const styles = StyleSheet.create({
   signupButtonText: {
     fontSize: 20,
     fontWeight: "bold",
-
     fontFamily: 'BebasNeue_400Regular',
     color: "#f5f5f5",
   },
@@ -133,5 +184,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     width: "80%",        
     textAlign: "center",
-}
-})
+},
+});
+
