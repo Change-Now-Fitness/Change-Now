@@ -15,12 +15,3 @@ export interface Sets {
   reps: number;
 }
 
-
-export async function fetchExerciseHistory(
-  exerciseId: number
-): Promise<WorkoutSet[]> {
-  const data = await apiFetch<{ history: WorkoutSet[] }>(
-    `/exercises/${exerciseId}/history`
-  );
-  return data.history;
-}
