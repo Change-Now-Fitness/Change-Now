@@ -1,5 +1,9 @@
 const pool = require('../dbconnection');
-
+/**
+ * Used by signup function in auth to preload exercises to a user
+ * @param {*} user_id 
+ * @returns 
+ */
 async function preload_workouts(user_id) {
     try {
         const upload_exercises = await pool.query(
