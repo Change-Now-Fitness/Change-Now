@@ -7,9 +7,39 @@ const workoutRouter = require("./routes/workouts");
 const app = express();
 //my browser requires whitelisted address if api and frontend addresses are different
 const cors = require("cors");
+
+const isPrivateHostname = (hostname) =>
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname === "::1" ||
+    /^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname) ||
+    /^192\.168\.\d{1,3}\.\d{1,3}$/.test(hostname) ||
+    /^172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}$/.test(hostname);
+
+const corsOptions = {
+    origin(origin, callback) {
+        if (!origin) {
+            callback(null, true);
+            return;
+        }
+
+        try {
+            const parsedOrigin = new URL(origin);
+            if (parsedOrigin.protocol === "http:" && isPrivateHostname(parsedOrigin.hostname)) {
+                callback(null, true);
+                return;
+            }
+        } catch (error) {
+            console.log(`Invalid CORS origin: ${origin}`);
+        }
+
+        callback(new Error(`Origin not allowed by CORS: ${origin}`));
+    },
+    credentials: true,
+};
+
 app.use(cors({
-    origin: "http://localhost:8081",
-    credentials: true
+    ...corsOptions
 }));
 
 app.use(express.json());

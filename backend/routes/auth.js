@@ -164,11 +164,11 @@ router.post('/requireAuth/', async (req, res) => {
         console.log('found mobile token');
         if (headers.authorization.substring(0,6) === 'Bearer') {
             console.log('bearer located');
-            const token = headers.get('Authorization').substring(6);
+            const token = headers.authorization.substring(7);
             try {
                 const verifiedToken = jwt.verify(token, JWT_SECRET);
                 console.log('token verified');
-                return res.status(200).json({verifiedToken});
+                return res.status(200).json({jwtoken: verifiedToken});
             } catch (error) {
                 return res.status(401).json({success: false, message: 'bad token'});
             }
