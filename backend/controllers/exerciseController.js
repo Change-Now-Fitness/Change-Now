@@ -1,133 +1,16 @@
-// Temporary in-memory seed data.
-// Replace this with database reads once the exercises table is populated.
-const EXERCISE_SEED = [
-  {
-    id: 1,
-    name: "Bench Press",
-    type: "strength",
-    muscleGroup: "chest",
-    equipment: "barbell",
-    isCustom: false,
-    userId: null,
-  },
-  {
-    id: 2,
-    name: "Incline Bench Press",
-    type: "strength",
-    muscleGroup: "chest",
-    equipment: "barbell",
-    isCustom: false,
-    userId: null,
-  },
-  {
-    id: 3,
-    name: "Decline Bench Press",
-    type: "strength",
-    muscleGroup: "chest",
-    equipment: "barbell",
-    isCustom: false,
-    userId: null,
-  },
-  {
-    id: 4,
-    name: "Lat Pulldown",
-    type: "strength",
-    muscleGroup: "back",
-    equipment: "cable",
-    isCustom: false,
-    userId: null,
-  },
-  {
-    id: 5,
-    name: "Barbell Row",
-    type: "strength",
-    muscleGroup: "back",
-    equipment: "barbell",
-    isCustom: false,
-    userId: null,
-  },
-  {
-    id: 6,
-    name: "Barbell Shoulder Press",
-    type: "strength",
-    muscleGroup: "shoulders",
-    equipment: "barbell",
-    isCustom: false,
-    userId: null,
-  },
-  {
-    id: 7,
-    name: "Front Raise",
-    type: "strength",
-    muscleGroup: "shoulders",
-    equipment: "dumbbell",
-    isCustom: false,
-    userId: null,
-  },
-  {
-    id: 8,
-    name: "Squat",
-    type: "strength",
-    muscleGroup: "legs",
-    equipment: "barbell",
-    isCustom: false,
-    userId: null,
-  },
-  {
-    id: 9,
-    name: "Leg Press",
-    type: "strength",
-    muscleGroup: "legs",
-    equipment: "machine",
-    isCustom: false,
-    userId: null,
-  },
-  {
-    id: 10,
-    name: "Barbell Curl",
-    type: "strength",
-    muscleGroup: "biceps",
-    equipment: "barbell",
-    isCustom: false,
-    userId: null,
-  },
-  {
-    id: 11,
-    name: "Skullcrusher",
-    type: "strength",
-    muscleGroup: "triceps",
-    equipment: "barbell",
-    isCustom: false,
-    userId: null,
-  },
-  {
-    id: 12,
-    name: "Standing Calf Raise",
-    type: "strength",
-    muscleGroup: "calves",
-    equipment: "machine",
-    isCustom: false,
-    userId: null,
-  },
-  {
-    id: 13,
-    name: "Wrist Curl",
-    type: "strength",
-    muscleGroup: "forearms",
-    equipment: "barbell",
-    isCustom: false,
-    userId: null,
-  },
-];
+const pool = require("../dbconnection");
+const { ensureDefaultExercises } = require("../services/exerciseCatalog");
 
-// In-memory store for the scaffolded API. This resets whenever the server restarts.
-let exercises = [...EXERCISE_SEED];
-let nextExerciseId = EXERCISE_SEED.length + 1;
+const LEGACY_MUSCLE_GROUPS = {
+  back: "lats",
+  core: "abs",
+  legs: "quads",
+};
 
 const normalizeName = (value) =>
   typeof value === "string" ? value.trim() : "";
 
-const normalizeValue = (value, fallback) => {
+const normalizeValue = (value, fallback = "") => {
   if (typeof value !== "string") {
     return fallback;
   }
@@ -136,105 +19,161 @@ const normalizeValue = (value, fallback) => {
   return normalized || fallback;
 };
 
-// Query protocol scaffold:
-// GET /exercises?search=&muscleGroup=&type=&equipment=&includeCustom=&userId=
-// Every response uses the shared exercise shape expected by the frontend MVP.
-// Keep this contract aligned with the frontend when the real DB integration lands.
-const getExercises = (req, res) => {
+const parseUserId = (value) => {
+  const parsedUserId = Number.parseInt(String(value ?? ""), 10);
+  return Number.isNaN(parsedUserId) ? null : parsedUserId;
+};
+
+const normalizeMuscleGroup = (value) => {
+  const normalizedGroup = normalizeValue(value, "");
+  return LEGACY_MUSCLE_GROUPS[normalizedGroup] ?? normalizedGroup;
+};
+
+const mapExerciseRow = (row) => ({
+  id: row.id,
+  name: row.exercise_name,
+  type: normalizeValue(row.exercise_category, "strength"),
+  muscleGroup: normalizeMuscleGroup(row.muscle_group),
+  equipment: normalizeValue(row.exercise_type, "other"),
+  isCustom: Boolean(row.is_custom),
+  userId: row.user_id,
+});
+
+const getExercises = async (req, res) => {
   const search = normalizeValue(req.query.search, "");
   const muscleGroup = normalizeValue(req.query.muscleGroup, "");
   const type = normalizeValue(req.query.type, "");
   const equipment = normalizeValue(req.query.equipment, "");
-  const userId =
-    typeof req.query.userId === "string" ? req.query.userId.trim() : "";
   const includeCustom = req.query.includeCustom !== "false";
+  const userId = parseUserId(req.query.userId);
 
-  let filteredExercises = [...exercises];
-
-  if (userId) {
-    filteredExercises = filteredExercises.filter(
-      (exercise) => !exercise.isCustom || exercise.userId === userId
-    );
+  if (userId === null) {
+    return res.status(400).json({ message: "A valid userId query param is required" });
   }
 
-  if (!includeCustom) {
-    filteredExercises = filteredExercises.filter(
-      (exercise) => !exercise.isCustom
-    );
-  }
+  try {
+    await ensureDefaultExercises(userId);
 
-  if (muscleGroup) {
-    filteredExercises = filteredExercises.filter(
-      (exercise) => exercise.muscleGroup === muscleGroup
+    const queryResult = await pool.query(
+      `SELECT id,
+              user_id,
+              exercise_name,
+              muscle_group,
+              exercise_category,
+              exercise_type,
+              is_custom
+         FROM exercise
+        WHERE user_id = $1
+        ORDER BY LOWER(exercise_name) ASC`,
+      [userId]
     );
-  }
 
-  if (type) {
-    filteredExercises = filteredExercises.filter(
-      (exercise) => exercise.type === type
-    );
-  }
+    let filteredExercises = queryResult.rows.map(mapExerciseRow);
 
-  if (equipment) {
-    filteredExercises = filteredExercises.filter(
-      (exercise) => exercise.equipment === equipment
-    );
-  }
+    if (!includeCustom) {
+      filteredExercises = filteredExercises.filter((exercise) => !exercise.isCustom);
+    }
 
-  if (search) {
-    filteredExercises = filteredExercises.filter((exercise) =>
-      exercise.name.toLowerCase().includes(search)
-    );
-  }
+    if (muscleGroup) {
+      filteredExercises = filteredExercises.filter(
+        (exercise) => exercise.muscleGroup === muscleGroup
+      );
+    }
 
-  return res.json(filteredExercises);
+    if (type) {
+      filteredExercises = filteredExercises.filter((exercise) => exercise.type === type);
+    }
+
+    if (equipment) {
+      filteredExercises = filteredExercises.filter(
+        (exercise) => exercise.equipment === equipment
+      );
+    }
+
+    if (search) {
+      filteredExercises = filteredExercises.filter((exercise) =>
+        exercise.name.toLowerCase().includes(search)
+      );
+    }
+
+    return res.json(filteredExercises);
+  } catch (error) {
+    console.error("Failed to fetch exercises:", error);
+    return res.status(500).json({ message: "Failed to fetch exercises" });
+  }
 };
 
-const createExercise = (req, res) => {
+const createExercise = async (req, res) => {
   const name = normalizeName(req.body.name);
+  const userId = parseUserId(req.body.userId);
 
   if (!name) {
     return res.status(400).json({ message: "Exercise name is required" });
   }
 
-  const nextExercise = {
-    id: nextExerciseId,
-    name,
-    type: normalizeValue(req.body.type, "strength"),
-    muscleGroup: normalizeValue(req.body.muscleGroup, "chest"),
-    equipment: normalizeValue(req.body.equipment, "barbell"),
-    isCustom: true,
-    // Replace this fallback with the authenticated user id once auth is wired
-    // through the exercise creation flow.
-    userId: normalizeName(req.body.userId) || "mock-user-id",
-  };
+  if (userId === null) {
+    return res.status(400).json({ message: "A valid userId is required" });
+  }
 
-  nextExerciseId += 1;
-  // Replace this array push with a database insert and return the inserted row.
-  exercises.push(nextExercise);
+  try {
+    const insertResult = await pool.query(
+      `INSERT INTO exercise
+        (user_id, exercise_name, muscle_group, exercise_category, exercise_type, is_custom)
+       VALUES ($1, $2, $3, $4, $5, true)
+       RETURNING id,
+                 user_id,
+                 exercise_name,
+                 muscle_group,
+                 exercise_category,
+                 exercise_type,
+                 is_custom`,
+      [
+        userId,
+        name,
+        normalizeValue(req.body.muscleGroup, "chest"),
+        normalizeValue(req.body.type, "strength"),
+        normalizeValue(req.body.equipment, "barbell"),
+      ]
+    );
 
-  return res.status(201).json(nextExercise);
+    return res.status(201).json(mapExerciseRow(insertResult.rows[0]));
+  } catch (error) {
+    console.error("Failed to create exercise:", error);
+    return res.status(500).json({ message: "Failed to create exercise" });
+  }
 };
 
-const deleteExercise = (req, res) => {
+const deleteExercise = async (req, res) => {
   const exerciseId = Number.parseInt(req.params.id, 10);
+  const userId = parseUserId(req.query.userId ?? req.body?.userId);
 
   if (Number.isNaN(exerciseId)) {
     return res.status(400).json({ message: "Exercise id must be a number" });
   }
 
-  const exerciseIndex = exercises.findIndex(
-    (exercise) => exercise.id === exerciseId
-  );
-
-  if (exerciseIndex === -1) {
-    return res.status(404).json({ message: "Exercise not found" });
+  if (userId === null) {
+    return res.status(400).json({ message: "A valid userId is required" });
   }
 
-  // Replace this in-memory delete with a database delete scoped to the owner.
-  exercises.splice(exerciseIndex, 1);
+  try {
+    const deleteResult = await pool.query(
+      `DELETE FROM exercise
+        WHERE id = $1
+          AND user_id = $2
+          AND is_custom = true
+      RETURNING id`,
+      [exerciseId, userId]
+    );
 
-  return res.json({ message: "Exercise deleted successfully" });
+    if (deleteResult.rowCount === 0) {
+      return res.status(404).json({ message: "Exercise not found" });
+    }
+
+    return res.json({ message: "Exercise deleted successfully" });
+  } catch (error) {
+    console.error("Failed to delete exercise:", error);
+    return res.status(500).json({ message: "Failed to delete exercise" });
+  }
 };
 
 module.exports = {

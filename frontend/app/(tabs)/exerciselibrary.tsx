@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect } from "react";
 import {
+  ActivityIndicator,
   KeyboardAvoidingView,
   LayoutChangeEvent,
   Modal,
@@ -18,16 +19,7 @@ import {
 
 import { checkLogin } from '../../services/auth';
 import { useRouter } from 'expo-router';
-
-type Exercise = {
-  id: number;
-  name: string;
-  type: string;
-  muscleGroup: string;
-  equipment: string;
-  isCustom: boolean;
-  userId: string | null;
-};
+import { ApiError, Exercise, createExercise, fetchExercises } from "../../lib/api";
 
 type ExerciseForm = {
   name: string;
@@ -1589,44 +1581,59 @@ export default function ExerciseLibrary() {
   const { width } = useWindowDimensions();
   const scrollRef = useRef<ScrollView | null>(null);
   const sectionOffsets = useRef<Record<string, number>>({});
-  const nextExerciseId = useRef(PRESET_EXERCISES.length + 1);
 
   const [searchText, setSearchText] = useState("");
   const [selectedMuscleGroup, setSelectedMuscleGroup] = useState("chest");
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [customExercises, setCustomExercises] = useState<Exercise[]>([]);
+  const [exercises, setExercises] = useState<Exercise[]>([]);
   const [formState, setFormState] = useState<ExerciseForm>(INITIAL_FORM_STATE);
+  const [userId, setUserId] = useState<number | null>(null);
+  const [isLoadingExercises, setIsLoadingExercises] = useState(true);
+  const [isSavingExercise, setIsSavingExercise] = useState(false);
+  const [loadError, setLoadError] = useState("");
+  const [saveError, setSaveError] = useState("");
 
-  const checkLoginStatus = async () => {
-
+  const loadExercises = async () => {
+    setIsLoadingExercises(true);
+    setLoadError("");
     try {
-      console.log('checking loggin on library');
-      const login_status = await checkLogin();
-      console.log(`login status: ${login_status}`);
-      if (login_status.success == true) {
-        console.log('ex lib user display id: ', login_status.user_id);
-        return true;
-      } else {
-        console.log('check login returned false');
+      console.log("checking login on library");
+      const loginStatus = await checkLogin();
+      if (loginStatus.success !== true) {
+        console.log("check login returned false");
         router.replace('/');
-        return false;
+        return;
       }
+
+      const nextUserId = Number.parseInt(loginStatus.user_id, 10);
+      if (Number.isNaN(nextUserId)) {
+        throw new Error("Unable to resolve the current user");
+      }
+
+      console.log("exercise library user id:", nextUserId);
+      setUserId(nextUserId);
+
+      const fetchedExercises = await fetchExercises(nextUserId);
+      setExercises(fetchedExercises);
     } catch (error) {
-      console.log(`error checking log in status ${error}`);
-      return false;
-    };
+      const apiError = error as ApiError;
+      const message =
+        (error instanceof Error ? error.message : apiError.message) ||
+        "Failed to load exercises";
+      console.log(`error loading exercise library ${message}`);
+      setLoadError(message);
+    } finally {
+      setIsLoadingExercises(false);
+    }
   };
 
   useEffect(() => {
-    checkLoginStatus();
+    void loadExercises();
   }, []);
 
   const showTwoColumnCards = width >= 960;
-  const allExercises = [...PRESET_EXERCISES, ...customExercises];
+  const allExercises = exercises;
   const normalizedSearchText = searchText.trim().toLowerCase();
-  // This mirrors the backend query shape at a small local-state level for now.
-  // When the API is wired in, this filtered grouping can move server-side or run
-  // against fetched data with the same exercise object contract.
   const exerciseSections = MUSCLE_GROUPS.map((group) => ({
     ...group,
     exercises: allExercises.filter((exercise) => {
@@ -1681,48 +1688,53 @@ export default function ExerciseLibrary() {
   };
 
   const openModal = () => {
+    setSaveError("");
     setIsModalVisible(true);
   };
 
   const closeModal = () => {
     setIsModalVisible(false);
     setFormState(INITIAL_FORM_STATE);
+    setSaveError("");
   };
 
-  const handleSaveExercise = () => {
+  const handleSaveExercise = async () => {
     const trimmedName = formState.name.trim();
 
-    if (!trimmedName) {
+    if (!trimmedName || userId === null) {
       return;
     }
 
-    const nextExercise: Exercise = {
-      id: nextExerciseId.current,
-      name: trimmedName,
-      type: formState.type,
-      muscleGroup: formState.muscleGroup,
-      equipment: formState.equipment,
-      isCustom: true,
-      userId: "mock-user-id",
-    };
+    setIsSavingExercise(true);
+    setSaveError("");
 
-    nextExerciseId.current += 1;
+    try {
+      const savedExercise = await createExercise({
+        name: trimmedName,
+        type: formState.type,
+        muscleGroup: formState.muscleGroup,
+        equipment: formState.equipment,
+        userId,
+      });
 
-    // MVP behavior: append to local state so the flow works before the backend
-    // layer is connected. Replace this with POST /exercises and then
-    // merge/refresh from the API response once the real database path is ready.
-    console.log("Custom exercise saved:", nextExercise);
-    setCustomExercises((current) => [...current, nextExercise]);
-    setSearchText("");
-    closeModal();
+      console.log("Custom exercise saved:", savedExercise);
+      setExercises((current) => [...current, savedExercise]);
+      setSearchText("");
+      closeModal();
 
-    // Wait for React to paint the new item before trying to scroll to its section.
-    requestAnimationFrame(() => {
-      scrollToSection(nextExercise.muscleGroup);
-    });
+      requestAnimationFrame(() => {
+        scrollToSection(savedExercise.muscleGroup);
+      });
+    } catch (error) {
+      const apiError = error as ApiError;
+      setSaveError(apiError.message || "Failed to save exercise");
+    } finally {
+      setIsSavingExercise(false);
+    }
   };
 
-  const isSaveDisabled = formState.name.trim().length === 0;
+  const isSaveDisabled =
+    formState.name.trim().length === 0 || isSavingExercise || userId === null;
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -1798,7 +1810,17 @@ export default function ExerciseLibrary() {
             onScroll={handleScroll}
             scrollEventThrottle={16}
           >
-            {exerciseSections.length === 0 ? (
+            {isLoadingExercises ? (
+              <View style={styles.emptyState}>
+                <ActivityIndicator size="large" color="#1db954" />
+                <Text style={styles.emptyStateTitle}>Loading exercises...</Text>
+              </View>
+            ) : loadError ? (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyStateTitle}>Could not load exercises</Text>
+                <Text style={styles.emptyStateText}>{loadError}</Text>
+              </View>
+            ) : exerciseSections.length === 0 ? (
               <View style={styles.emptyState}>
                 <Text style={styles.emptyStateTitle}>No exercises found</Text>
                 <Text style={styles.emptyStateText}>
@@ -1940,6 +1962,10 @@ export default function ExerciseLibrary() {
                 })}
               </View>
 
+              {saveError ? (
+                <Text style={styles.modalErrorText}>{saveError}</Text>
+              ) : null}
+
               <View style={styles.modalActions}>
                 <Pressable
                   style={({ pressed }) => [
@@ -1960,7 +1986,11 @@ export default function ExerciseLibrary() {
                   onPress={handleSaveExercise}
                   disabled={isSaveDisabled}
                 >
-                  <Text style={styles.saveButtonText}>Save</Text>
+                  {isSavingExercise ? (
+                    <ActivityIndicator color="#ffffff" />
+                  ) : (
+                    <Text style={styles.saveButtonText}>Save</Text>
+                  )}
                 </Pressable>
               </View>
             </ScrollView>
@@ -2207,6 +2237,7 @@ const styles = StyleSheet.create({
     color: "#b5bcc3",
     fontSize: 14,
     lineHeight: 20,
+    marginTop: 10,
   },
 
   modalRoot: {
@@ -2303,6 +2334,12 @@ const styles = StyleSheet.create({
 
   optionChipTextActive: {
     color: "#ffffff",
+  },
+
+  modalErrorText: {
+    color: "#ff8d8d",
+    fontSize: 13,
+    marginTop: 8,
   },
 
   modalActions: {

@@ -30,7 +30,7 @@ export async function checkLogin() {
             });
             const data = await response.json();
             console.log(`server repsonded with user ID:`, data);
-            return {'success': response.ok, 'user_id': data.jwtoken.user_id};
+            return {'success': response.ok, 'user_id': data?.jwtoken?.user_id ?? ''};
         } catch (error) {
             console.log(`auth error: ${error}`);
             return {'success': false, 'user_id': ''};
@@ -47,7 +47,8 @@ export async function checkLogin() {
                         'Authorization': `Bearer ${checkToken}`
                     },
                 });
-                return {'success': true, 'user_id': ''}
+                const data = await response.json();
+                return {'success': response.ok, 'user_id': data?.jwtoken?.user_id ?? ''}
                 
             } catch (error) {
                 console.log(`Bad token: ${error}`);
@@ -130,7 +131,7 @@ export async function signUp(email: string, password: string) {
 
         if (platform != "web") {
 
-            await SecureStore.setItemAsync('authToken', userData.token);
+            await SecureStore.setItemAsync('user_token', userData.token);
             console.log('Signup Success, jwt mobile token saved');
             return true;
 
