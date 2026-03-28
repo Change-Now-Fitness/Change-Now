@@ -1,4 +1,9 @@
 // lib/api.ts
+import { Platform } from "react-native";
+import * as SecureStore from "expo-secure-store";
+
+
+const TOKEN_KEY = "auth_token";
 const normalizeApiBaseUrl = (value?: string) => {
   const rawValue = value?.trim();
 
@@ -56,6 +61,55 @@ const buildApiError = async (
     };
   }
 };
+export async function getToken(): Promise<string | null> {
+  if (Platform.OS === "web") {
+    return typeof window !== "undefined"
+      ? localStorage.getItem(TOKEN_KEY)
+      : null;
+  }
+  return SecureStore.getItemAsync(TOKEN_KEY);
+}
+
+export async function apiFetch<T = any>(
+    path: string,
+    opts:{
+        method? : "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
+        body?: unknown;
+        auth?: boolean;
+    } = {}
+): Promise<T> {
+    const {method = "GET",body, auth = true } = opts;
+    const headers: Record<string,string> = {
+        "Content-Type" : "application/json",
+    };
+    if (auth) {
+    const token = await getToken();
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+  }
+
+  const res = await fetch(`${BASE_URL}${path}`, {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+
+  let data: any;
+  try {
+    data = await res.json();
+  } catch {
+    data = null;
+  }
+
+  if (!res.ok) {
+    const message = data?.error || `Request failed with status ${res.status}`;
+    throw { status: res.status, message } as ApiError;
+  }
+
+  return data as T;
+}
+
 
 export async function fetchExercises(userId: number) {
   const res = await fetch(

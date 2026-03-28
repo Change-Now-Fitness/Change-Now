@@ -1,5 +1,5 @@
 
-import { ActivityIndicator, ScrollView, Text, TextInput, TouchableOpacity, View, StyleSheet } from "react-native";
+import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View, StyleSheet, Dimensions } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { fetchCurrentSets, addSet } from "../../lib/api";
 import React, { useState, useEffect } from 'react';
@@ -7,6 +7,8 @@ import { jwtDecode } from 'jwt-decode';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 import { checkLogin } from '../../services/auth';
+import { fetchExerciseHistory, WorkoutSet } from "@/lib/exercise";
+import { LineChart } from "react-native-chart-kit";
 import { colors, spacing, fontSize, borderRadius } from "@/lib/theme";
 
 
@@ -14,7 +16,7 @@ export default function SelectedExerciseScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ name?: string; exerciseId?: string }>();
 
-  const exerciseId = params.exerciseId ?? '';
+  const exerciseId = Number(params.exerciseId) || 0;
   const exerciseName =
     typeof params.name === "string" && params.name.length > 0
       ? params.name
@@ -27,16 +29,16 @@ export default function SelectedExerciseScreen() {
   //   { set: 3, weight: 120, reps: 6 },
   // ]);
 
-  const [history, setHistory] = useState([]);
+  const [history, setHistory] = useState<WorkoutSet[]>([]);
   const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
+  const [error, setError] = useState("");
   const [userId, setUserId] = useState<number | null>(null);
 
   const loadHistory = async () => {
     try {
       setLoading(true);
-      //const data = await fetchDailyExercisesHistory();
-     // setHistory(data);
+      const data = await fetchExerciseHistory(exerciseId);
+      setHistory(data);
       setError("");
     } catch (e: any) {
       setError(e.message || "Failed to load history");
@@ -48,23 +50,45 @@ export default function SelectedExerciseScreen() {
   // Get the logged-in user's ID
 
   useEffect(() => {
-  const loadUserId = async () => {
-    const { success, user_id } = await checkLogin();
-    if (success) {
-      setUserId(parseInt(user_id));
-    }
-  };
+    const loadUserId = async () => {
+      const { success, user_id } = await checkLogin();
+      if (success) {
+        setUserId(parseInt(user_id));
+      }
+    };
 
-  loadUserId();
-}, []);
+    loadUserId();
+    loadHistory();
+  }, []);
+
+  const sortedHistory = [...history].sort(
+    (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+  );
+
+  const dataForGraph = sortedHistory.map(set => {
+    const sets = set.sets || [];
+
+    const { totalWeight, totalReps } = sets.reduce(
+      (acc, set) => {
+        acc.totalWeight += set.weight || 0;
+        acc.totalReps += set.reps || 0;
+        return acc;
+      },
+      { totalWeight: 0, totalReps: 0 }
+    );
+
+    const count = sets.length;
+
+    return {
+      avg_weight: count ? totalWeight / count : 0,
+      avg_reps: count ? totalReps / count : 0,
+    };
+  });
 
 
-
-  
-  
   // Handler for adding sets
 
- return (
+  return (
     <ScrollView style={s.scrollView} showsVerticalScrollIndicator={false}>
       {/* Header */}
       <View style={s.headerRow}>
@@ -79,6 +103,27 @@ export default function SelectedExerciseScreen() {
       <View style={s.historyCard}>
         {history && history.length > 0 ? (
           <View style={{ borderRadius: borderRadius.md, overflow: 'hidden' }}>
+            <LineChart data={{
+              labels: sortedHistory.map(item => item.created_at.slice(5, 10) || ''),
+              datasets: [
+                { data: dataForGraph.map(item => item.avg_weight || 0), color: () => "rgb(255,99,132)" },
+                { data: dataForGraph.map(item => item.avg_reps || 0), color: () => "blue" },
+              ], legend: ["Volume", "Calories"],
+            }}
+              width={Dimensions.get("window").width - 66}
+              height={220}
+              chartConfig={{
+                backgroundGradientFrom: colors.bgCard,
+                backgroundGradientTo: colors.bgCard,
+                color: () => 'white',
+                style: {
+                  borderRadius: borderRadius.md,
+                },
+                propsForBackgroundLines: {
+                  strokeDasharray: "5,5",
+                  stroke: "rgba(255, 255, 255, 0.3)",
+                }
+              }} bezier />
           </View>
         ) : (
           <View style={{ height: 220, justifyContent: 'center', alignItems: 'center' }}>
