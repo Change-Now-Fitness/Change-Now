@@ -1628,7 +1628,7 @@ export default function ExerciseLibrary() {
   };
 
   useEffect(() => {
-    void loadExercises();
+   // void loadExercises();
   }, []);
 
   const showTwoColumnCards = width >= 960;

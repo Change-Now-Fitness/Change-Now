@@ -1,4 +1,4 @@
-
+import {apiFetch} from "./api";
 export interface WorkoutSet {
   workout_log_id: number;
   exercise_id: number;
@@ -15,3 +15,11 @@ export interface Sets {
   reps: number;
 }
 
+export async function fetchExerciseHistory(
+  exerciseId: number
+): Promise<WorkoutSet[]> {
+  const data = await apiFetch<{ history: WorkoutSet[] }>(
+    `/workouts/${exerciseId}/history`
+  );
+  return data.history;
+}
