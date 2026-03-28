@@ -1,10 +1,19 @@
 const pool = require("../dbconnection");
-const { ensureDefaultExercises } = require("../services/exerciseCatalog");
+const {
+  ensureExerciseCatalogTables,
+} = require("../services/exerciseCatalog");
+const {
+  CUSTOM_SOURCE,
+  TEMPLATE_SOURCE,
+  parseExerciseId,
+  serializeExerciseId,
+} = require("../services/exerciseIdentifiers");
 
 const LEGACY_MUSCLE_GROUPS = {
   back: "lats",
   core: "abs",
   legs: "quads",
+  shoulder: "shoulders",
 };
 
 const normalizeName = (value) =>
@@ -29,13 +38,23 @@ const normalizeMuscleGroup = (value) => {
   return LEGACY_MUSCLE_GROUPS[normalizedGroup] ?? normalizedGroup;
 };
 
-const mapExerciseRow = (row) => ({
-  id: row.id,
+const mapTemplateRow = (row) => ({
+  id: serializeExerciseId(TEMPLATE_SOURCE, row.id),
   name: row.exercise_name,
   type: normalizeValue(row.exercise_category, "strength"),
   muscleGroup: normalizeMuscleGroup(row.muscle_group),
   equipment: normalizeValue(row.exercise_type, "other"),
-  isCustom: Boolean(row.is_custom),
+  isCustom: false,
+  userId: null,
+});
+
+const mapCustomRow = (row) => ({
+  id: serializeExerciseId(CUSTOM_SOURCE, row.id),
+  name: row.exercise_name,
+  type: normalizeValue(row.exercise_category, "strength"),
+  muscleGroup: normalizeMuscleGroup(row.muscle_group),
+  equipment: normalizeValue(row.exercise_type, "other"),
+  isCustom: true,
   userId: row.user_id,
 });
 
@@ -52,23 +71,34 @@ const getExercises = async (req, res) => {
   }
 
   try {
-    await ensureDefaultExercises(userId);
+    await ensureExerciseCatalogTables();
 
-    const queryResult = await pool.query(
-      `SELECT id,
-              user_id,
-              exercise_name,
-              muscle_group,
-              exercise_category,
-              exercise_type,
-              is_custom
-         FROM exercise
-        WHERE user_id = $1
-        ORDER BY LOWER(exercise_name) ASC`,
-      [userId]
-    );
+    const [templateRows, customRows] = await Promise.all([
+      pool.query(
+        `SELECT id,
+                exercise_name,
+                muscle_group,
+                exercise_category,
+                exercise_type
+           FROM exercise_templates`
+      ),
+      pool.query(
+        `SELECT id,
+                user_id,
+                exercise_name,
+                muscle_group,
+                exercise_category,
+                exercise_type
+           FROM user_custom_exercises
+          WHERE user_id = $1`,
+        [userId]
+      ),
+    ]);
 
-    let filteredExercises = queryResult.rows.map(mapExerciseRow);
+    let filteredExercises = [
+      ...templateRows.rows.map(mapTemplateRow),
+      ...customRows.rows.map(mapCustomRow),
+    ];
 
     if (!includeCustom) {
       filteredExercises = filteredExercises.filter((exercise) => !exercise.isCustom);
@@ -96,6 +126,10 @@ const getExercises = async (req, res) => {
       );
     }
 
+    filteredExercises.sort((left, right) =>
+      left.name.localeCompare(right.name, undefined, { sensitivity: "base" })
+    );
+
     return res.json(filteredExercises);
   } catch (error) {
     console.error("Failed to fetch exercises:", error);
@@ -106,6 +140,9 @@ const getExercises = async (req, res) => {
 const createExercise = async (req, res) => {
   const name = normalizeName(req.body.name);
   const userId = parseUserId(req.body.userId);
+  const muscleGroup = normalizeValue(req.body.muscleGroup, "chest");
+  const type = normalizeValue(req.body.type, "strength");
+  const equipment = normalizeValue(req.body.equipment, "barbell");
 
   if (!name) {
     return res.status(400).json({ message: "Exercise name is required" });
@@ -116,27 +153,43 @@ const createExercise = async (req, res) => {
   }
 
   try {
+    await ensureExerciseCatalogTables();
+
+    const duplicateCheck = await pool.query(
+      `SELECT 1
+         FROM exercise_templates
+        WHERE LOWER(TRIM(exercise_name)) = LOWER(TRIM($1))
+          AND LOWER(TRIM(muscle_group)) = LOWER(TRIM($2))
+       UNION ALL
+       SELECT 1
+         FROM user_custom_exercises
+        WHERE user_id = $3
+          AND LOWER(TRIM(exercise_name)) = LOWER(TRIM($1))
+          AND LOWER(TRIM(muscle_group)) = LOWER(TRIM($2))
+       LIMIT 1`,
+      [name, muscleGroup, userId]
+    );
+
+    if (duplicateCheck.rowCount > 0) {
+      return res.status(409).json({
+        message: "An exercise with that name and muscle group already exists",
+      });
+    }
+
     const insertResult = await pool.query(
-      `INSERT INTO exercise
-        (user_id, exercise_name, muscle_group, exercise_category, exercise_type, is_custom)
-       VALUES ($1, $2, $3, $4, $5, true)
+      `INSERT INTO user_custom_exercises
+        (user_id, exercise_name, muscle_group, exercise_category, exercise_type)
+       VALUES ($1, $2, $3, $4, $5)
        RETURNING id,
                  user_id,
                  exercise_name,
                  muscle_group,
                  exercise_category,
-                 exercise_type,
-                 is_custom`,
-      [
-        userId,
-        name,
-        normalizeValue(req.body.muscleGroup, "chest"),
-        normalizeValue(req.body.type, "strength"),
-        normalizeValue(req.body.equipment, "barbell"),
-      ]
+                 exercise_type`,
+      [userId, name, muscleGroup, type, equipment]
     );
 
-    return res.status(201).json(mapExerciseRow(insertResult.rows[0]));
+    return res.status(201).json(mapCustomRow(insertResult.rows[0]));
   } catch (error) {
     console.error("Failed to create exercise:", error);
     return res.status(500).json({ message: "Failed to create exercise" });
@@ -144,25 +197,30 @@ const createExercise = async (req, res) => {
 };
 
 const deleteExercise = async (req, res) => {
-  const exerciseId = Number.parseInt(req.params.id, 10);
+  const parsedExerciseId = parseExerciseId(req.params.id);
   const userId = parseUserId(req.query.userId ?? req.body?.userId);
 
-  if (Number.isNaN(exerciseId)) {
-    return res.status(400).json({ message: "Exercise id must be a number" });
+  if (!parsedExerciseId) {
+    return res.status(400).json({ message: "Exercise id is invalid" });
   }
 
   if (userId === null) {
     return res.status(400).json({ message: "A valid userId is required" });
   }
 
+  if (parsedExerciseId.source !== CUSTOM_SOURCE) {
+    return res.status(400).json({ message: "Only custom exercises can be deleted" });
+  }
+
   try {
+    await ensureExerciseCatalogTables();
+
     const deleteResult = await pool.query(
-      `DELETE FROM exercise
+      `DELETE FROM user_custom_exercises
         WHERE id = $1
           AND user_id = $2
-          AND is_custom = true
       RETURNING id`,
-      [exerciseId, userId]
+      [parsedExerciseId.id, userId]
     );
 
     if (deleteResult.rowCount === 0) {

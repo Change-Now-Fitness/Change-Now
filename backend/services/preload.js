@@ -1,4 +1,4 @@
-const { ensureDefaultExercises } = require("./exerciseCatalog");
+const { preloadExerciseCatalog } = require("./exerciseCatalog");
 /**
  * Used by signup function in auth to preload exercises to a user
  * @param {*} user_id 
@@ -6,7 +6,7 @@ const { ensureDefaultExercises } = require("./exerciseCatalog");
  */
 async function preload_workouts(user_id) {
     try {
-        const preloadSummary = await ensureDefaultExercises(user_id);
+        const preloadSummary = await preloadExerciseCatalog(user_id);
         console.log("row count edited: ", preloadSummary.insertedCount);
         //could be redundant but since we new to JS, just incase:
         return {success: true, error: ''};
