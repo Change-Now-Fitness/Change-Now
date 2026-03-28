@@ -30,7 +30,7 @@ export interface ApiError {
 }
 
 export interface Exercise {
-  id: number;
+  id: string | number;
   name: string;
   type: string;
   muscleGroup: string;
