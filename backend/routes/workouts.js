@@ -1,3 +1,5 @@
+import authMiddleware from "../middleware/auth";
+
 const express = require("express");
 const router = express.Router();
 const pool = require("../dbconnection");
@@ -111,4 +113,66 @@ router.post("/sets", async (req, res) => {
   }
 });
 
+//fetchexercisehistory
+router.get("/:exerciseId/history",authMiddleware, async (req, res) => {
+const uid = req.uid
+    const exerciseID = req.params.id
+
+    try {
+      const result = await db.query(
+        `SELECT
+            ws.workout_log_id,
+            ws.exercise_id,
+            e.name,
+            e.type,
+            ws.created_at,
+            ws.id,
+            ws.set_number,
+            ws.weight,
+            ws.reps
+         FROM workout_sets ws
+         JOIN exercises e ON e.id = ws.exercise_id
+         JOIN workout_logs wl ON wl.id = ws.workout_log_id
+         WHERE ws.exercise_id = $1 AND wl.user_id = $2
+         ORDER BY wl.performed_at DESC`,
+        [exerciseID, uid]
+      )
+
+      const history = []
+      let current = null
+
+      for (const row of result.rows) {
+        const workoutLogID = row.workout_log_id
+
+        const set = {
+          id: row.id,
+          setNumber: row.set_number,
+          weight: row.weight,
+          reps: row.reps
+        }
+
+        if (!current || current.workoutId !== workoutLogID) {
+          const group = {
+            workoutId: workoutLogID,
+            exerciseId: row.exercise_id,
+            exerciseName: row.name,
+            exerciseType: row.type,
+            createdAt: row.created_at,
+            sets: []
+          }
+
+          history.push(group)
+          current = group
+        }
+
+        current.sets.push(set)
+      }
+
+      res.status(200).json({ history })
+    } catch (err) {
+      console.error(err)
+      res.status(500).json({ error: 'failed to query history' })
+    }
+  }
+)
 module.exports = router;
