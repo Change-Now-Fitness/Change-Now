@@ -1,5 +1,5 @@
 
-import { ActivityIndicator, ScrollView, Text, TextInput, TouchableOpacity, View, StyleSheet } from "react-native";
+import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View, StyleSheet, Dimensions } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { fetchCurrentSets, fetchExerciseHistory, addSet } from "../../lib/api";
 import React, { useState, useEffect } from 'react';
@@ -7,6 +7,8 @@ import { jwtDecode } from 'jwt-decode';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 import { checkLogin } from '../../services/auth';
+import {  WorkoutSet } from "@/lib/exercise";
+import { LineChart } from "react-native-chart-kit";
 import { colors, spacing, fontSize, borderRadius } from "@/lib/theme";
 import * as Api from "../../lib/api";
 console.log("Api exports:", Object.keys(Api));

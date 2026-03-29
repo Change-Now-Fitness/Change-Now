@@ -41,13 +41,6 @@ export default function TabLayout() {
           tabBarIcon: () => <Text style={{ fontSize: 20 }}>🏠</Text>,
         }}
       />
-      <Tabs.Screen
-        name="customerexercise"
-        options={{
-          title: "Add",
-          tabBarIcon: () => <Text style={{ fontSize: 20 }}>➕</Text>,
-        }}
-      />
        <Tabs.Screen
         name="exerciselibrary"
         options={{
