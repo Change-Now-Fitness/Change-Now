@@ -1,6 +1,7 @@
-import authMiddleware from "../middleware/auth";
+
 
 const express = require("express");
+const authMiddleware = require("../middleware/auth")
 const router = express.Router();
 const pool = require("../dbconnection");
 const {
@@ -116,6 +117,10 @@ router.post("/sets", async (req, res) => {
 router.get("/:exerciseId/history", async (req, res) => {
   const exerciseReference = parseExerciseId(req.params.exerciseId);
   const userId = parseNumber(req.query.userId);
+  const today = new Date().toISOString().split("T")[0];
+
+  console.log('exerciseReference:', exerciseReference);
+  console.log('userId:', userId);
 
   if (!exerciseReference) {
     return res.status(400).json({ error: "Exercise id is invalid" });
@@ -132,11 +137,12 @@ router.get("/:exerciseId/history", async (req, res) => {
 
     const result = await pool.query(
       `SELECT reps, weight, created_at
-         FROM workout_log
+        FROM workout_log
         WHERE ${referenceConfig.whereClause}
           AND user_id = $2
+          AND created_at < $3::date
         ORDER BY created_at DESC`,
-      [exerciseReference.id, userId]
+      [exerciseReference.id, userId, today]
     );
 
     // Group rows by date

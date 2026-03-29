@@ -1629,7 +1629,7 @@ export default function ExerciseLibrary() {
   };
 
   useEffect(() => {
-   // void loadExercises();
+    void loadExercises();
   }, []);
 
   const showTwoColumnCards = width >= 960;
@@ -1857,7 +1857,7 @@ export default function ExerciseLibrary() {
                         ]}
                         onPress={() =>
                           router.push({
-                            pathname: "/selectedexercise",
+                            pathname: "../screens/selectedexercise",
                             params: { name: exercise.name, exerciseId: exercise.id.toString() },
                           })
                         }

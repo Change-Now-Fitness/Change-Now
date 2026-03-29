@@ -3,7 +3,7 @@ import { Platform } from "react-native";
 import * as SecureStore from "expo-secure-store";
 
 
-const TOKEN_KEY = "auth_token";
+const TOKEN_KEY = "user_token";
 const normalizeApiBaseUrl = (value?: string) => {
   const rawValue = value?.trim();
 

@@ -1,24 +1,28 @@
-
-import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View, StyleSheet, Dimensions } from "react-native";
+import {
+  ActivityIndicator,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+  StyleSheet,
+  Dimensions,
+} from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { fetchCurrentSets, fetchExerciseHistory, addSet } from "../../lib/api";
-import React, { useState, useEffect } from 'react';
-import { jwtDecode } from 'jwt-decode';
-import * as SecureStore from 'expo-secure-store';
-import { Platform } from 'react-native';
-import { checkLogin } from '../../services/auth';
-import {  WorkoutSet } from "@/lib/exercise";
-import { LineChart } from "react-native-chart-kit";
+import React, { useState, useEffect } from "react";
+import { checkLogin } from "../../services/auth";
 import { colors, spacing, fontSize, borderRadius } from "@/lib/theme";
-import * as Api from "../../lib/api";
-console.log("Api exports:", Object.keys(Api));
+import { LineChart } from "react-native-chart-kit";
+
+
 
 type WorkoutSet = {
   set: number;
   weight: number;
   reps: number;
 };
- 
+
 type PreviousWorkout = {
   date: string;
   sets: WorkoutSet[];
@@ -27,6 +31,7 @@ type PreviousWorkout = {
 export default function SelectedExerciseScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ name?: string; exerciseId?: string }>();
+  
 
   const exerciseId = params.exerciseId ?? "";
   const exerciseName =
@@ -34,6 +39,7 @@ export default function SelectedExerciseScreen() {
       ? params.name
       : "Selected Exercise";
 
+  console.log('exerciseId param received:', exerciseId);
 
   const [weightText, setWeightText] = useState("");
   const [repsText, setRepsText] = useState("");
@@ -54,11 +60,11 @@ export default function SelectedExerciseScreen() {
     };
     loadUserId();
   }, []);
-  
-  // Fetch today's sets 
+
+  // Fetch today's sets
   useEffect(() => {
     if (!exerciseId || !userId) return;
- 
+
     const loadSets = async () => {
       setLoadingCurrent(true);
       try {
@@ -77,21 +83,21 @@ export default function SelectedExerciseScreen() {
         setLoadingCurrent(false);
       }
     };
- 
+
     loadSets();
   }, [exerciseId, userId]);
- 
-  // Fetch previous workouts (all past dates)
+
+  // Fetch previous workouts grouped by date
   useEffect(() => {
     if (!exerciseId || !userId) return;
- 
+
     const loadHistory = async () => {
       setLoadingHistory(true);
       try {
-         const grouped = await fetchExerciseHistory(exerciseId, userId);
-         const shaped: PreviousWorkout[] = Object.entries(grouped).map(
+        const grouped = await fetchExerciseHistory(exerciseId, userId);
+        const shaped: PreviousWorkout[] = Object.entries(grouped).map(
           ([date, sets]: [string, any]) => ({
-            date,
+            date: date as string,
             sets: sets.map((s: any, i: number) => ({
               set: i + 1,
               weight: parseFloat(s.weight),
@@ -99,6 +105,8 @@ export default function SelectedExerciseScreen() {
             })),
           })
         );
+        // Sort oldest to newest for the chart
+        shaped.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
         setPreviousWorkouts(shaped);
       } catch (err: any) {
         console.error("Error fetching history:", err.message);
@@ -106,44 +114,60 @@ export default function SelectedExerciseScreen() {
         setLoadingHistory(false);
       }
     };
- 
+
     loadHistory();
   }, [exerciseId, userId]);
- 
+
   const handleAddSet = async () => {
     const weight = parseFloat(weightText);
     const reps = parseInt(repsText, 10);
- 
+
     if (isNaN(weight) || isNaN(reps)) return;
- 
+
     const newSet: WorkoutSet = {
       set: currentSets.length + 1,
       weight,
       reps,
     };
- 
+
     setCurrentSets((prev) => [...prev, newSet]);
     setWeightText("");
     setRepsText("");
- 
+
     try {
       await addSet(exerciseId, userId!, weight, reps);
     } catch (err: any) {
-      // Roll back on failure
       setCurrentSets((prev) => prev.slice(0, -1));
       console.error("Failed to save set:", err.message);
     }
   };
- 
+
   const isAddDisabled =
     weightText.trim().length === 0 || repsText.trim().length === 0;
- 
+
+  // Compute max weight per day for the chart
+  const chartData =
+    previousWorkouts.length > 0
+      ? {
+          labels: previousWorkouts.map((w) => w.date.slice(5)), // "MM-DD"
+          datasets: [
+            {
+              data: previousWorkouts.map((w) =>
+                Math.max(...w.sets.map((s) => s.weight))
+              ),
+              color: () => colors.primary,
+            },
+          ],
+          legend: ["Max Weight (lbs)"],
+        }
+      : null;
+
   return (
     <ScrollView style={s.scrollView} showsVerticalScrollIndicator={false}>
       {/* Header */}
       <View style={s.headerRow}>
         <TouchableOpacity
-          onPress={() => router.push({pathname: "../exerciselibrary"})}
+          onPress={() => router.back()}
           style={s.backButton}
           accessibilityRole="button"
           accessibilityLabel="Go back"
@@ -153,16 +177,40 @@ export default function SelectedExerciseScreen() {
         <Text style={s.title}>{exerciseName}</Text>
         <View style={{ width: 32 }} />
       </View>
- 
-      {/* Chart placeholder */}
+
+      {/* Chart */}
       <View style={s.historyCard}>
-        <View style={{ height: 220, justifyContent: "center", alignItems: "center" }}>
-          <Text style={{ color: colors.textSecondary, fontSize: fontSize.sm }}>
-            Progress chart coming soon
-          </Text>
-        </View>
+        {loadingHistory ? (
+          <View style={s.centeredRow}>
+            <ActivityIndicator color={colors.primary} />
+          </View>
+        ) : chartData ? (
+          <LineChart
+            data={chartData}
+            width={Dimensions.get("window").width - 66}
+            height={220}
+            chartConfig={{
+              backgroundGradientFrom: colors.bgCard,
+              backgroundGradientTo: colors.bgCard,
+              color: () => colors.primary,
+              labelColor: () => colors.textSecondary,
+              style: { borderRadius: borderRadius.md },
+              propsForBackgroundLines: {
+                strokeDasharray: "5,5",
+                stroke: "rgba(255,255,255,0.15)",
+              },
+            }}
+            bezier
+          />
+        ) : (
+          <View style={{ height: 220, justifyContent: "center", alignItems: "center" }}>
+            <Text style={{ color: colors.textSecondary, fontSize: fontSize.sm }}>
+              No history data yet
+            </Text>
+          </View>
+        )}
       </View>
- 
+
       {/* Current Workout */}
       <Text style={s.sectionTitle}>Current Workout</Text>
       <View style={s.card}>
@@ -171,7 +219,7 @@ export default function SelectedExerciseScreen() {
           <Text style={s.headerCell}>Weight</Text>
           <Text style={s.headerCell}>Reps</Text>
         </View>
- 
+
         {loadingCurrent ? (
           <View style={s.centeredRow}>
             <ActivityIndicator color={colors.primary} />
@@ -189,7 +237,7 @@ export default function SelectedExerciseScreen() {
             </View>
           ))
         )}
- 
+
         {/* Add Set inputs */}
         <View style={s.addRow}>
           <TextInput
@@ -209,7 +257,7 @@ export default function SelectedExerciseScreen() {
             onChangeText={(text) => setRepsText(text.replace(/[^0-9]/g, ""))}
           />
         </View>
- 
+
         <View style={s.buttonRow}>
           <TouchableOpacity
             style={[s.solidButton, isAddDisabled && s.buttonDisabled]}
@@ -220,10 +268,10 @@ export default function SelectedExerciseScreen() {
           </TouchableOpacity>
         </View>
       </View>
- 
+
       {/* Previous Workouts */}
       <Text style={s.sectionTitle}>Previous Workouts</Text>
- 
+
       {loadingHistory ? (
         <View style={s.centeredRow}>
           <ActivityIndicator color={colors.primary} />
@@ -233,7 +281,8 @@ export default function SelectedExerciseScreen() {
           <Text style={s.emptyText}>No previous workouts recorded yet</Text>
         </View>
       ) : (
-        previousWorkouts.map((workout) => (
+        // Show newest first in the list
+        [...previousWorkouts].reverse().map((workout) => (
           <View key={workout.date} style={s.card}>
             <Text style={s.historyDate}>{workout.date}</Text>
             <View style={s.tableHeader}>
@@ -251,12 +300,12 @@ export default function SelectedExerciseScreen() {
           </View>
         ))
       )}
- 
+
       <View style={{ height: 120 }} />
     </ScrollView>
   );
 }
- 
+
 const s = StyleSheet.create({
   scrollView: {
     flex: 1,
