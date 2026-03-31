@@ -59,7 +59,7 @@ router.post('/signup', async (req, res) => {
                     httpOnly: true,
                     secure: false,
                     sameSite: "lax",
-                    maxAge: 30 * 1000
+                    maxAge: 10 * 60 * 1000
             });
             return res.status(200).json({'success': true});
 
@@ -115,7 +115,7 @@ router.post('/login/', async (req, res) => {
                     httpOnly: true,
                     secure: false,
                     sameSite: 'lax',
-                    maxAge: 30 * 1000
+                    maxAge: 10 * 60 * 1000
                 });
                 console.log('cookie sent');
                 return res.status(200).json({success: true});
