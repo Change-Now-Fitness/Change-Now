@@ -1,5 +1,7 @@
 Optimize the project directory structure.
 
+Import all exercises into supabase.
+
 Fully integrate the ’exerciselibrary‘; import all exercises.
 
 Add testing-related tasks: create test files (submitted test files and advanced the accompanying unit testing efforts).
