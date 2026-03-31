@@ -44,7 +44,6 @@ describe("Exercise library screen", () => {
         name: "Barbell Curl",
         type: "strength",
         muscleGroup: "biceps",
-        equipment: "barbell",
         isCustom: false,
         userId: 1,
       },
@@ -63,7 +62,6 @@ describe("Exercise library screen", () => {
       name: "Adam Press",
       type: "strength",
       muscleGroup: "chest",
-      equipment: "barbell",
       isCustom: true,
       userId: 1,
     });
