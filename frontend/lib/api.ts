@@ -34,7 +34,6 @@ export interface Exercise {
   name: string;
   type: string;
   muscleGroup: string;
-  equipment: string;
   isCustom: boolean;
   userId: number | null;
 }
@@ -70,7 +69,7 @@ export async function fetchExercises(userId: number) {
 }
 
 export async function createExercise(
-  payload: Pick<Exercise, "name" | "type" | "muscleGroup" | "equipment"> & {
+  payload: Pick<Exercise, "name" | "type" | "muscleGroup"> & {
     userId: number;
   }
 ) {

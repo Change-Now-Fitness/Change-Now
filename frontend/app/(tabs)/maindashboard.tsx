@@ -150,7 +150,7 @@ const s = StyleSheet.create({
     fontWeight: "600",
     color: colors.text,
   },
-  exerciseType: {
+  exerciseMeta: {
     fontSize: fontSize.xs,
     color: colors.textSecondary,
     marginTop: 2,

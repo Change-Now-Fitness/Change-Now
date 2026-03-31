@@ -3,7 +3,6 @@ export interface WorkoutSet {
   workout_log_id: number;
   exercise_id: number;
   exercise_name: string;
-  exercise_type: string;
   created_at: string;
   sets: Sets[];
 }
