@@ -73,6 +73,52 @@ const normalizeTemplate = (exercise) => ({
   ),
 });
 
+const LEGACY_EXERCISE_TYPE_DEFAULT = "other";
+
+async function tableHasColumn(tableName, columnName) {
+  const result = await pool.query(
+    `
+      SELECT EXISTS (
+        SELECT 1
+          FROM information_schema.columns
+         WHERE table_schema = 'public'
+           AND table_name = $1
+           AND column_name = $2
+      ) AS exists
+    `,
+    [tableName, columnName]
+  );
+
+  return result.rows[0]?.exists === true;
+}
+
+async function ensureLegacyExerciseTypeCompatibility(tableName) {
+  const hasExerciseType = await tableHasColumn(tableName, "exercise_type");
+
+  if (!hasExerciseType) {
+    return;
+  }
+
+  await pool.query(
+    `
+      UPDATE ${tableName}
+         SET exercise_type = CASE
+           WHEN LOWER(TRIM(COALESCE(exercise_category, ''))) = 'bodyweight'
+             THEN 'bodyweight'
+           ELSE $1
+         END
+       WHERE exercise_type IS NULL
+          OR TRIM(exercise_type) = ''
+    `,
+    [LEGACY_EXERCISE_TYPE_DEFAULT]
+  );
+
+  await pool.query(`
+    ALTER TABLE ${tableName}
+    ALTER COLUMN exercise_type SET DEFAULT '${LEGACY_EXERCISE_TYPE_DEFAULT}'
+  `);
+}
+
 async function ensureExerciseTemplatesTable() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS exercise_templates (
@@ -91,6 +137,8 @@ async function ensureExerciseTemplatesTable() {
     CREATE UNIQUE INDEX IF NOT EXISTS exercise_templates_name_group_unique_idx
       ON exercise_templates (exercise_name, muscle_group)
   `);
+
+  await ensureLegacyExerciseTypeCompatibility("exercise_templates");
 }
 
 async function ensureUserCustomExercisesTable() {
@@ -109,6 +157,8 @@ async function ensureUserCustomExercisesTable() {
     CREATE UNIQUE INDEX IF NOT EXISTS user_custom_exercises_unique_idx
       ON user_custom_exercises (user_id, exercise_name, muscle_group)
   `);
+
+  await ensureLegacyExerciseTypeCompatibility("user_custom_exercises");
 }
 
 async function ensureExerciseCatalogTables() {
