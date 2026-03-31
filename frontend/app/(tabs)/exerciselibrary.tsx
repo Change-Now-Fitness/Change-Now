@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -10,16 +10,16 @@ import {
   Pressable,
   SafeAreaView,
   ScrollView,
+  StyleSheet,
   Text,
   TextInput,
   View,
-  useWindowDimensions,
-  StyleSheet
+  useWindowDimensions
 } from "react-native";
 
-import { checkLogin } from '../../services/auth';
 import { useRouter } from 'expo-router';
 import { ApiError, Exercise, createExercise, fetchExercises } from "../../lib/api";
+import { checkLogin } from '../../services/auth';
 
 type ExerciseForm = {
   name: string;
@@ -351,7 +351,7 @@ export default function ExerciseLibrary() {
                           ) : null}
                         </View>
                         <Text style={styles.exerciseMeta}>
-                          {toLabel(exercise.type)} | {toLabel(exercise.equipment)}
+                          {toLabel(exercise.type)} | {toLabel(exercise.muscleGroup)}
                         </Text>
                       </Pressable>
                     ))}
