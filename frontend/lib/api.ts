@@ -1,4 +1,9 @@
 // lib/api.ts
+import { Platform } from "react-native";
+import * as SecureStore from "expo-secure-store";
+
+
+const TOKEN_KEY = "user_token";
 const normalizeApiBaseUrl = (value?: string) => {
   const rawValue = value?.trim();
 
@@ -55,6 +60,56 @@ const buildApiError = async (
     };
   }
 };
+export async function getToken(): Promise<string | null> {
+  if (Platform.OS === "web") {
+    return typeof window !== "undefined"
+      ? localStorage.getItem(TOKEN_KEY)
+      : null;
+  }
+  return SecureStore.getItemAsync(TOKEN_KEY);
+}
+//apiFetch will bring token in headers which you can use middleware in backend transit it into userid
+//RECOMMEND YOU USE THIS FUNCTION TO FETCH ANY DATA IN BACKEND
+export async function apiFetch<T = any>(
+    path: string,
+    opts:{
+        method? : "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
+        body?: unknown;
+        auth?: boolean;
+    } = {}
+): Promise<T> {
+    const {method = "GET",body, auth = true } = opts;
+    const headers: Record<string,string> = {
+        "Content-Type" : "application/json",
+    };
+    if (auth) {
+    const token = await getToken();
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+  }
+
+  const res = await fetch(`${BASE_URL}${path}`, {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+
+  let data: any;
+  try {
+    data = await res.json();
+  } catch {
+    data = null;
+  }
+
+  if (!res.ok) {
+    const message = data?.error || `Request failed with status ${res.status}`;
+    throw { status: res.status, message } as ApiError;
+  }
+
+  return data as T;
+}
+
 
 export async function fetchExercises(userId: number) {
   const res = await fetch(
@@ -101,5 +156,11 @@ export async function addSet(exerciseId: string, userId: number, weight: number,
     body: JSON.stringify({ exerciseId, userId, weight, reps }),
   });
   if (!res.ok) throw new Error("Failed to save set");
+  return res.json();
+}
+
+export async function fetchExerciseHistory(exerciseId: string, userId: number) {
+  const res = await fetch(`${BASE_URL}/workouts/${exerciseId}/history?userId=${userId}`);
+  if (!res.ok) throw new Error("Failed to fetch history");
   return res.json();
 }

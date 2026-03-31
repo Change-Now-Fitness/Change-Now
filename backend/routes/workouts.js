@@ -1,4 +1,7 @@
+
+
 const express = require("express");
+const authMiddleware = require("../middleware/auth")
 const router = express.Router();
 const pool = require("../dbconnection");
 const {
@@ -110,5 +113,52 @@ router.post("/sets", async (req, res) => {
     res.status(500).json({ error: "Database error" });
   }
 });
+
+router.get("/:exerciseId/history", async (req, res) => {
+  const exerciseReference = parseExerciseId(req.params.exerciseId);
+  const userId = parseNumber(req.query.userId);
+  const today = new Date().toISOString().split("T")[0];
+
+  console.log('exerciseReference:', exerciseReference);
+  console.log('userId:', userId);
+
+  if (!exerciseReference) {
+    return res.status(400).json({ error: "Exercise id is invalid" });
+  }
+
+  if (userId === null) {
+    return res.status(400).json({ error: "A valid userId is required" });
+  }
+
+  const referenceConfig = buildWorkoutReferenceConfig(exerciseReference);
+
+  try {
+    await ensureExerciseCatalogTables();
+
+    const result = await pool.query(
+      `SELECT reps, weight, created_at
+        FROM workout_log
+        WHERE ${referenceConfig.whereClause}
+          AND user_id = $2
+          AND created_at < $3::date
+        ORDER BY created_at DESC`,
+      [exerciseReference.id, userId, today]
+    );
+
+    // Group rows by date
+    const grouped = {};
+    for (const row of result.rows) {
+      const date = row.created_at.toISOString().split("T")[0];
+      if (!grouped[date]) grouped[date] = [];
+      grouped[date].push({ weight: row.weight, reps: row.reps });
+    }
+
+    res.json(grouped);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
 
 module.exports = router;
