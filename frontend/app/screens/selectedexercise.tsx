@@ -1,54 +1,56 @@
-
-import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View, StyleSheet, Dimensions } from "react-native";
+import {
+  ActivityIndicator,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+  StyleSheet,
+  Dimensions,
+} from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { fetchCurrentSets, addSet } from "../../lib/api";
-import React, { useState, useEffect } from 'react';
-import { jwtDecode } from 'jwt-decode';
-import * as SecureStore from 'expo-secure-store';
-import { Platform } from 'react-native';
-import { checkLogin } from '../../services/auth';
-import { fetchExerciseHistory, WorkoutSet } from "@/lib/exercise";
-import { LineChart } from "react-native-chart-kit";
+import { fetchCurrentSets, fetchExerciseHistory, addSet } from "../../lib/api";
+import React, { useState, useEffect } from "react";
+import { checkLogin } from "../../services/auth";
 import { colors, spacing, fontSize, borderRadius } from "@/lib/theme";
+import { LineChart } from "react-native-chart-kit";
 
+
+
+type WorkoutSet = {
+  set: number;
+  weight: number;
+  reps: number;
+};
+
+type PreviousWorkout = {
+  date: string;
+  sets: WorkoutSet[];
+};
 
 export default function SelectedExerciseScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ name?: string; exerciseId?: string }>();
+  
 
-  const exerciseId = Number(params.exerciseId) || 0;
+  const exerciseId = params.exerciseId ?? "";
   const exerciseName =
     typeof params.name === "string" && params.name.length > 0
       ? params.name
       : "Selected Exercise";
 
+  console.log('exerciseId param received:', exerciseId);
 
-  // const [currentSets, setCurrentSets] = useState<WorkoutSet[]>([
-  //   { set: 1, weight: 110, reps: 8 },
-  //   { set: 2, weight: 115, reps: 7 },
-  //   { set: 3, weight: 120, reps: 6 },
-  // ]);
-
-  const [history, setHistory] = useState<WorkoutSet[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [weightText, setWeightText] = useState("");
+  const [repsText, setRepsText] = useState("");
+  const [currentSets, setCurrentSets] = useState<WorkoutSet[]>([]);
+  const [previousWorkouts, setPreviousWorkouts] = useState<PreviousWorkout[]>([]);
   const [userId, setUserId] = useState<number | null>(null);
-
-  const loadHistory = async () => {
-    try {
-      setLoading(true);
-      const data = await fetchExerciseHistory(exerciseId);
-      setHistory(data);
-      setError("");
-    } catch (e: any) {
-      setError(e.message || "Failed to load history");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [loadingCurrent, setLoadingCurrent] = useState(true);
+  const [loadingHistory, setLoadingHistory] = useState(true);
+  const [error, setError] = useState("");
 
   // Get the logged-in user's ID
-
   useEffect(() => {
     const loadUserId = async () => {
       const { success, user_id } = await checkLogin();
@@ -56,43 +58,120 @@ export default function SelectedExerciseScreen() {
         setUserId(parseInt(user_id));
       }
     };
-
     loadUserId();
-    loadHistory();
   }, []);
 
-  const sortedHistory = [...history].sort(
-    (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-  );
+  // Fetch today's sets
+  useEffect(() => {
+    if (!exerciseId || !userId) return;
 
-  const dataForGraph = sortedHistory.map(set => {
-    const sets = set.sets || [];
-
-    const { totalWeight, totalReps } = sets.reduce(
-      (acc, set) => {
-        acc.totalWeight += set.weight || 0;
-        acc.totalReps += set.reps || 0;
-        return acc;
-      },
-      { totalWeight: 0, totalReps: 0 }
-    );
-
-    const count = sets.length;
-
-    return {
-      avg_weight: count ? totalWeight / count : 0,
-      avg_reps: count ? totalReps / count : 0,
+    const loadSets = async () => {
+      setLoadingCurrent(true);
+      try {
+        const today = new Date().toISOString().split("T")[0];
+        const data = await fetchCurrentSets(exerciseId, userId, today);
+        const mapped: WorkoutSet[] = data.map((row: any, index: number) => ({
+          set: index + 1,
+          weight: parseFloat(row.weight),
+          reps: row.reps,
+        }));
+        setCurrentSets(mapped);
+      } catch (err: any) {
+        console.error("Error fetching sets:", err.message);
+        setError(err.message || "Failed to load today's sets");
+      } finally {
+        setLoadingCurrent(false);
+      }
     };
-  });
 
+    loadSets();
+  }, [exerciseId, userId]);
 
-  // Handler for adding sets
+  // Fetch previous workouts grouped by date
+  useEffect(() => {
+    if (!exerciseId || !userId) return;
+
+    const loadHistory = async () => {
+      setLoadingHistory(true);
+      try {
+        const grouped = await fetchExerciseHistory(exerciseId, userId);
+        const shaped: PreviousWorkout[] = Object.entries(grouped).map(
+          ([date, sets]: [string, any]) => ({
+            date: date as string,
+            sets: sets.map((s: any, i: number) => ({
+              set: i + 1,
+              weight: parseFloat(s.weight),
+              reps: s.reps,
+            })),
+          })
+        );
+        // Sort oldest to newest for the chart
+        shaped.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        setPreviousWorkouts(shaped);
+      } catch (err: any) {
+        console.error("Error fetching history:", err.message);
+      } finally {
+        setLoadingHistory(false);
+      }
+    };
+
+    loadHistory();
+  }, [exerciseId, userId]);
+
+  const handleAddSet = async () => {
+    const weight = parseFloat(weightText);
+    const reps = parseInt(repsText, 10);
+
+    if (isNaN(weight) || isNaN(reps)) return;
+
+    const newSet: WorkoutSet = {
+      set: currentSets.length + 1,
+      weight,
+      reps,
+    };
+
+    setCurrentSets((prev) => [...prev, newSet]);
+    setWeightText("");
+    setRepsText("");
+
+    try {
+      await addSet(exerciseId, userId!, weight, reps);
+    } catch (err: any) {
+      setCurrentSets((prev) => prev.slice(0, -1));
+      console.error("Failed to save set:", err.message);
+    }
+  };
+
+  const isAddDisabled =
+    weightText.trim().length === 0 || repsText.trim().length === 0;
+
+  // Compute max weight per day for the chart
+  const chartData =
+    previousWorkouts.length > 0
+      ? {
+          labels: previousWorkouts.map((w) => w.date.slice(5)), // "MM-DD"
+          datasets: [
+            {
+              data: previousWorkouts.map((w) =>
+                Math.max(...w.sets.map((s) => s.weight))
+              ),
+              color: () => colors.primary,
+            },
+          ],
+          legend: ["Max Weight (lbs)"],
+        }
+      : null;
 
   return (
     <ScrollView style={s.scrollView} showsVerticalScrollIndicator={false}>
       {/* Header */}
       <View style={s.headerRow}>
-        <TouchableOpacity onPress={() => router.back()} style={s.backButton}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={s.backButton}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+        >
           <Text style={s.backText}>‹</Text>
         </TouchableOpacity>
         <Text style={s.title}>{exerciseName}</Text>
@@ -101,41 +180,126 @@ export default function SelectedExerciseScreen() {
 
       {/* Chart */}
       <View style={s.historyCard}>
-        {history && history.length > 0 ? (
-          <View style={{ borderRadius: borderRadius.md, overflow: 'hidden' }}>
-            <LineChart data={{
-              labels: sortedHistory.map(item => item.created_at.slice(5, 10) || ''),
-              datasets: [
-                { data: dataForGraph.map(item => item.avg_weight || 0), color: () => "rgb(255,99,132)" },
-                { data: dataForGraph.map(item => item.avg_reps || 0), color: () => "blue" },
-              ], legend: ["Volume", "Calories"],
-            }}
-              width={Dimensions.get("window").width - 66}
-              height={220}
-              chartConfig={{
-                backgroundGradientFrom: colors.bgCard,
-                backgroundGradientTo: colors.bgCard,
-                color: () => 'white',
-                style: {
-                  borderRadius: borderRadius.md,
-                },
-                propsForBackgroundLines: {
-                  strokeDasharray: "5,5",
-                  stroke: "rgba(255, 255, 255, 0.3)",
-                }
-              }} bezier />
+        {loadingHistory ? (
+          <View style={s.centeredRow}>
+            <ActivityIndicator color={colors.primary} />
           </View>
+        ) : chartData ? (
+          <LineChart
+            data={chartData}
+            width={Dimensions.get("window").width - 66}
+            height={220}
+            chartConfig={{
+              backgroundGradientFrom: colors.bgCard,
+              backgroundGradientTo: colors.bgCard,
+              color: () => colors.primary,
+              labelColor: () => colors.textSecondary,
+              style: { borderRadius: borderRadius.md },
+              propsForBackgroundLines: {
+                strokeDasharray: "5,5",
+                stroke: "rgba(255,255,255,0.15)",
+              },
+            }}
+            bezier
+          />
         ) : (
-          <View style={{ height: 220, justifyContent: 'center', alignItems: 'center' }}>
-            <Text style={{ color: 'white' }}>
-              No history data
+          <View style={{ height: 220, justifyContent: "center", alignItems: "center" }}>
+            <Text style={{ color: colors.textSecondary, fontSize: fontSize.sm }}>
+              No history data yet
             </Text>
           </View>
         )}
       </View>
 
-      {/* History */}
+      {/* Current Workout */}
+      <Text style={s.sectionTitle}>Current Workout</Text>
+      <View style={s.card}>
+        <View style={s.tableHeader}>
+          <Text style={s.headerCell}>Set</Text>
+          <Text style={s.headerCell}>Weight</Text>
+          <Text style={s.headerCell}>Reps</Text>
+        </View>
+
+        {loadingCurrent ? (
+          <View style={s.centeredRow}>
+            <ActivityIndicator color={colors.primary} />
+          </View>
+        ) : currentSets.length === 0 ? (
+          <View style={s.centeredRow}>
+            <Text style={s.emptyText}>No sets logged yet today</Text>
+          </View>
+        ) : (
+          currentSets.map((set) => (
+            <View key={set.set} style={s.tableRow}>
+              <Text style={s.cell}>{set.set}</Text>
+              <Text style={s.cell}>{set.weight} lbs</Text>
+              <Text style={s.cell}>{set.reps}</Text>
+            </View>
+          ))
+        )}
+
+        {/* Add Set inputs */}
+        <View style={s.addRow}>
+          <TextInput
+            style={s.setInput}
+            placeholder="Weight"
+            placeholderTextColor={colors.textMuted}
+            keyboardType="numeric"
+            value={weightText}
+            onChangeText={(text) => setWeightText(text.replace(/[^0-9.]/g, ""))}
+          />
+          <TextInput
+            style={s.setInput}
+            placeholder="Reps"
+            placeholderTextColor={colors.textMuted}
+            keyboardType="numeric"
+            value={repsText}
+            onChangeText={(text) => setRepsText(text.replace(/[^0-9]/g, ""))}
+          />
+        </View>
+
+        <View style={s.buttonRow}>
+          <TouchableOpacity
+            style={[s.solidButton, isAddDisabled && s.buttonDisabled]}
+            onPress={handleAddSet}
+            disabled={isAddDisabled}
+          >
+            <Text style={s.solidButtonText}>+ Add Set</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Previous Workouts */}
       <Text style={s.sectionTitle}>Previous Workouts</Text>
+
+      {loadingHistory ? (
+        <View style={s.centeredRow}>
+          <ActivityIndicator color={colors.primary} />
+        </View>
+      ) : previousWorkouts.length === 0 ? (
+        <View style={[s.card, s.centeredRow]}>
+          <Text style={s.emptyText}>No previous workouts recorded yet</Text>
+        </View>
+      ) : (
+        // Show newest first in the list
+        [...previousWorkouts].reverse().map((workout) => (
+          <View key={workout.date} style={s.card}>
+            <Text style={s.historyDate}>{workout.date}</Text>
+            <View style={s.tableHeader}>
+              <Text style={s.headerCell}>Set</Text>
+              <Text style={s.headerCell}>Weight</Text>
+              <Text style={s.headerCell}>Reps</Text>
+            </View>
+            {workout.sets.map((set) => (
+              <View key={`${workout.date}-${set.set}`} style={s.tableRow}>
+                <Text style={s.cell}>{set.set}</Text>
+                <Text style={s.cell}>{set.weight} lbs</Text>
+                <Text style={s.cell}>{set.reps}</Text>
+              </View>
+            ))}
+          </View>
+        ))
+      )}
 
       <View style={{ height: 120 }} />
     </ScrollView>
@@ -205,11 +369,19 @@ const s = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.sm,
     alignItems: "center",
+    borderBottomWidth: 1,
+    borderColor: colors.border,
   },
   cell: {
     flex: 1,
     fontSize: fontSize.sm,
     color: colors.text,
+  },
+  addRow: {
+    flexDirection: "row",
+    paddingHorizontal: spacing.sm,
+    paddingTop: spacing.md,
+    gap: spacing.sm,
   },
   setInput: {
     flex: 1,
@@ -218,7 +390,6 @@ const s = StyleSheet.create({
     borderRadius: borderRadius.sm,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
-    marginHorizontal: 4,
     fontSize: fontSize.sm,
     textAlign: "center",
     color: colors.text,
@@ -228,25 +399,12 @@ const s = StyleSheet.create({
     flexDirection: "row",
     paddingHorizontal: spacing.sm,
     paddingTop: spacing.sm,
+    paddingBottom: spacing.xs,
     gap: spacing.sm,
-  },
-  outlineButton: {
-    flex: 1,
-    height: 38,
-    borderRadius: borderRadius.sm,
-    borderWidth: 1,
-    borderColor: colors.primary,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  outlineButtonText: {
-    fontSize: fontSize.sm,
-    fontWeight: "600",
-    color: colors.primary,
   },
   solidButton: {
     flex: 1,
-    height: 38,
+    height: 42,
     borderRadius: borderRadius.sm,
     backgroundColor: colors.primary,
     justifyContent: "center",
@@ -256,6 +414,9 @@ const s = StyleSheet.create({
     fontSize: fontSize.sm,
     fontWeight: "700",
     color: colors.text,
+  },
+  buttonDisabled: {
+    opacity: 0.4,
   },
   historyCard: {
     backgroundColor: colors.bgCard,
@@ -271,5 +432,13 @@ const s = StyleSheet.create({
     color: colors.primary,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
+  },
+  centeredRow: {
+    paddingVertical: spacing.md,
+    alignItems: "center",
+  },
+  emptyText: {
+    fontSize: fontSize.sm,
+    color: colors.textMuted,
   },
 });

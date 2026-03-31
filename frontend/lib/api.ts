@@ -3,7 +3,7 @@ import { Platform } from "react-native";
 import * as SecureStore from "expo-secure-store";
 
 
-const TOKEN_KEY = "auth_token";
+const TOKEN_KEY = "user_token";
 const normalizeApiBaseUrl = (value?: string) => {
   const rawValue = value?.trim();
 
@@ -157,5 +157,11 @@ export async function addSet(exerciseId: string, userId: number, weight: number,
     body: JSON.stringify({ exerciseId, userId, weight, reps }),
   });
   if (!res.ok) throw new Error("Failed to save set");
+  return res.json();
+}
+
+export async function fetchExerciseHistory(exerciseId: string, userId: number) {
+  const res = await fetch(`${BASE_URL}/workouts/${exerciseId}/history?userId=${userId}`);
+  if (!res.ok) throw new Error("Failed to fetch history");
   return res.json();
 }

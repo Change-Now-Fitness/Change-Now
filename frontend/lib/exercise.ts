@@ -1,4 +1,5 @@
 import {apiFetch} from "./api";
+
 export interface WorkoutSet {
   workout_log_id: number;
   exercise_id: number;

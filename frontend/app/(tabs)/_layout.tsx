@@ -49,13 +49,6 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="selectedexercise"
-        options={{
-          title: "History",
-          tabBarIcon: () => <Text style={{ fontSize: 20 }}>📊</Text>,
-        }}
-      />
-      <Tabs.Screen
         name="userscreen"
         options={{
           title: "Profile",

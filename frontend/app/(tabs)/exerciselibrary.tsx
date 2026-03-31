@@ -1561,6 +1561,7 @@ const PRESET_EXERCISES: Exercise[] = [
     isCustom: false,
     userId: null,
   },
+  
 ];
 
 const INITIAL_FORM_STATE: ExerciseForm = {
@@ -1845,14 +1846,21 @@ export default function ExerciseLibrary() {
 
                   <View style={styles.cardGrid}>
                     {group.exercises.map((exercise) => (
-                      <View
+                      <Pressable
                         key={exercise.id}
-                        style={[
+                        style={({ pressed }) => [
                           styles.exerciseCard,
                           showTwoColumnCards
                             ? styles.exerciseCardWide
                             : styles.exerciseCardFull,
+                          pressed && styles.exerciseCardPressed,
                         ]}
+                        onPress={() =>
+                          router.push({
+                            pathname: "../screens/selectedexercise",
+                            params: { name: exercise.name, exerciseId: exercise.id.toString() },
+                          })
+                        }
                       >
                         <View style={styles.cardTitleRow}>
                           <Text style={styles.exerciseName}>{exercise.name}</Text>
@@ -1865,7 +1873,7 @@ export default function ExerciseLibrary() {
                         <Text style={styles.exerciseMeta}>
                           {toLabel(exercise.type)} | {toLabel(exercise.equipment)}
                         </Text>
-                      </View>
+                      </Pressable>
                     ))}
                   </View>
                 </View>
@@ -2388,5 +2396,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "700",
   },
+  exerciseCardPressed: {
+  opacity: 0.75,
+},
 });
 
