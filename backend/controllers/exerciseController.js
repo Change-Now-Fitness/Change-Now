@@ -43,7 +43,6 @@ const mapTemplateRow = (row) => ({
   name: row.exercise_name,
   type: normalizeValue(row.exercise_category, "strength"),
   muscleGroup: normalizeMuscleGroup(row.muscle_group),
-  equipment: normalizeValue(row.exercise_type, "other"),
   isCustom: false,
   userId: null,
 });
@@ -53,7 +52,6 @@ const mapCustomRow = (row) => ({
   name: row.exercise_name,
   type: normalizeValue(row.exercise_category, "strength"),
   muscleGroup: normalizeMuscleGroup(row.muscle_group),
-  equipment: normalizeValue(row.exercise_type, "other"),
   isCustom: true,
   userId: row.user_id,
 });
@@ -62,7 +60,6 @@ const getExercises = async (req, res) => {
   const search = normalizeValue(req.query.search, "");
   const muscleGroup = normalizeValue(req.query.muscleGroup, "");
   const type = normalizeValue(req.query.type, "");
-  const equipment = normalizeValue(req.query.equipment, "");
   const includeCustom = req.query.includeCustom !== "false";
   const userId = parseUserId(req.query.userId);
 
@@ -78,8 +75,7 @@ const getExercises = async (req, res) => {
         `SELECT id,
                 exercise_name,
                 muscle_group,
-                exercise_category,
-                exercise_type
+                exercise_category
            FROM exercise_templates`
       ),
       pool.query(
@@ -87,8 +83,7 @@ const getExercises = async (req, res) => {
                 user_id,
                 exercise_name,
                 muscle_group,
-                exercise_category,
-                exercise_type
+                exercise_category
            FROM user_custom_exercises
           WHERE user_id = $1`,
         [userId]
@@ -114,12 +109,6 @@ const getExercises = async (req, res) => {
       filteredExercises = filteredExercises.filter((exercise) => exercise.type === type);
     }
 
-    if (equipment) {
-      filteredExercises = filteredExercises.filter(
-        (exercise) => exercise.equipment === equipment
-      );
-    }
-
     if (search) {
       filteredExercises = filteredExercises.filter((exercise) =>
         exercise.name.toLowerCase().includes(search)
@@ -142,7 +131,6 @@ const createExercise = async (req, res) => {
   const userId = parseUserId(req.body.userId);
   const muscleGroup = normalizeValue(req.body.muscleGroup, "chest");
   const type = normalizeValue(req.body.type, "strength");
-  const equipment = normalizeValue(req.body.equipment, "barbell");
 
   if (!name) {
     return res.status(400).json({ message: "Exercise name is required" });
@@ -178,15 +166,14 @@ const createExercise = async (req, res) => {
 
     const insertResult = await pool.query(
       `INSERT INTO user_custom_exercises
-        (user_id, exercise_name, muscle_group, exercise_category, exercise_type)
-       VALUES ($1, $2, $3, $4, $5)
+        (user_id, exercise_name, muscle_group, exercise_category)
+       VALUES ($1, $2, $3, $4)
        RETURNING id,
                  user_id,
                  exercise_name,
                  muscle_group,
-                 exercise_category,
-                 exercise_type`,
-      [userId, name, muscleGroup, type, equipment]
+                 exercise_category`,
+      [userId, name, muscleGroup, type]
     );
 
     return res.status(201).json(mapCustomRow(insertResult.rows[0]));
