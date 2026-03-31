@@ -4,49 +4,53 @@ const DEFAULT_TEMPLATE_USER_EMAIL = "DEFAULT_EXERCISES";
 
 // Safety net for environments where exercise_templates has not been synced yet.
 const FALLBACK_EXERCISE_TEMPLATES = [
-  { name: "Barbell Bench Press", muscleGroup: "chest", category: "strength", equipment: "barbell" },
-  { name: "Incline Dumbbell Press", muscleGroup: "chest", category: "strength", equipment: "dumbbell" },
-  { name: "Cable Fly", muscleGroup: "chest", category: "strength", equipment: "cable" },
-  { name: "Barbell Curl", muscleGroup: "biceps", category: "strength", equipment: "barbell" },
-  { name: "Hammer Curl", muscleGroup: "biceps", category: "strength", equipment: "dumbbell" },
-  { name: "Preacher Curl", muscleGroup: "biceps", category: "strength", equipment: "barbell" },
-  { name: "Close-Grip Bench Press", muscleGroup: "triceps", category: "strength", equipment: "barbell" },
-  { name: "Skull Crusher", muscleGroup: "triceps", category: "strength", equipment: "barbell" },
-  { name: "Rope Pushdown", muscleGroup: "triceps", category: "strength", equipment: "cable" },
-  { name: "Wrist Curl", muscleGroup: "forearms", category: "strength", equipment: "barbell" },
-  { name: "Reverse Wrist Curl", muscleGroup: "forearms", category: "strength", equipment: "barbell" },
-  { name: "Farmer's Walk", muscleGroup: "forearms", category: "strength", equipment: "dumbbell" },
-  { name: "Back Squat", muscleGroup: "quads", category: "strength", equipment: "barbell" },
-  { name: "Leg Press", muscleGroup: "quads", category: "strength", equipment: "machine" },
-  { name: "Bulgarian Split Squat", muscleGroup: "quads", category: "strength", equipment: "dumbbell" },
-  { name: "Romanian Deadlift", muscleGroup: "hamstrings", category: "strength", equipment: "barbell" },
-  { name: "Seated Leg Curl", muscleGroup: "hamstrings", category: "strength", equipment: "machine" },
-  { name: "Nordic Hamstring Curl", muscleGroup: "hamstrings", category: "bodyweight", equipment: "bodyweight" },
-  { name: "Barbell Hip Thrust", muscleGroup: "glutes", category: "strength", equipment: "barbell" },
-  { name: "Cable Kickback", muscleGroup: "glutes", category: "strength", equipment: "cable" },
-  { name: "Glute Bridge", muscleGroup: "glutes", category: "bodyweight", equipment: "bodyweight" },
-  { name: "Standing Calf Raise", muscleGroup: "calves", category: "strength", equipment: "machine" },
-  { name: "Seated Calf Raise", muscleGroup: "calves", category: "strength", equipment: "machine" },
-  { name: "Leg Press Calf Raise", muscleGroup: "calves", category: "strength", equipment: "machine" },
-  { name: "Pull-up", muscleGroup: "lats", category: "bodyweight", equipment: "bodyweight" },
-  { name: "Lat Pulldown", muscleGroup: "lats", category: "strength", equipment: "cable" },
-  { name: "Single-arm Dumbbell Row", muscleGroup: "lats", category: "strength", equipment: "dumbbell" },
-  { name: "Face Pull", muscleGroup: "upper back", category: "strength", equipment: "cable" },
-  { name: "Seated Cable Row", muscleGroup: "upper back", category: "strength", equipment: "cable" },
-  { name: "Chest-supported Row", muscleGroup: "upper back", category: "strength", equipment: "machine" },
-  { name: "Deadlift", muscleGroup: "lower back", category: "strength", equipment: "barbell" },
-  { name: "Good Morning", muscleGroup: "lower back", category: "strength", equipment: "barbell" },
-  { name: "Back Extension", muscleGroup: "lower back", category: "bodyweight", equipment: "bodyweight" },
-  { name: "Barbell Shoulder Press", muscleGroup: "shoulders", category: "strength", equipment: "barbell" },
-  { name: "Lateral Raise", muscleGroup: "shoulders", category: "strength", equipment: "dumbbell" },
-  { name: "Reverse Pec Deck", muscleGroup: "shoulders", category: "strength", equipment: "machine" },
-  { name: "Plank", muscleGroup: "abs", category: "bodyweight", equipment: "bodyweight" },
-  { name: "Hanging Leg Raise", muscleGroup: "abs", category: "bodyweight", equipment: "bodyweight" },
-  { name: "Cable Crunch", muscleGroup: "abs", category: "strength", equipment: "cable" },
-  { name: "Treadmill Run", muscleGroup: "cardio", category: "cardio", equipment: "machine" },
-  { name: "Jump Rope", muscleGroup: "cardio", category: "cardio", equipment: "other" },
-  { name: "Rowing Machine", muscleGroup: "cardio", category: "cardio", equipment: "machine" },
-];
+  ["Barbell Bench Press", "chest", "strength"],
+  ["Incline Dumbbell Press", "chest", "strength"],
+  ["Cable Fly", "chest", "strength"],
+  ["Barbell Curl", "biceps", "strength"],
+  ["Hammer Curl", "biceps", "strength"],
+  ["Preacher Curl", "biceps", "strength"],
+  ["Close-Grip Bench Press", "triceps", "strength"],
+  ["Skull Crusher", "triceps", "strength"],
+  ["Rope Pushdown", "triceps", "strength"],
+  ["Wrist Curl", "forearms", "strength"],
+  ["Reverse Wrist Curl", "forearms", "strength"],
+  ["Farmer's Walk", "forearms", "strength"],
+  ["Back Squat", "quads", "strength"],
+  ["Leg Press", "quads", "strength"],
+  ["Bulgarian Split Squat", "quads", "strength"],
+  ["Romanian Deadlift", "hamstrings", "strength"],
+  ["Seated Leg Curl", "hamstrings", "strength"],
+  ["Nordic Hamstring Curl", "hamstrings", "bodyweight"],
+  ["Barbell Hip Thrust", "glutes", "strength"],
+  ["Cable Kickback", "glutes", "strength"],
+  ["Glute Bridge", "glutes", "bodyweight"],
+  ["Standing Calf Raise", "calves", "strength"],
+  ["Seated Calf Raise", "calves", "strength"],
+  ["Leg Press Calf Raise", "calves", "strength"],
+  ["Pull-up", "lats", "bodyweight"],
+  ["Lat Pulldown", "lats", "strength"],
+  ["Single-arm Dumbbell Row", "lats", "strength"],
+  ["Face Pull", "upper back", "strength"],
+  ["Seated Cable Row", "upper back", "strength"],
+  ["Chest-supported Row", "upper back", "strength"],
+  ["Deadlift", "lower back", "strength"],
+  ["Good Morning", "lower back", "strength"],
+  ["Back Extension", "lower back", "bodyweight"],
+  ["Barbell Shoulder Press", "shoulders", "strength"],
+  ["Lateral Raise", "shoulders", "strength"],
+  ["Reverse Pec Deck", "shoulders", "strength"],
+  ["Plank", "abs", "bodyweight"],
+  ["Hanging Leg Raise", "abs", "bodyweight"],
+  ["Cable Crunch", "abs", "strength"],
+  ["Treadmill Run", "cardio", "cardio"],
+  ["Jump Rope", "cardio", "cardio"],
+  ["Rowing Machine", "cardio", "cardio"],
+].map(([name, muscleGroup, category]) => ({
+  name,
+  muscleGroup,
+  category,
+}));
 
 const normalizeName = (value) =>
   typeof value === "string" ? value.trim() : "";
@@ -67,20 +71,7 @@ const normalizeTemplate = (exercise) => ({
     exercise.category ?? exercise.exercise_category,
     "strength"
   ),
-  equipment: normalizeValue(
-    exercise.equipment ?? exercise.exercise_type,
-    "other"
-  ),
 });
-
-const buildTemplateKey = (exercise) => {
-  const normalizedExercise = normalizeTemplate(exercise);
-
-  return [
-    normalizedExercise.name.toLowerCase(),
-    normalizedExercise.muscleGroup,
-  ].join("|");
-};
 
 async function ensureExerciseTemplatesTable() {
   await pool.query(`
@@ -89,7 +80,6 @@ async function ensureExerciseTemplatesTable() {
       exercise_name VARCHAR NOT NULL,
       muscle_group VARCHAR NOT NULL,
       exercise_category VARCHAR NOT NULL,
-      exercise_type TEXT NOT NULL,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `);
@@ -111,7 +101,6 @@ async function ensureUserCustomExercisesTable() {
       exercise_name VARCHAR NOT NULL,
       muscle_group VARCHAR NOT NULL,
       exercise_category VARCHAR NOT NULL,
-      exercise_type TEXT NOT NULL,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `);
@@ -133,8 +122,7 @@ async function getExerciseTemplates() {
   const templateRows = await pool.query(
     `SELECT exercise_name,
             muscle_group,
-            exercise_category,
-            exercise_type
+            exercise_category
        FROM exercise_templates
       ORDER BY LOWER(exercise_name) ASC,
                LOWER(muscle_group) ASC`
@@ -150,21 +138,20 @@ async function getExerciseTemplates() {
 const buildTemplateInsertStatement = (exercises) => {
   const values = [];
   const placeholders = exercises.map((exercise, index) => {
-    const offset = index * 4;
+    const offset = index * 3;
     values.push(
       exercise.name,
       exercise.muscleGroup,
-      exercise.category,
-      exercise.equipment
+      exercise.category
     );
 
-    return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4})`;
+    return `($${offset + 1}, $${offset + 2}, $${offset + 3})`;
   });
 
   return {
     text:
       "INSERT INTO exercise_templates " +
-      "(exercise_name, muscle_group, exercise_category, exercise_type) VALUES " +
+      "(exercise_name, muscle_group, exercise_category) VALUES " +
       placeholders.join(", "),
     values,
   };
@@ -186,8 +173,7 @@ async function syncExerciseTemplatesFromUser(
     const sourceExercises = await pool.query(
       `SELECT exercise_name,
               muscle_group,
-              exercise_category,
-              exercise_type
+              exercise_category
          FROM (
            SELECT DISTINCT ON (
                     LOWER(TRIM(exercise.exercise_name)),
@@ -195,8 +181,7 @@ async function syncExerciseTemplatesFromUser(
                   )
                   exercise.exercise_name,
                   exercise.muscle_group,
-                  exercise.exercise_category,
-                  exercise.exercise_type
+                  exercise.exercise_category
              FROM exercise
              JOIN users
                ON users.id = exercise.user_id
@@ -206,10 +191,6 @@ async function syncExerciseTemplatesFromUser(
                      LOWER(TRIM(exercise.muscle_group)) ASC,
                      CASE
                        WHEN LOWER(TRIM(exercise.exercise_category)) = 'temp' THEN 1
-                       ELSE 0
-                     END ASC,
-                     CASE
-                       WHEN LOWER(TRIM(COALESCE(exercise.exercise_type, 'other'))) = 'other' THEN 1
                        ELSE 0
                      END ASC,
                      exercise.id DESC

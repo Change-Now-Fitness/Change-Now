@@ -68,14 +68,12 @@ async function migrateLegacyCustomExercises() {
       user_id,
       exercise_name,
       muscle_group,
-      exercise_category,
-      exercise_type
+      exercise_category
     )
     SELECT legacy.user_id,
            legacy.exercise_name,
            legacy.muscle_group,
-           legacy.exercise_category,
-           COALESCE(legacy.exercise_type, 'other')
+           legacy.exercise_category
       FROM (
         SELECT DISTINCT ON (
                  exercise.user_id,
@@ -86,7 +84,6 @@ async function migrateLegacyCustomExercises() {
                exercise.exercise_name,
                exercise.muscle_group,
                exercise.exercise_category,
-               exercise.exercise_type,
                exercise.id
           FROM exercise
          WHERE COALESCE(exercise.is_custom, false) = true
