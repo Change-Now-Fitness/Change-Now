@@ -104,10 +104,127 @@ pm2 logs changenow-backend
 
 ### Live Backend API
 
+### Live Backend API
+
 http://18.224.229.202:4000
 
-### Bug Tracking + Features
+---
 
-The ChangeNow team makes use of the Issues feature on GitHub to track bugs and missing features. This is convenient because it keeps our checklist in the same place as our code, and enables us to assign team members to issues to keep track. To access it, select the Issues tab. 
+## Beta Release Notes 🧪
+
+### Currently Working Features
+
+* User signup and login
+* Exercise library with muscle group navigation
+* Search functionality
+* Add custom exercise modal
+* Selected exercise view
+* Add workout sets
+* View current workout sets
+* View historical workout logs
+* Backend API and database integration
+* Live backend deployment on AWS EC2
+
+### Features In Progress
+
+* Graph and analytics visualization refinements
+* Additional workout trend metrics
+* UI responsiveness improvements
+
+### Known Issues
+
+* Graph display formatting is still being refined
+* Minor mobile styling inconsistencies on smaller screens
+* Some API error messages are still being improved for user clarity
+
+---
+
+## Testing 🧪
+
+### Unit Tests
+
+Run frontend tests using:
+
+```bash
+cd frontend
+npm test
+```
+
+Current test coverage includes:
+
+* `exerciselibrary.test.tsx`
+* `login.test.tsx`
+* `signup.test.tsx`
+
+### Integration / System Test
+
+Primary beta integration flow tested:
+
+```text
+Signup → Login → Exercise Library → Add Custom Exercise → Add Workout Set → View History
+```
+
+This validates the full **client → server → database → client** workflow.
+
+---
+
+## Bug Tracking + Features 🐞
+
+The ChangeNow team uses **GitHub Issues** to track bugs, missing features, and release milestones. This keeps project management centralized with the codebase and allows tasks to be assigned to individual team members.
+
+Tracked items include:
+
+* bugs
+* feature requests
+* API milestones
+* beta blockers
+* final release tasks
+
+Our main project schedule was initially maintained in a master planning document, and we are currently migrating active tasks and bug reports into GitHub Issues for better coordination and developer visibility.
+
+---
+
+## Change Logs 📝
+
+Project evolution and developer changes are documented in:
+
+```text
+docs/changelog.md
+docs/changes/
+```
+
+Individual developer logs include:
+
+* `adam.md`
+* `sam.md`
+* `alex.md`
+* `chenqi.md`
+* `jules.md`
+
+These logs document feature additions, design updates, bug fixes, and milestone progress.
+
+---
+
+## Developer Handoff 👨‍💻
+
+This repository contains all source code, documentation, deployment instructions, and testing resources required for continued development from the beta milestone.
+
+Primary development folders:
+
+```text
+frontend/
+backend/
+docs/
+testing/
+```
+
+A new developer can use this README to:
+
+* install dependencies
+* run the backend
+* run the frontend
+* deploy updates to EC2
+* execute tests
+* review active issues and historical changes
 
 This is a new update, our main project schedule is in a master document and we're in the process of migrating this over to Issues. Issues is used mainly for our "current" checklist or features that are next in line. Some features that were implemented in the past have not been added to Issues.
