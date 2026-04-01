@@ -11,7 +11,7 @@ import * as SecureStore from 'expo-secure-store';
  * to use the "router" hook to change pages accordingly
  */
 
-const API_URL = "https://change-now-production.up.railway.app";
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 const platform = Platform.OS;
 
