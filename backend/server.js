@@ -23,6 +23,10 @@ const corsOptions = {
             callback(null, true);
             return;
         }
+        if (origin === "https://changenow-ashy.vercel.app") {
+            console.log('prod origin parsed');
+            return callback (null,true);
+        }
 
         try {
             const parsedOrigin = new URL(origin);
