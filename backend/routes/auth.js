@@ -57,8 +57,8 @@ router.post('/signup', async (req, res) => {
             console.log('sending cookie, web');
             res.cookie('token', token, {
                     httpOnly: true,
-                    secure: false,
-                    sameSite: "lax",
+                    secure: true,
+                    sameSite: "none",
                     maxAge: 10 * 60 * 1000
             });
             return res.status(200).json({'success': true});
@@ -113,8 +113,8 @@ router.post('/login', async (req, res) => {
             if (platform === 'web') {
                 res.cookie('token', token, {
                     httpOnly: true,
-                    secure: false,
-                    sameSite: 'lax',
+                    secure: true,
+                    sameSite: 'none',
                     maxAge: 10 * 60 * 1000
                 });
                 console.log('cookie sent');
