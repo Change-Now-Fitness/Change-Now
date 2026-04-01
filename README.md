@@ -18,7 +18,18 @@ Change-Now/
 └── assets/     # Shared assets
 ```
 ---
+
+## Dependencies for devs:
+
+Github Branch: alpha
+
+Node.js: v20.20.0
+
+npm: 10.8.2
+
 ## Backend (API Server) 🚀
+
+
 
 ### Setup
 ```
