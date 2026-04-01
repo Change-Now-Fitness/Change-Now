@@ -141,32 +141,23 @@ http://18.224.229.202:4000
 
 ## Testing 🧪
 
-### Unit Tests
+Testing documentation is maintained separately in the project documentation folder for ease of maintenance and future expansion.
 
-Run frontend tests using:
+Detailed testing instructions, test cases, and validation workflows can be found in:
 
-```bash
-cd frontend
-npm test
+```text id="wjlwm7"
+docs/testing/
 ```
 
-Current test coverage includes:
+This includes:
 
-* `exerciselibrary.test.tsx`
-* `login.test.tsx`
-* `signup.test.tsx`
+* unit test documentation
+* system / integration test workflows
+* manual test procedures
+* known issue validation steps
 
-### Integration / System Test
+A new developer should refer to this folder for full test execution details and expected outputs.
 
-Primary beta integration flow tested:
-
-```text
-Signup → Login → Exercise Library → Add Custom Exercise → Add Workout Set → View History
-```
-
-This validates the full **client → server → database → client** workflow.
-
----
 
 ## Bug Tracking + Features 🐞
 
