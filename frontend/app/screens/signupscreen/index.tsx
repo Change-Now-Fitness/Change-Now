@@ -3,10 +3,9 @@ import { Text, TextInput, View, StyleSheet, Pressable, Animated, Platform } from
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useFonts, BebasNeue_400Regular } from '@expo-google-fonts/bebas-neue';
-import { signUp } from '../../services/auth';
 
 
-
+const API_URL = "https://change-now-production.up.railway.app";
 
 export default function SignupScreen() {
   const router = useRouter();
@@ -20,8 +19,6 @@ export default function SignupScreen() {
 
   const loginScaleAnim = useRef(new Animated.Value(1)).current;
   const signupScaleAnim = useRef(new Animated.Value(1)).current;
-
-  const platform = Platform.OS;
 
   const [fontsLoaded] = useFonts({
         BebasNeue_400Regular,
@@ -39,7 +36,6 @@ export default function SignupScreen() {
   };
 
   const handleSignup = async () => {
-    console.log('trying signup');
     setError("");
 
     // Confirm password check
@@ -53,24 +49,45 @@ export default function SignupScreen() {
       return;
     }
 
-
     try {
-      console.log('trying signup');
-      const successBool = await signUp(email, password);
-      console.log('successbool: ', successBool)
-      if (successBool) {
-        router.replace('/(tabs)/exerciselibrary');
-        return console.log('signup successful');
-      }
-      console.log('failed');
-      return console.log('frontend auth replied signup failed');
-    } catch (error) {
-      return console.log('signup failed', error);
-      
-    }
-    
+          const response = await fetch(`${API_URL}/auth/signup`, {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({email, password}),
+          });
 
-  }
+          const userData = await response.json();
+          
+          //if response isnt 200 - success
+          if (!response.ok) {
+              console.log('Signup Failed', userData);
+              return;
+          }
+          
+          if (Platform.OS != "web") {
+
+          await SecureStore.setItemAsync('authToken', userData.token);
+          console.log('Signup Success, token saved');
+          router.push("/(tabs)/exerciselibrary");  
+
+
+
+          } else {
+              //currently we cant handle storing web tokens, only mobile
+              //maybe i will implement for testing purposes but for now skipping
+              console.log('Signup Successful, token not saved because not using mobile OS')
+              router.push("/(tabs)/exerciselibrary");  
+          }
+
+          //Add nav for workout page
+
+
+      } catch (error) {
+          console.log('Network Error', error);
+      }
+    }
     
   return (
     <View style={styles.container}>
