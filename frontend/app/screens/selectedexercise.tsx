@@ -145,22 +145,46 @@ export default function SelectedExerciseScreen() {
   const isAddDisabled =
     weightText.trim().length === 0 || repsText.trim().length === 0;
 
-  // Compute max weight per day for the chart
-  const chartData =
-    previousWorkouts.length > 0
+
+  // Build today's entry if currentSets exists
+  const todayEntry: PreviousWorkout | null =
+    currentSets.length > 0
       ? {
-          labels: previousWorkouts.map((w) => w.date.slice(5)), // "MM-DD"
-          datasets: [
-            {
-              data: previousWorkouts.map((w) =>
-                Math.max(...w.sets.map((s) => s.weight))
-              ),
-              color: () => colors.primary,
-            },
-          ],
-          legend: ["Max Weight (lbs)"],
+          date: new Date().toISOString().split("T")[0],
+          sets: currentSets,
         }
       : null;
+
+  // Combines history + today's sets, oldest to newest
+  const allWorkoutsForChart = [
+    ...previousWorkouts,
+    ...(todayEntry ? [todayEntry] : []),
+  ];
+
+  const rawLabels = allWorkoutsForChart.map((w) => w.date.slice(5));
+  const rawData = allWorkoutsForChart.map((w) =>
+    Math.max(...w.sets.map((s) => s.weight))
+  );
+
+  // Pad with a zero entry if there's only one data point
+  const labels = rawData.length === 1 ? ["", ...rawLabels] : rawLabels;
+  const data = rawData.length === 1 ? [0, ...rawData] : rawData;
+
+
+  // Compute max weight per day for the chart
+  const chartData =
+  allWorkoutsForChart.length > 0
+    ? {
+        labels,
+        datasets: [
+          {
+            data,
+            color: () => colors.primary,
+          },
+        ],
+        legend: ["Max Weight (lbs)"],
+      }
+    : null;
 
   return (
     <ScrollView style={s.scrollView} showsVerticalScrollIndicator={false}>
