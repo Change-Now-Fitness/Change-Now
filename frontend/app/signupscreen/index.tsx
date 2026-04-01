@@ -7,7 +7,6 @@ import { signUp } from '../../services/auth';
 
 
 
-const API_URL = "http://localhost:4000";
 
 export default function SignupScreen() {
   const router = useRouter();

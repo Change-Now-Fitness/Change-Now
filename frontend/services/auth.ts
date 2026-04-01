@@ -11,7 +11,7 @@ import * as SecureStore from 'expo-secure-store';
  * to use the "router" hook to change pages accordingly
  */
 
-const API_URL = 'http://localhost:4000';
+const API_URL = process.env.EXO_PUBLIC_API_URL;
 
 const platform = Platform.OS;
 
