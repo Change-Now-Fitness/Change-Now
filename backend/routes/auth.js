@@ -78,7 +78,7 @@ router.post('/signup', async (req, res) => {
  * If one exists, returns the password hash and compares it with the argon encyption key with
  * the password input. Returns either cookie or raw JWT based on requestor OS. 
  */
-router.post('/login/', async (req, res) => {
+router.post('/login', async (req, res) => {
     console.log('login serverside gateway reached');
     //take http request and get body of json, ensure fields not empty
     const {email, password, platform} = await req.body;
@@ -142,7 +142,7 @@ router.post('/login/', async (req, res) => {
  * 'Middleware' (helper) function that checks if the user's tokens are valid,
  * returns result to client. Prepared for both cookies and jwt tokens.
  */
-router.post('/requireAuth/', async (req, res) => {
+router.post('/requireAuth', async (req, res) => {
     const headers = await req.headers;
     console.log('requireAuth req recieved');
     const dprint = headers;

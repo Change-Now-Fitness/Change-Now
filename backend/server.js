@@ -7,6 +7,7 @@ const workoutRouter = require("./routes/workouts");
 const app = express();
 //my browser requires whitelisted address if api and frontend addresses are different
 const cors = require("cors");
+const pool = require('./dbconnection');
 
 const isPrivateHostname = (hostname) =>
     hostname === "localhost" ||
@@ -47,7 +48,6 @@ app.use("/auth", authRouter);
 // Exercise routes are scaffolded separately so the frontend can move to a real
 // API contract without changing its object shape later.
 app.use("/exercises", exerciseRoutes);
-const pool = require('./dbconnection');
 app.use("/workouts", workoutRouter)
 
 
