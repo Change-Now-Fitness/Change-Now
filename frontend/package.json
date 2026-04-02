@@ -10,7 +10,8 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "test": "jest",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "build": "expo export --platform web"
   },
   "dependencies": {
     "@expo-google-fonts/bebas-neue": "^0.4.1",
