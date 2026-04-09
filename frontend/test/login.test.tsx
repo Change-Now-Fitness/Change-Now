@@ -55,7 +55,7 @@ describe("Login screen", () => {
 
     await waitFor(() => {
       expect(login).toHaveBeenCalledWith("test@example.com", "password123");
-      expect(mockReplace).toHaveBeenCalledWith("/(tabs)/maindashboard");
+      expect(mockReplace).toHaveBeenCalledWith("/(tabs)/exerciselibrary");
     });
   });
 });

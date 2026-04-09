@@ -45,7 +45,7 @@ start "ChangeNow Backend" cmd /k "cd /d %~dp0backend && npm start"
 
 echo.
 echo Starting Expo frontend...
-call npx expo start
+call npx expo start -c
 if errorlevel 1 (
     echo ERROR: Failed to start Expo frontend.
     exit /b 1

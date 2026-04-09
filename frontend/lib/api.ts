@@ -39,7 +39,6 @@ export interface Exercise {
   name: string;
   type: string;
   muscleGroup: string;
-  equipment: string;
   isCustom: boolean;
   userId: number | null;
 }
@@ -126,7 +125,7 @@ export async function fetchExercises(userId: number) {
 }
 
 export async function createExercise(
-  payload: Pick<Exercise, "name" | "type" | "muscleGroup" | "equipment"> & {
+  payload: Pick<Exercise, "name" | "type" | "muscleGroup"> & {
     userId: number;
   }
 ) {
@@ -158,5 +157,11 @@ export async function addSet(exerciseId: string, userId: number, weight: number,
     body: JSON.stringify({ exerciseId, userId, weight, reps }),
   });
   if (!res.ok) throw new Error("Failed to save set");
+  return res.json();
+}
+
+export async function fetchExerciseHistory(exerciseId: string, userId: number) {
+  const res = await fetch(`${BASE_URL}/workouts/${exerciseId}/history?userId=${userId}`);
+  if (!res.ok) throw new Error("Failed to fetch history");
   return res.json();
 }

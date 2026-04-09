@@ -1,6 +1,6 @@
 import React from "react";
 import { fireEvent, render, waitFor } from "@testing-library/react-native";
-import SignupScreen from "../app/signupscreen/index";
+import SignupScreen from "../app/screens/signup";
 import { signUp } from "../services/auth";
 
 const mockReplace = jest.fn();
@@ -58,7 +58,7 @@ describe("Signup screen", () => {
 
     await waitFor(() => {
       expect(signUp).toHaveBeenCalledWith("test@example.com", "password123");
-      expect(mockReplace).toHaveBeenCalledWith("/(tabs)/maindashboard");
+      expect(mockReplace).toHaveBeenCalledWith("/(tabs)/exerciselibrary");
     });
   });
 });

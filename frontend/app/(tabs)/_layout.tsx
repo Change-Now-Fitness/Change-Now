@@ -34,25 +34,12 @@ export default function TabLayout() {
         },
       }}
     >
-      <Tabs.Screen
-        name="maindashboard"
-        options={{
-          title: "Home",
-          tabBarIcon: () => <Text style={{ fontSize: 20 }}>🏠</Text>,
-        }}
-      />
+
        <Tabs.Screen
         name="exerciselibrary"
         options={{
           title: "Exercise lib",
           tabBarIcon: () => <Text style={{ fontSize: 18 }}>🤖</Text>,
-        }}
-      />
-      <Tabs.Screen
-        name="selectedexercise"
-        options={{
-          title: "History",
-          tabBarIcon: () => <Text style={{ fontSize: 20 }}>📊</Text>,
         }}
       />
       <Tabs.Screen

@@ -60,7 +60,7 @@ export default function SignupScreen() {
       const successBool = await signUp(email, password);
       console.log('successbool: ', successBool)
       if (successBool) {
-        router.replace('/(tabs)/maindashboard');
+        router.replace('/(tabs)/exerciselibrary');
         return console.log('signup successful');
       }
       console.log('failed');

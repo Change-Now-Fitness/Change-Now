@@ -39,7 +39,7 @@ export default function LoginScreen() {
             const login_status = await checkLogin();
             console.log(`login status: ${login_status.success}`);
             if (login_status.success == true) {
-                router.replace('/(tabs)/maindashboard');
+                router.replace('/(tabs)/exerciselibrary');
                 return true;
             } else {
                 console.log('check login returned false');
@@ -88,7 +88,7 @@ export default function LoginScreen() {
         try {
             const attemptLogin = await login(email, password);
             if (attemptLogin) {
-                router.replace('/(tabs)/maindashboard');
+                router.replace('/(tabs)/exerciselibrary');
                 return;
             } 
             return;
@@ -98,7 +98,7 @@ export default function LoginScreen() {
     }
 
     const handleSignup = async () => {
-        router.push("/signupscreen")
+        router.push("./screens/signup")
     };
  
     
