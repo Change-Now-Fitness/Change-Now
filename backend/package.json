@@ -19,6 +19,7 @@
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
     "pg": "^8.19.0",
-    "supabase-js": "^0.0.1-security"
+    "supabase-js": "^0.0.1-security",
+    "swagger-ui-express": "^5.0.1"
   }
 }
