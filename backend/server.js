@@ -4,6 +4,7 @@ const express = require('express');
 const authRouter = require("./routes/auth");
 const exerciseRoutes = require("./routes/exerciseRoutes");
 const workoutRouter = require("./routes/workouts");
+const userRouter = require("./routes/user");
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 const app = express();
@@ -41,7 +42,12 @@ const corsOptions = {
         callback(new Error(`Origin not allowed by CORS: ${origin}`));
     },
     credentials: true,
-};
+}
+app.use(cors({
+    ...corsOptions
+}));
+
+;
 
 const swaggerOptions = {
     definition: {
@@ -62,11 +68,6 @@ const swaggerOptions = {
 
 const swaggerSpecifications = swaggerJsdoc(swaggerOptions);
 
-
-app.use(cors({
-    ...corsOptions
-}));
-
 app.use(express.json());
 
 app.use('/api-docs',
@@ -75,6 +76,7 @@ app.use('/api-docs',
 );
 
 app.use("/auth", authRouter);
+app.use("/user", userRouter);
 // Exercise routes are scaffolded separately so the frontend can move to a real
 // API contract without changing its object shape later.
 app.use("/exercises", exerciseRoutes);
