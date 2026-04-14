@@ -1,5 +1,6 @@
 import {
   ActivityIndicator,
+  Alert,
   ScrollView,
   Text,
   TextInput,
@@ -9,7 +10,7 @@ import {
   Dimensions,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { fetchCurrentSets, fetchExerciseHistory, addSet } from "../../lib/api";
+import { fetchCurrentSets, fetchExerciseHistory, addSet, deleteSet } from "../../lib/api";
 import React, { useState, useEffect } from "react";
 import { checkLogin } from "../../services/auth";
 import { colors, spacing, fontSize, borderRadius } from "@/lib/theme";
@@ -18,6 +19,7 @@ import { LineChart } from "react-native-chart-kit";
 
 
 type WorkoutSet = {
+  id?: number;
   set: number;
   weight: number;
   reps: number;
@@ -61,16 +63,15 @@ export default function SelectedExerciseScreen() {
     loadUserId();
   }, []);
 
-  // Fetch today's sets
-  useEffect(() => {
+  const loadCurrentSets = async () => {
     if (!exerciseId || !userId) return;
 
-    const loadSets = async () => {
       setLoadingCurrent(true);
       try {
         const today = new Date().toISOString().split("T")[0];
         const data = await fetchCurrentSets(exerciseId, userId, today);
         const mapped: WorkoutSet[] = data.map((row: any, index: number) => ({
+          id: typeof row.id === "number" ? row.id : Number(row.id),
           set: index + 1,
           weight: parseFloat(row.weight),
           reps: row.reps,
@@ -82,9 +83,13 @@ export default function SelectedExerciseScreen() {
       } finally {
         setLoadingCurrent(false);
       }
-    };
+  };
 
-    loadSets();
+  // Fetch today's sets
+  useEffect(() => {
+    if (!exerciseId || !userId) return;
+
+    loadCurrentSets();
   }, [exerciseId, userId]);
 
   // Fetch previous workouts grouped by date
@@ -124,22 +129,55 @@ export default function SelectedExerciseScreen() {
 
     if (isNaN(weight) || isNaN(reps)) return;
 
-    const newSet: WorkoutSet = {
+    if (!userId || !exerciseId) return;
+
+    const optimisticSet: WorkoutSet = {
       set: currentSets.length + 1,
       weight,
       reps,
     };
 
-    setCurrentSets((prev) => [...prev, newSet]);
+    setCurrentSets((prev) => [...prev, optimisticSet]);
     setWeightText("");
     setRepsText("");
 
     try {
-      await addSet(exerciseId, userId!, weight, reps);
+      await addSet(exerciseId, userId, weight, reps);
+      await loadCurrentSets();
     } catch (err: any) {
       setCurrentSets((prev) => prev.slice(0, -1));
-      console.error("Failed to save set:", err.message);
+      setError(err.message || "Failed to save set");
     }
+  };
+
+  const handleDeleteSet = async (targetSet: WorkoutSet) => {
+    const previous = currentSets;
+
+    setCurrentSets((prev) =>
+      prev
+        .filter((item) => item.set !== targetSet.set)
+        .map((item, index) => ({ ...item, set: index + 1 }))
+    );
+
+    if (!targetSet.id || !userId) return;
+
+    try {
+      await deleteSet(targetSet.id, userId);
+    } catch (err: any) {
+      setCurrentSets(previous);
+      setError(err.message || "Failed to delete set");
+    }
+  };
+
+  const confirmDeleteSet = (targetSet: WorkoutSet) => {
+    Alert.alert(
+      "Delete set",
+      `Delete set ${targetSet.set} (${targetSet.weight} lbs x ${targetSet.reps})?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Delete", style: "destructive", onPress: () => void handleDeleteSet(targetSet) },
+      ]
+    );
   };
 
   const isAddDisabled =
@@ -250,6 +288,7 @@ export default function SelectedExerciseScreen() {
           <Text style={s.headerCell}>Set</Text>
           <Text style={s.headerCell}>Weight</Text>
           <Text style={s.headerCell}>Reps</Text>
+          <Text style={[s.headerCell, s.actionHeader]}>Action</Text>
         </View>
 
         {loadingCurrent ? (
@@ -262,10 +301,18 @@ export default function SelectedExerciseScreen() {
           </View>
         ) : (
           currentSets.map((set) => (
-            <View key={set.set} style={s.tableRow}>
+            <View key={set.id ?? set.set} style={s.tableRow}>
               <Text style={s.cell}>{set.set}</Text>
               <Text style={s.cell}>{set.weight} lbs</Text>
               <Text style={s.cell}>{set.reps}</Text>
+              <TouchableOpacity
+                style={s.deleteButton}
+                onPress={() => confirmDeleteSet(set)}
+                accessibilityRole="button"
+                accessibilityLabel={`Delete set ${set.set}`}
+              >
+                <Text style={s.deleteButtonText}>Delete</Text>
+              </TouchableOpacity>
             </View>
           ))
         )}
@@ -396,6 +443,11 @@ const s = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
+  actionHeader: {
+    flex: 0,
+    width: 72,
+    textAlign: "right",
+  },
   tableRow: {
     flexDirection: "row",
     paddingHorizontal: spacing.sm,
@@ -408,6 +460,21 @@ const s = StyleSheet.create({
     flex: 1,
     fontSize: fontSize.sm,
     color: colors.text,
+  },
+  deleteButton: {
+    width: 72,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,120,120,0.45)",
+    borderRadius: borderRadius.sm,
+    paddingVertical: 4,
+    backgroundColor: "rgba(255,100,100,0.12)",
+  },
+  deleteButtonText: {
+    color: "#ff8a80",
+    fontSize: fontSize.xs,
+    fontWeight: "700",
   },
   addRow: {
     flexDirection: "row",
