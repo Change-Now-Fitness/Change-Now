@@ -14,7 +14,7 @@ const API_URL =  process.env.EXPO_PUBLIC_API_URL;
 /**
  * Augments api fetch with auth tokens, takes api path and http options, returns success bool and data
  * @param endpointURL 
- * @param options 
+ * @param options use Method, Content type, and Body
  * @returns 
  */
 async function apiRequest(endpointURL: string, options: RequestInit = {}) {

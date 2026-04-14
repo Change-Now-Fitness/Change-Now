@@ -85,23 +85,23 @@ const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
  *                 error:
  *                   type: string
  */
-router.post('/signup', async (req, res) => {
-    const { email, password, platform} = req.body;
-    //ensure required fields filled, else returns json w error
-    if (email == "" || password == "") {
-        return res.status(400).json({ error: 'Email and Password required'});
-    }
-
-    try {
-        const tryExistingEmail = await pool.query(
-            'SELECT id FROM users WHERE email = $1',
-            [email]
-        );
-        if (tryExistingEmail.rows.length > 0) {
-            return res.status(409).json({ error: 'Account already exists with this email'});
+    router.post('/signup', async (req, res) => {
+        const { email, password, platform} = req.body;
+        //ensure required fields filled, else returns json w error
+        if (email == "" || password == "") {
+            return res.status(400).json({ error: 'Email and Password required'});
         }
-        const passwordHash = await argon2.hash(password);
-        const newAccount = await pool.query(
+
+        try {
+            const tryExistingEmail = await pool.query(
+                'SELECT id FROM users WHERE email = $1',
+                [email]
+            );
+            if (tryExistingEmail.rows.length > 0) {
+                return res.status(409).json({ error: 'Account already exists with this email'});
+            }
+            const passwordHash = await argon2.hash(password);
+            const newAccount = await pool.query(
             'INSERT INTO users (email, password_hash, first_name, last_name) VALUES ($1, $2, $3, $4) RETURNING id, email',
             [email, passwordHash, 'first d', 'lastexample']
         );
@@ -386,7 +386,10 @@ function getCookieValue(cookieHeader, name) {
     } 
     return null;
 }
-
+/**
+ * @openapi
+ * canajnkljandna
+ */
 router.post('/requireAuth2/', async (req, res, next) => {
     const headers = req.headers;
     console.log('requireAuth2 req recieved');
