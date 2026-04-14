@@ -161,30 +161,38 @@ export default function SelectedExerciseScreen() {
     ...(todayEntry ? [todayEntry] : []),
   ];
 
-  const rawLabels = allWorkoutsForChart.map((w) => w.date.slice(5));
-  const rawData = allWorkoutsForChart.map((w) =>
-    Math.max(...w.sets.map((s) => s.weight))
+  // Build a point for every logged set so the chart shows true set-by-set changes
+  // (e.g. 100 -> 120 -> 80 as three consecutive points).
+  const setPoints = allWorkoutsForChart.flatMap((workout) =>
+    workout.sets.map((set, index) => ({
+      weight: set.weight,
+      dateLabel: workout.date.slice(5),
+      setNumber: index + 1,
+    }))
   );
 
-  // Pad with a zero entry if there's only one data point
-  const labels = rawData.length === 1 ? ["", ...rawLabels] : rawLabels;
-  const data = rawData.length === 1 ? [0, ...rawData] : rawData;
+  // Keep labels lightweight. Show date+set on boundary points, index for sequence.
+  const labels = setPoints.map((point, index) => {
+    const isFirst = index === 0;
+    const isLast = index === setPoints.length - 1;
+    return isFirst || isLast
+      ? `${point.dateLabel} #${point.setNumber}`
+      : `${index + 1}`;
+  });
 
-
-  // Compute max weight per day for the chart
   const chartData =
-  allWorkoutsForChart.length > 0
-    ? {
-        labels,
-        datasets: [
-          {
-            data,
-            color: () => colors.primary,
-          },
-        ],
-        legend: ["Max Weight (lbs)"],
-      }
-    : null;
+    setPoints.length > 0
+      ? {
+          labels,
+          datasets: [
+            {
+              data: setPoints.map((point) => point.weight),
+              color: () => colors.primary,
+            },
+          ],
+          legend: ["Weight by Set (lbs)"],
+        }
+      : null;
 
   return (
     <ScrollView style={s.scrollView} showsVerticalScrollIndicator={false}>
