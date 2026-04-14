@@ -114,6 +114,40 @@ router.post("/sets", async (req, res) => {
   }
 });
 
+router.delete("/sets/:setId", async (req, res) => {
+  const setId = parseNumber(req.params.setId);
+  const userId = parseNumber(req.query.userId);
+
+  if (setId === null) {
+    return res.status(400).json({ error: "A valid setId is required" });
+  }
+
+  if (userId === null) {
+    return res.status(400).json({ error: "A valid userId is required" });
+  }
+
+  try {
+    await ensureExerciseCatalogTables();
+
+    const result = await pool.query(
+      `DELETE FROM workout_log
+        WHERE id = $1
+          AND user_id = $2
+       RETURNING id`,
+      [setId, userId]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: "Set not found" });
+    }
+
+    return res.json({ deletedSetId: result.rows[0].id });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Database error" });
+  }
+});
+
 router.get("/:exerciseId/history", async (req, res) => {
   const exerciseReference = parseExerciseId(req.params.exerciseId);
   const userId = parseNumber(req.query.userId);
