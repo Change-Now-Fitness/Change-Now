@@ -4,6 +4,7 @@
  * user's tokens, ensuring protected endpoints
  * have credentials supplied to them
  * returns data
+ * @author Samuel Mount
  */
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
@@ -19,6 +20,7 @@ const API_URL =  process.env.EXPO_PUBLIC_API_URL;
 async function apiRequest(endpointURL: string, options: RequestInit = {}) {
 
     const reqHeaders = new Headers(options.headers);
+    //for non web, gets local storage token and appends appropriate headers to request
     if (platform != 'web') {
         try {
             const token = await SecureStore.getItemAsync('user_token');
@@ -33,6 +35,7 @@ async function apiRequest(endpointURL: string, options: RequestInit = {}) {
         }
     } 
 
+    //append argument options and send req 
     try {
         const data = await fetch(`${API_URL}${endpointURL}`, {
             ...options, //appends options from arguments
@@ -49,12 +52,4 @@ async function apiRequest(endpointURL: string, options: RequestInit = {}) {
         console.log('request to backend faied, reporting from middleware');
         return {success : false, data: error};
     }
-
-    
-
-    //handle data in different formats
-
-    //handle errors
-
-
 }
