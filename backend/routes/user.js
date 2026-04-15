@@ -2,7 +2,19 @@ const express = require('express');
 const router = express.Router();
 const { requireAuth3 } = require('../middleware/requireAuth3');
 const pool = require('../dbconnection');
-
+/**
+ * @openapi
+ * /routes/getName:
+ *   post:
+ *     summary: Get user's name from DB and return it
+ *     tags: [Profile]
+ *     responses:
+ *       '200':
+ *         description: OK
+ *       '500':
+ *         description: Database request error
+ *         
+ */
 router.post('/getName', requireAuth3, async (req, res) => {
     const user_id = req.id;
     try {
