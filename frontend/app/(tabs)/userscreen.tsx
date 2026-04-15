@@ -5,7 +5,6 @@ import { useRouter } from 'expo-router';
 import { apiRequest } from '@/services/middleware';
 
 export default function UserScreen() {
-  const API_URL = process.env.EXPO_PUBLIC_API_URL || 'htpp://localhost:4000';
   const router = useRouter();
 
   const [name, setName] = useState("Name Undefined");
@@ -20,7 +19,7 @@ export default function UserScreen() {
 
       if (fullName.success == true) {
         console.log('full name fetch worked, name parsed: ', fullName.data);
-        const nameString = JSON.stringify(fullName.data.user_full_name).replace('"', '');
+        const nameString = fullName.data.user_full_name
         setName(nameString);
         setLoading(false);
         return;
