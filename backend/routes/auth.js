@@ -259,8 +259,8 @@ router.post('/login/', async (req, res) => {
             if (platform === 'web') {
                 res.cookie('token', token, {
                     httpOnly: true,
-                    secure: false,
-                    sameSite: 'lax',
+                    secure: false, //on prod, true
+                    sameSite: 'lax', //on prod, "none"
                     maxAge: 10 * 60 * 1000
                 });
                 console.log('cookie sent');

@@ -3,6 +3,7 @@ import { colors, spacing, fontSize, borderRadius } from "@/lib/theme";
 import { useState, useEffect } from "react";
 import { useRouter } from 'expo-router';
 import { apiRequest } from '@/services/middleware';
+import { logOut } from '@/services/auth';
 
 export default function UserScreen() {
   const router = useRouter();
@@ -38,6 +39,25 @@ export default function UserScreen() {
     loadName();
   }, []);
 
+  const handleLogOut = async () => {
+    try {
+      const res = await logOut();
+      if (res?.success) {
+        console.log('logoutsuccessful');
+        return router.replace('/');
+      }
+      else {
+        console.log('logout failed, error: ', res?.data);
+        router.replace('/');
+        return; //add ui error
+      }
+
+    } catch (e) {
+      console.log('logout failed, ', e);
+      return;
+    }
+  }
+
   return (
     <View style={s.container}>
       {
@@ -59,7 +79,7 @@ export default function UserScreen() {
 
               <TouchableOpacity
                 style={s.logoutButton}
-                //onPress={}
+                onPress={handleLogOut}
                 activeOpacity={0.8}
               >
                 <Text style={s.logoutText}>Log Out</Text>

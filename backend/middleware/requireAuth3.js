@@ -8,7 +8,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
 function requireAuth3(req, res, next) {
     const headers = req.headers;
     console.log('requireAuth2 req recieved');
-    const dprint = headers;
+    //const dprint = headers;
     //console.log(`headers: ${JSON.stringify(dprint)}`)
 
     if (headers.cookie) {
@@ -19,6 +19,8 @@ function requireAuth3(req, res, next) {
             const jwtoken = jwt.verify(token, JWT_SECRET);
             console.log('user id sent to next auth function from reqauth');
             req.id = jwtoken.user_id;
+            req.token = jwtoken;
+            req.platform = 'web';
             console.log('req user on cookie: ', JSON.stringify(req.id));
             return next();
             
@@ -34,7 +36,9 @@ function requireAuth3(req, res, next) {
             try {
                 const verifiedToken = jwt.verify(token, JWT_SECRET);
                 console.log('token verified');
-                req.user = { id: verifiedToken.user_id };
+                req.id = verifiedToken.user_id;
+                req.token = token;
+                req.platform = 'application';
                 return next();
             } catch (error) {
                 return res.status(401).json({success: false, message: 'bad token'});

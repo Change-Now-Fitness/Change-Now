@@ -24,4 +24,18 @@ router.post('/getName', requireAuth3, async (req, res) => {
         return res.status(500).json({error: error});
     }
 });
+
+router.post('/logOut', requireAuth3, async (req, res) => {
+    console.log('logout request recieved');
+    if (req.platform == 'web') {
+        res.clearCookie('token', {
+            httpOnly: true,
+            secure: false, //on prod, true
+            sameSite: 'lax', //on prod, "none"
+            path: '/'
+        });
+        console.log('logout on backend attempting')
+        return res.status(200).json({success: true, data: 'sent and overwrote logout cookie'});
+    }
+});
 module.exports = router;

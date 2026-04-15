@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
+import { apiRequest } from './middleware';
 /**
  * User authentication functions and middleware
  * 
@@ -153,5 +154,34 @@ export async function signUp(email: string, password: string) {
           console.log('Network Error', error);
           return false;
       }
+
+}
+/**
+ * Logs user out from userscreen
+ */
+export async function logOut() {
+    if (platform != 'web') {
+        await SecureStore.deleteItemAsync("user_token");
+    } else {
+        try {
+            const request = await apiRequest("/user/logOut", {
+                'method': 'POST'
+            })
+            if (request.success) {
+                console.log('backend reports logout successful')
+                return {request};  
+            }
+            console.log('success fail');
+            return {request};  
+
+    
+        } catch (error) {
+            console.log('logout failed: ', error)
+            return {success: false, data: error};
+        }
+    
+    }
+
+
 
 }
