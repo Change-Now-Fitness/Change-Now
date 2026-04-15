@@ -20,8 +20,9 @@ export default function UserScreen() {
 
       if (fullName.success == true) {
         console.log('full name fetch worked, name parsed: ', fullName.data);
-        const nameString = fullName.data.user_full_name
+        const nameString = fullName.data.full_name;
         setName(nameString);
+        console.log('name set, ', name);
         setLoading(false);
         return;
       } else {
