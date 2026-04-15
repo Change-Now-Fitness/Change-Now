@@ -17,7 +17,7 @@ const API_URL =  process.env.EXPO_PUBLIC_API_URL;
  * @param options use Method, Content type, and Body
  * @returns 
  */
-async function apiRequest(endpointURL: string, options: RequestInit = {}) {
+export async function apiRequest(endpointURL: string, options: RequestInit = {}) {
 
     const reqHeaders = new Headers(options.headers);
     //for non web, gets local storage token and appends appropriate headers to request

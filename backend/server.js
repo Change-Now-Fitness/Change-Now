@@ -1,5 +1,4 @@
 require('dotenv').config();
-
 const express = require('express');
 const authRouter = require("./routes/auth");
 const exerciseRoutes = require("./routes/exerciseRoutes");
@@ -7,6 +6,7 @@ const workoutRouter = require("./routes/workouts");
 const userRouter = require("./routes/user");
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
+
 const app = express();
 //my browser requires whitelisted address if api and frontend addresses are different
 const cors = require("cors");

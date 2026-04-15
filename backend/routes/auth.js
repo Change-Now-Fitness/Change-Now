@@ -330,14 +330,14 @@ router.post('/login/', async (req, res) => {
 router.post('/requireAuth/', async (req, res) => {
     const headers = req.headers;
     console.log('requireAuth req recieved');
-    const dprint = headers;
-    console.log(`headers: ${JSON.stringify(dprint)}`)
+    //const dprint = headers;
+    //console.log(`headers: ${JSON.stringify(dprint)}`)
 
     if (headers.cookie) {
         console.log('cookie');
         try {
             const token = getCookieValue(headers.cookie, 'token');
-            console.log(`cookie found: ${token}`);
+            //console.log(`cookie found: ${token}`);
             const jwtoken = jwt.verify(token, JWT_SECRET);
             console.log('user data sent back from verified cookie');
             return res.status(200).json({jwtoken});
@@ -400,7 +400,7 @@ router.post('/requireAuth2/', async (req, res, next) => {
         console.log('cookie');
         try {
             const token = getCookieValue(headers.cookie, 'token');
-            console.log(`cookie found: ${token}`);
+            //console.log(`cookie found: ${token}`);
             const jwtoken = jwt.verify(token, JWT_SECRET);
             console.log('user id sent to next auth function from reqauth');
             req.user = { id: jwtoken.user_id };
