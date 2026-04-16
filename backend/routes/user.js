@@ -36,7 +36,18 @@ router.post('/getName', requireAuth3, async (req, res) => {
         return res.status(500).json({error: error});
     }
 });
-
+/**
+ * @openapi
+ * /routes/logOut:
+ *   post:
+ *     summary: Checks the platform for web and clears cookie, 
+ *              mobile token deleted on clientside
+ *              
+ *     tags: [Profile]
+ *     responses:
+ *       '200':
+ *         description: Backend was able to destroy cookie or inform frontend mobile request leaked through
+ */
 router.post('/logOut', requireAuth3, async (req, res) => {
     console.log('logout request recieved');
     if (req.platform == 'web') {
@@ -48,6 +59,8 @@ router.post('/logOut', requireAuth3, async (req, res) => {
         });
         console.log('logout on backend attempting')
         return res.status(200).json({success: true, data: 'sent and overwrote logout cookie'});
+    } else {
+        return res.status(200).json({success: true, data: 'mobile application hit api, non destructive but fyi'}); 
     }
 });
 module.exports = router;
