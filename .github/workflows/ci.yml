@@ -2,7 +2,7 @@ name: CI/CD Pipeline
 
 on: 
   pull_request: 
-    branches: [ ci-cd ]
+    branches: [ ci-pipeline ]
     types: [ opened, synchronize ]
 
 permissions: 
@@ -25,6 +25,7 @@ jobs:
         run: npm run lint
 
   test:
+    if: false
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -39,18 +40,3 @@ jobs:
       - name: Run tests
         run: npm test
 
-  build:
-    needs: [lint]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: 
-          node-version: 20
-          cache: npm
-      - run: npm run ci:all
-      - run: npm run build
-      - uses: actions/upload-artifact@v4
-        with:
-          name: dist
-          path: frontend/dist

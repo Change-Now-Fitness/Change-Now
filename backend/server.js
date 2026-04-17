@@ -35,7 +35,7 @@ const corsOptions = {
                 callback(null, true);
                 return;
             }
-        } catch (error) {
+        } catch  {
             console.log(`Invalid CORS origin: ${origin}`);
         }
 
