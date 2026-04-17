@@ -4,6 +4,8 @@ on:
   pull_request: 
     branches: [ ci-pipeline ]
     types: [ opened, synchronize ]
+  push:
+    branches: [ ci-pipeline ]
 
 permissions: 
   contents: read
