@@ -1,5 +1,6 @@
 name: CI/CD Pipeline
 
+#on push or pr, this will run lint and basic tests and show results in github actions
 on: 
   pull_request: 
     branches: [ ci-pipeline ]
