@@ -1,6 +1,7 @@
 import {
   ActivityIndicator,
   Alert,
+  Platform,
   ScrollView,
   Text,
   TextInput,
@@ -170,14 +171,20 @@ export default function SelectedExerciseScreen() {
   };
 
   const confirmDeleteSet = (targetSet: WorkoutSet) => {
-    Alert.alert(
-      "Delete set",
-      `Delete set ${targetSet.set} (${targetSet.weight} lbs x ${targetSet.reps})?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Delete", style: "destructive", onPress: () => void handleDeleteSet(targetSet) },
-      ]
-    );
+    const message = `Delete set ${targetSet.set} (${targetSet.weight} lbs x ${targetSet.reps})?`;
+
+    if (Platform.OS === "web") {
+      const confirmed = window.confirm(message);
+      if (confirmed) {
+        void handleDeleteSet(targetSet);
+      }
+      return;
+    }
+
+    Alert.alert("Delete set", message, [
+      { text: "Cancel", style: "cancel" },
+      { text: "Delete", style: "destructive", onPress: () => void handleDeleteSet(targetSet) },
+    ]);
   };
 
   const isAddDisabled =
@@ -282,6 +289,7 @@ export default function SelectedExerciseScreen() {
 
       {/* Current Workout */}
       <Text style={s.sectionTitle}>Current Workout</Text>
+      {error ? <Text style={s.errorText}>{error}</Text> : null}
       <View style={s.card}>
         <View style={s.tableHeader}>
           <Text style={s.headerCell}>Set</Text>
@@ -538,5 +546,10 @@ const s = StyleSheet.create({
   emptyText: {
     fontSize: fontSize.sm,
     color: colors.textMuted,
+  },
+  errorText: {
+    fontSize: fontSize.sm,
+    color: "#ff8a80",
+    marginBottom: spacing.sm,
   },
 });
