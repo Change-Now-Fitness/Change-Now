@@ -1,6 +1,6 @@
 name: CodeQL
 
-#more in depth security scan
+#more in depth security scan, advanced security enabled
 on:
   pull_request:
     branches: [ci-pipeline]
