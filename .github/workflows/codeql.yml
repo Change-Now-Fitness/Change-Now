@@ -1,6 +1,5 @@
 name: CodeQL
 
-#more in depth security scan, advanced security enabled
 on:
   pull_request:
     branches: [ci-pipeline]
@@ -11,7 +10,6 @@ on:
 
 permissions:
   contents: read
-  actions: read
   security-events: write
 
 jobs:
