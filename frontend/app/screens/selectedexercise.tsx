@@ -209,14 +209,13 @@ export default function SelectedExerciseScreen() {
     }))
   );
 
-  // Keep labels lightweight. Show date+set on boundary points, index for sequence.
-  const labels = setPoints.map((point, index) => {
-    const isFirst = index === 0;
-    const isLast = index === setPoints.length - 1;
-    return isFirst || isLast
+  // Reduce X-axis clutter: show date on the first set of each day,
+  // then show only set numbers for the remaining sets on that same day.
+  const labels = setPoints.map((point) =>
+    point.setNumber === 1
       ? `${point.dateLabel} #${point.setNumber}`
-      : `${index + 1}`;
-  });
+      : `#${point.setNumber}`
+  );
 
   const chartData =
     setPoints.length > 0
