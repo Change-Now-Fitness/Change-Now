@@ -1,0 +1,46 @@
+name: CodeQL
+
+on:
+  pull_request:
+    branches: [ci-pipeline]
+  push:
+    branches: [ci-pipeline]
+  schedule:
+    - cron: "20 3 * * 1" # weekly Monday 03:20 UTC
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  analyze:
+    name: Analyze (CodeQL)
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ["javascript-typescript"]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+
+      # For JS/TS, CodeQL can often analyze without an explicit build.
+      # If you want it to see more code paths (esp. TS type info), install deps:
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm run ci:all
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
