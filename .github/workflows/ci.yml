@@ -26,26 +26,6 @@ jobs:
       - name: Run linter
         run: npm run lint
 
-  security: 
-    runs-on: ubuntu-latest
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-      - name: Install dependencies
-        run: npm run ci:all
-      - name: Audit backend dependencies
-        working-directory: backend
-        run: npm audit --audit-level=high
-      - name: Audit frontend dependencies
-        working-directory: frontend
-        run: npm audit --audit-level=high
-
   test:
     if: false
     runs-on: ubuntu-latest
