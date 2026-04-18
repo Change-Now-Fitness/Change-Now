@@ -42,7 +42,7 @@ describe("Login screen", () => {
     const { getByText } = render(<LoginScreen />);
     fireEvent.press(getByText("Sign Up"));
 
-    expect(mockPush).toHaveBeenCalledWith("/signupscreen");
+    expect(mockPush).toHaveBeenCalledWith("/screens/signup");
   });
 
   it("calls login service and redirects on success", async () => {

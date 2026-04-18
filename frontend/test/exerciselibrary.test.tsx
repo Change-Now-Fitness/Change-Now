@@ -32,6 +32,10 @@ describe("Exercise library screen", () => {
     render(<ExerciseLibrary />);
 
     await waitFor(() => {
+      expect(checkLogin).toHaveBeenCalledTimes(1);
+    });
+
+    await waitFor(() => {
       expect(mockReplace).toHaveBeenCalledWith("/");
     });
   });

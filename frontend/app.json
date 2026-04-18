@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Change-Now",
-    "slug": "Change-Now",
+    "slug": "change-now",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -13,6 +13,8 @@
       "bundleIdentifier": "com.anonymous.Change-Now"
     },
     "android": {
+      "package": "com.changenow.app",
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

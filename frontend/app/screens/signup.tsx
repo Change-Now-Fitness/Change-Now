@@ -1,13 +1,8 @@
 import React, { useState, useRef } from "react";
-import { Text, TextInput, View, StyleSheet, Pressable, Animated, Platform } from "react-native";
+import { Text, TextInput, View, StyleSheet, Pressable, Animated } from "react-native";
 import { useRouter } from "expo-router";
-import * as SecureStore from "expo-secure-store";
 import { useFonts, BebasNeue_400Regular } from '@expo-google-fonts/bebas-neue';
 import { signUp } from '../../services/auth';
-
-
-
-const API_URL = "http://localhost:4000";
 
 export default function SignupScreen() {
   const router = useRouter();
@@ -15,14 +10,9 @@ export default function SignupScreen() {
   const [password, setPassword] = useState("");
   const [confirmPassword, confirmSetPassword] = useState("");
   const [error, setError] = useState("");
-
-  const [loginHovered, setLoginHovered] = useState(false);
   const [signupHovered, setSignupHovered] = useState(false);
 
-  const loginScaleAnim = useRef(new Animated.Value(1)).current;
   const signupScaleAnim = useRef(new Animated.Value(1)).current;
-
-  const platform = Platform.OS;
 
   const [fontsLoaded] = useFonts({
         BebasNeue_400Regular,

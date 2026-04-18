@@ -2,14 +2,8 @@ import { Text, TextInput, View, StyleSheet, Pressable, Animated } from "react-na
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "expo-router";
 import { useFonts, BebasNeue_400Regular } from '@expo-google-fonts/bebas-neue';
-import * as SecureStore from "expo-secure-store";
-import { Platform } from "react-native";
 
 import { checkLogin, login } from "@/services/auth";
-import { log } from "node:console";
-
-
-const API_URL = "http://localhost:4000";
 
 export default function LoginScreen() {
 
@@ -31,29 +25,24 @@ export default function LoginScreen() {
     const loginScaleAnim = useRef(new Animated.Value(1)).current;
     const signupScaleAnim = useRef(new Animated.Value(1)).current;
 
-    const platform = Platform.OS;
-
-    const checkLoginStatus = async () => {
-
-        try {
-            const login_status = await checkLogin();
-            console.log(`login status: ${login_status.success}`);
-            if (login_status.success == true) {
-                router.replace('/(tabs)/exerciselibrary');
-                return true;
-            } else {
-                console.log('check login returned false');
-                return false;
-            }
-        } catch (error) {
-            console.log(`error checking log in status ${error}`);
-            return false;
-        };
-    };
-
     useEffect(() => {
-        checkLoginStatus();
-    }, []);
+        const checkLoginStatus = async () => {
+            try {
+                const login_status = await checkLogin();
+                console.log(`login status: ${login_status.success}`);
+                if (login_status.success === true) {
+                    router.replace('/(tabs)/exerciselibrary');
+                    return;
+                }
+
+                console.log('check login returned false');
+            } catch (error) {
+                console.log(`error checking log in status ${error}`);
+            }
+        };
+
+        void checkLoginStatus();
+    }, [router]);
         
 
     const [fontsLoaded] = useFonts({

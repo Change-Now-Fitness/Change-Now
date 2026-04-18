@@ -1,6 +1,7 @@
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { apiRequest } from './middleware';
+import { buildApiUrl } from '@/lib/config';
 /**
  * User authentication functions and middleware
  * 
@@ -11,9 +12,6 @@ import { apiRequest } from './middleware';
  * Functions return a true or false based on success which can be used
  * to use the "router" hook to change pages accordingly
  */
-
-const API_URL = 'http://localhost:4000';
-
 const platform = Platform.OS;
 
 /**
@@ -23,9 +21,9 @@ const platform = Platform.OS;
  */
 export async function checkLogin() {
     console.log('login status checking...');
-    if (platform == 'web') {
+    if (platform === 'web') {
         try {
-            const response = await fetch(`${API_URL}/auth/requireAuth`, {
+            const response = await fetch(buildApiUrl("/auth/requireAuth"), {
                 method: 'POST',
                 credentials: 'include'
             });
@@ -41,7 +39,7 @@ export async function checkLogin() {
         let checkToken = await SecureStore.getItemAsync('user_token');
         if (checkToken) {
             try {
-                const response = await fetch(`${API_URL}/auth/requireAuth`, {
+                const response = await fetch(buildApiUrl("/auth/requireAuth"), {
                     method: 'POST',
                     headers: {
                         'Content-Type':'application/json',
@@ -72,7 +70,7 @@ export async function checkLogin() {
 export async function login(email: string, password: string) {
     try {
         console.log('request sent to server');
-        const request = await fetch(`${API_URL}/auth/login`, {
+        const request = await fetch(buildApiUrl("/auth/login"), {
             method: 'POST',
             credentials: 'include',
             headers: {
@@ -85,7 +83,7 @@ export async function login(email: string, password: string) {
             return false;
         }
 
-        if (platform == 'web') {
+        if (platform === 'web') {
             console.log('web login function comlete');
             return true;
         } else {
@@ -112,7 +110,7 @@ export async function login(email: string, password: string) {
  */
 export async function signUp(email: string, password: string) {
     try {
-        const response = await fetch(`${API_URL}/auth/signup`, {
+        const response = await fetch(buildApiUrl("/auth/signup"), {
             method: 'POST',
             credentials: 'include',
             headers: {
@@ -130,7 +128,7 @@ export async function signUp(email: string, password: string) {
               return false;
           }
 
-        if (platform != "web") {
+        if (platform !== "web") {
 
             await SecureStore.setItemAsync('user_token', userData.token);
             console.log('Signup Success, jwt mobile token saved');
@@ -160,7 +158,7 @@ export async function signUp(email: string, password: string) {
  * Logs user out from userscreen
  */
 export async function logOut() {
-    if (platform != 'web') {
+    if (platform !== 'web') {
         await SecureStore.deleteItemAsync("user_token");
     } else {
         try {
