@@ -13,6 +13,7 @@ import { buildApiUrl } from '@/lib/config';
  * to use the "router" hook to change pages accordingly
  */
 const platform = Platform.OS;
+const TOKEN_KEY = "user_token";
 
 /**
  * Checks for valid token and returns boolean result
@@ -29,14 +30,24 @@ export async function checkLogin() {
             });
             const data = await response.json();
             console.log(`server repsonded with user ID:`, data);
-            return {'success': response.ok, 'user_id': data?.jwtoken?.user_id ?? ''};
+            return {
+                success: response.ok,
+                user_id: data?.jwtoken?.user_id ?? '',
+                status: response.status,
+                message: data?.message ?? '',
+            };
         } catch (error) {
             console.log(`auth error: ${error}`);
-            return {'success': false, 'user_id': ''};
+            return {
+                success: false,
+                user_id: '',
+                status: 0,
+                message: error instanceof Error ? error.message : 'Network request failed',
+            };
         }
 
     } else {
-        let checkToken = await SecureStore.getItemAsync('user_token');
+        let checkToken = await SecureStore.getItemAsync(TOKEN_KEY);
         if (checkToken) {
             try {
                 const response = await fetch(buildApiUrl("/auth/requireAuth"), {
@@ -47,16 +58,35 @@ export async function checkLogin() {
                     },
                 });
                 const data = await response.json();
-                return {'success': response.ok, 'user_id': data?.jwtoken?.user_id ?? ''}
+                if (!response.ok && response.status === 401) {
+                    await SecureStore.deleteItemAsync(TOKEN_KEY);
+                }
+
+                return {
+                    success: response.ok,
+                    user_id: data?.jwtoken?.user_id ?? '',
+                    status: response.status,
+                    message: data?.message ?? '',
+                };
                 
             } catch (error) {
                 console.log(`Bad token: ${error}`);
-                return {'success': false, 'user_id': ''};
+                return {
+                    success: false,
+                    user_id: '',
+                    status: 0,
+                    message: error instanceof Error ? error.message : 'Network request failed',
+                };
             }
 
         } 
         console.log('no token found');
-        return {'success': false, 'user_id': ''};
+        return {
+            success: false,
+            user_id: '',
+            status: 401,
+            message: 'Authentication token not found',
+        };
     }
 }
 
@@ -91,7 +121,7 @@ export async function login(email: string, password: string) {
             const json_response = JSON.stringify(java_obj_response);
             console.log(`response: ${json_response}`);
             console.log('response recieved');
-            await SecureStore.setItemAsync('user_token', java_obj_response.token);
+            await SecureStore.setItemAsync(TOKEN_KEY, java_obj_response.token);
             console.log('mobile login complete');
             return true;
         }
@@ -130,7 +160,7 @@ export async function signUp(email: string, password: string) {
 
         if (platform !== "web") {
 
-            await SecureStore.setItemAsync('user_token', userData.token);
+            await SecureStore.setItemAsync(TOKEN_KEY, userData.token);
             console.log('Signup Success, jwt mobile token saved');
             return true;
 
@@ -159,7 +189,8 @@ export async function signUp(email: string, password: string) {
  */
 export async function logOut() {
     if (platform !== 'web') {
-        await SecureStore.deleteItemAsync("user_token");
+        await SecureStore.deleteItemAsync(TOKEN_KEY);
+        return { success: true, data: null };
     } else {
         try {
             const request = await apiRequest("/user/logOut", {
@@ -167,10 +198,10 @@ export async function logOut() {
             })
             if (request.success) {
                 console.log('backend reports logout successful')
-                return {request};  
+                return { success: true, data: request.data };  
             }
             console.log('success fail');
-            return {request};  
+            return { success: false, data: request.data, message: request.message };  
 
     
         } catch (error) {

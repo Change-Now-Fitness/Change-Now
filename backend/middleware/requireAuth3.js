@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret'; 
+const JWT_SECRET = process.env.JWT_SECRET || process.env.JWT_KEY || 'dev-secret'; 
 /**
  * @openapi
  * canajnkljandna

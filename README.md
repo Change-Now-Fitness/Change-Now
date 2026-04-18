@@ -61,6 +61,25 @@ Frontend runs at: http://localhost:8081
 
 ---
 
+## Hosted Testing Checklist
+
+Before sending Android builds to testers:
+
+- deploy the backend to a public host
+- set `PUBLIC_API_URL` and backend env vars on that host
+- run `npm run validate:env` in `backend/`
+- verify `GET /health` and `GET /ready`
+- set `EXPO_PUBLIC_API_URL` in the frontend build environment
+- rebuild the Android app after the API URL changes
+
+Detailed steps are in:
+
+```text
+docs/deployment/android-testing-backend.md
+```
+
+---
+
 ## Backend Deployment (AWS EC2) ☁️
 
 The backend is deployed on an AWS EC2 instance and managed using **PM2**.

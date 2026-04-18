@@ -10,35 +10,42 @@ export default function UserScreen() {
 
   const [name, setName] = useState("Name Undefined");
   const [loading, setLoading] = useState(true);
-
-  const loadName = async () => {
-    try {
-      console.log('loadname sent');
-      const fullName = await apiRequest(`/user/getName`, {
-        'method': 'POST'
-      });
-
-      if (fullName.success == true) {
-        console.log('full name fetch worked, name parsed: ', fullName.data);
-        const nameString = fullName.data.full_name;
-        setName(nameString);
-        console.log('name set, ', name);
-        setLoading(false);
-        return;
-      } else {
-        console.log('fullname returned fail, error: ', fullName.data);
-        return router.replace('/');
-      }
-
-    } catch (error) {
-      console.log('loadname fail, error: ', error);
-      return router.replace('/');
-    }
-  }
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    loadName();
-  }, []);
+    const loadName = async () => {
+      try {
+        console.log('loadname sent');
+        const fullName = await apiRequest<{ full_name: string }>(`/user/getName`, {
+          'method': 'POST'
+        });
+
+        if (fullName.success === true && fullName.data?.full_name) {
+          console.log('full name fetch worked, name parsed: ', fullName.data);
+          const nameString = fullName.data.full_name;
+          setName(nameString);
+          setLoading(false);
+          return;
+        }
+
+        if (fullName.status === 401) {
+          console.log('fullname returned unauthorized, routing to login');
+          router.replace('/');
+          return;
+        }
+
+        console.log('fullname returned fail, error: ', fullName.message);
+        setError(fullName.message || 'Profile data is unavailable right now');
+        setLoading(false);
+      } catch (error) {
+        console.log('loadname fail, error: ', error);
+        setError('Profile data is unavailable right now');
+        setLoading(false);
+      }
+    };
+
+    void loadName();
+  }, [router]);
 
   const handleLogOut = async () => {
     try {
@@ -49,7 +56,7 @@ export default function UserScreen() {
       }
       else {
         console.log('logout failed, error: ', res?.data);
-        router.replace('/');
+        setError(res?.message || 'Logout failed');
         return; //add ui error
       }
 
@@ -67,6 +74,7 @@ export default function UserScreen() {
         ) :(
             <>
               <Text style={s.header}>Profile</Text>
+              {error ? <Text style={s.errorText}>{error}</Text> : null}
 
               <View style={s.card}>
                 <View style={s.avatarWrap}>
@@ -146,5 +154,10 @@ const s = StyleSheet.create({
     color: colors.danger,
     fontSize: fontSize.md,
     fontWeight: "700",
+  },
+  errorText: {
+    color: colors.danger,
+    fontSize: fontSize.sm,
+    marginBottom: spacing.md,
   },
 });

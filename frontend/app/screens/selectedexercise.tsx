@@ -31,6 +31,9 @@ type PreviousWorkout = {
   sets: WorkoutSet[];
 };
 
+const MAX_WEIGHT = 999.99;
+const MAX_REPS = 999;
+
 export default function SelectedExerciseScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ name?: string; exerciseId?: string }>();
@@ -71,7 +74,8 @@ export default function SelectedExerciseScreen() {
       try {
         const today = new Date().toISOString().split("T")[0];
         const data = await fetchCurrentSets(exerciseId, userId, today);
-        const mapped: WorkoutSet[] = data.map((row: any, index: number) => ({
+        const rows = Array.isArray(data) ? data : [];
+        const mapped: WorkoutSet[] = rows.map((row: any, index: number) => ({
           id: typeof row.id === "number" ? row.id : Number(row.id),
           set: index + 1,
           weight: parseFloat(row.weight),
@@ -101,10 +105,15 @@ export default function SelectedExerciseScreen() {
       setLoadingHistory(true);
       try {
         const grouped = await fetchExerciseHistory(exerciseId, userId);
+        if (!grouped || typeof grouped !== "object") {
+          setPreviousWorkouts([]);
+          return;
+        }
+
         const shaped: PreviousWorkout[] = Object.entries(grouped).map(
           ([date, sets]: [string, any]) => ({
             date: date as string,
-            sets: sets.map((s: any, i: number) => ({
+            sets: (Array.isArray(sets) ? sets : []).map((s: any, i: number) => ({
               set: i + 1,
               weight: parseFloat(s.weight),
               reps: s.reps,
@@ -128,9 +137,22 @@ export default function SelectedExerciseScreen() {
     const weight = parseFloat(weightText);
     const reps = parseInt(repsText, 10);
 
-    if (isNaN(weight) || isNaN(reps)) return;
+    if (isNaN(weight) || isNaN(reps)) {
+      setError("Weight and reps are required");
+      return;
+    }
 
     if (!userId || !exerciseId) return;
+
+    if (weight <= 0 || weight > MAX_WEIGHT) {
+      setError(`Weight must be between 0.01 and ${MAX_WEIGHT} lbs`);
+      return;
+    }
+
+    if (reps <= 0 || reps > MAX_REPS) {
+      setError(`Reps must be between 1 and ${MAX_REPS}`);
+      return;
+    }
 
     const optimisticSet: WorkoutSet = {
       set: currentSets.length + 1,
@@ -138,6 +160,7 @@ export default function SelectedExerciseScreen() {
       reps,
     };
 
+    setError("");
     setCurrentSets((prev) => [...prev, optimisticSet]);
     setWeightText("");
     setRepsText("");

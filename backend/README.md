@@ -1,24 +1,22 @@
-To start the backend, ensure you're in the backend directory and then do:
+## Backend Setup
 
+```bash
 npm install
-node server.js
+npm run validate:env
+npm start
+```
 
+For local development, copy values from [backend/.env.example](/c:/Change-Now/backend/.env.example:1).
 
+For hosted Android testing, follow [docs/deployment/android-testing-backend.md](/c:/Change-Now/docs/deployment/android-testing-backend.md:1).
 
-my .env may or may not be in the github but it has the supabase links with a populated db with tables. if its not, you might need to create your own but i do plan to create a team db so we dont have this issue
+## Main Files
 
---------------
-COMPONENTS
---------------
-backend/server.js
-core server class
-
-backend/routes/auth.js
-has authentication (login/signup stuff)
-
-backend/dbconnections.js
-
-contains connection pool for the db, its the databaselayer
+- [server.js](/c:/Change-Now/backend/server.js:1): Express server, route mounting, health checks, Swagger
+- [routes/auth.js](/c:/Change-Now/backend/routes/auth.js:1): signup, login, auth validation
+- [routes/user.js](/c:/Change-Now/backend/routes/user.js:1): profile and logout
+- [routes/workouts.js](/c:/Change-Now/backend/routes/workouts.js:1): current sets, history, set creation and deletion
+- [dbconnection.js](/c:/Change-Now/backend/dbconnection.js:1): PostgreSQL connection pool
 
 
 

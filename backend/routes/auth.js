@@ -7,8 +7,10 @@ const jwt = require('jsonwebtoken');
 const express = require("express");
 const router = express.Router();
 const { preload_workouts } = require('../services/preload')
+const { buildTokenCookieOptions } = require("../config/runtime");
 //secret code tbd, 'dev-secret' by defualt
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret'; 
+const JWT_SECRET = process.env.JWT_SECRET || process.env.JWT_KEY || 'dev-secret';
+const TOKEN_MAX_AGE_MS = 60 * 60 * 1000;
 
 
 /**
@@ -88,7 +90,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
     router.post('/signup', async (req, res) => {
         const { email, password, platform} = req.body;
         //ensure required fields filled, else returns json w error
-        if (email == "" || password == "") {
+        if (!email?.trim() || !password?.trim()) {
             return res.status(400).json({ error: 'Email and Password required'});
         }
 
@@ -105,9 +107,10 @@ const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
             'INSERT INTO users (email, password_hash, first_name, last_name) VALUES ($1, $2, $3, $4) RETURNING id, email',
             [email, passwordHash, 'first d', 'lastexample']
         );
-        const user = newAccount.rows[0].id;
+        const newUser = newAccount.rows[0];
+        const userId = newUser.id;
 
-        const preload = await preload_workouts(user);
+        const preload = await preload_workouts(userId);
         if (preload.success) {
             console.log('preload successful');
         } else {
@@ -116,7 +119,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
 
         const token = jwt.sign(
             {
-                user_id: user
+                user_id: userId
             },
             JWT_SECRET,
             { expiresIn: '1h'}
@@ -126,16 +129,11 @@ const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
             console.log(`token: ${token}`);
 
             console.log('sending cookie, web');
-            res.cookie('token', token, {
-                    httpOnly: true,
-                    secure: false,
-                    sameSite: "lax",
-                    maxAge: 10 * 60 * 1000
-            });
+            res.cookie('token', token, buildTokenCookieOptions(TOKEN_MAX_AGE_MS));
             return res.status(200).json({'success': true});
 
         } else {
-            return res.json({token, user: {id: user.id, email: user.email}});
+            return res.json({token, user: {id: newUser.id, email: newUser.email}});
         }
 
     } catch (error) {
@@ -257,12 +255,7 @@ router.post('/login/', async (req, res) => {
             //console.log(`token: ${token}`);
             //30 sec token for testing
             if (platform === 'web') {
-                res.cookie('token', token, {
-                    httpOnly: true,
-                    secure: false, //on prod, true
-                    sameSite: 'lax', //on prod, "none"
-                    maxAge: 10 * 60 * 1000
-                });
+                res.cookie('token', token, buildTokenCookieOptions(TOKEN_MAX_AGE_MS));
                 console.log('cookie sent');
                 return res.status(200).json({success: true});
                 

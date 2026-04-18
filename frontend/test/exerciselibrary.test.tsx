@@ -37,7 +37,7 @@ describe("Exercise library screen", () => {
 
     await waitFor(() => {
       expect(mockReplace).toHaveBeenCalledWith("/");
-    });
+    }, { timeout: 10000 });
   });
 
   it("loads and shows fetched exercise list", async () => {

@@ -6,48 +6,43 @@ const workoutRouter = require("./routes/workouts");
 const userRouter = require("./routes/user");
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
+const pool = require('./dbconnection');
+const {
+    assertValidRuntimeConfig,
+    configuredCorsOrigins,
+    getRuntimeConfigIssues,
+    getCorsOptions,
+    getPublicApiUrl,
+    shouldTrustProxy,
+} = require("./config/runtime");
 
 const app = express();
-//my browser requires whitelisted address if api and frontend addresses are different
 const cors = require("cors");
 
 //start server
 const port = process.env.PORT || 4000;
+const host = process.env.HOST || '0.0.0.0';
+const publicApiUrl = getPublicApiUrl(port);
+const corsOptions = getCorsOptions();
+const { warnings: runtimeWarnings } = getRuntimeConfigIssues();
 
-const isPrivateHostname = (hostname) =>
-    hostname === "localhost" ||
-    hostname === "127.0.0.1" ||
-    hostname === "::1" ||
-    /^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname) ||
-    /^192\.168\.\d{1,3}\.\d{1,3}$/.test(hostname) ||
-    /^172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}$/.test(hostname);
+assertValidRuntimeConfig();
 
-const corsOptions = {
-    origin(origin, callback) {
-        if (!origin) {
-            callback(null, true);
-            return;
-        }
-
-        try {
-            const parsedOrigin = new URL(origin);
-            if (parsedOrigin.protocol === "http:" && isPrivateHostname(parsedOrigin.hostname)) {
-                callback(null, true);
-                return;
-            }
-        } catch (error) {
-            console.log(`Invalid CORS origin: ${origin}`);
-        }
-
-        callback(new Error(`Origin not allowed by CORS: ${origin}`));
-    },
-    credentials: true,
+app.disable("x-powered-by");
+if (shouldTrustProxy) {
+    app.set("trust proxy", 1);
 }
-app.use(cors({
-    ...corsOptions
-}));
 
-;
+app.use(cors(corsOptions));
+
+for (const warning of runtimeWarnings) {
+    console.warn(`Runtime configuration warning: ${warning}`);
+}
+
+const mountApiRouter = (basePath, router) => {
+    app.use(basePath, router);
+    app.use(`/api${basePath}`, router);
+};
 
 const swaggerOptions = {
     definition: {
@@ -58,12 +53,12 @@ const swaggerOptions = {
         },
         servers: [
             {
-                url : 'http://localhost:4000',
-                 description: 'Dev Server'
-                }
-            ],
+                url: publicApiUrl,
+                description: process.env.NODE_ENV === "production" ? "Production Server" : "Configured API Server"
+            }
+        ],
     },
-        apis: ['routes/auth.js', 'routes/user.js'],
+    apis: ['routes/auth.js', 'routes/user.js'],
 };
 
 const swaggerSpecifications = swaggerJsdoc(swaggerOptions);
@@ -75,24 +70,65 @@ app.use('/api-docs',
     swaggerUi.setup(swaggerSpecifications, {explorer: true})
 );
 
-app.use("/auth", authRouter);
-app.use("/user", userRouter);
+mountApiRouter("/auth", authRouter);
+mountApiRouter("/user", userRouter);
 // Exercise routes are scaffolded separately so the frontend can move to a real
 // API contract without changing its object shape later.
-app.use("/exercises", exerciseRoutes);
-const pool = require('./dbconnection');
-app.use("/workouts", workoutRouter)
+mountApiRouter("/exercises", exerciseRoutes);
+mountApiRouter("/workouts", workoutRouter);
 
-
-//test route
 app.get('/', (req, res) => {
-    res.send('Gym API is running');
-})
+    res.json({
+        name: "ChangeNow API",
+        status: "ok",
+        docs: "/api-docs",
+        health: "/health",
+        ready: "/ready",
+        publicApiUrl,
+        allowedCorsOrigins: configuredCorsOrigins,
+        routeAliases: {
+            auth: ["/auth", "/api/auth"],
+            user: ["/user", "/api/user"],
+            exercises: ["/exercises", "/api/exercises"],
+            workouts: ["/workouts", "/api/workouts"],
+        },
+    });
+});
+
+app.get(['/health', '/api/health'], (req, res) => {
+    res.status(200).json({
+        status: "ok",
+        service: "backend",
+        timestamp: new Date().toISOString(),
+        uptimeSeconds: Math.round(process.uptime()),
+    });
+});
+
+app.get(['/ready', '/api/ready'], async (req, res) => {
+    try {
+        await pool.query('SELECT 1');
+        res.status(200).json({
+            status: "ok",
+            service: "backend",
+            database: "ok",
+            timestamp: new Date().toISOString(),
+        });
+    } catch (error) {
+        console.error('Readiness check failed:', error);
+        res.status(503).json({
+            status: "error",
+            service: "backend",
+            database: "unavailable",
+            timestamp: new Date().toISOString(),
+        });
+    }
+});
 
 
 if (require.main === module) {
-    app.listen(port, '', () => {
-        console.log(`Server listening on port ${port}`);
+    app.listen(port, host, () => {
+        console.log(`Server listening on ${host}:${port}`);
+        console.log(`Public API URL: ${publicApiUrl}`);
     });
 }
 

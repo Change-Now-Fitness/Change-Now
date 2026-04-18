@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { requireAuth3 } = require('../middleware/requireAuth3');
 const pool = require('../dbconnection');
+const { buildTokenCookieClearOptions } = require('../config/runtime');
 /**
  * @openapi
  * /routes/getName:
@@ -51,12 +52,7 @@ router.post('/getName', requireAuth3, async (req, res) => {
 router.post('/logOut', requireAuth3, async (req, res) => {
     console.log('logout request recieved');
     if (req.platform == 'web') {
-        res.clearCookie('token', {
-            httpOnly: true,
-            secure: false, //on prod, true
-            sameSite: 'lax', //on prod, "none"
-            path: '/'
-        });
+        res.clearCookie('token', buildTokenCookieClearOptions());
         console.log('logout on backend attempting')
         return res.status(200).json({success: true, data: 'sent and overwrote logout cookie'});
     } else {

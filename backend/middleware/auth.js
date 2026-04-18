@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken')
+const JWT_SECRET = process.env.JWT_SECRET || process.env.JWT_KEY || 'dev-secret';
 /**
  * 
  * @param {*} req 
@@ -20,9 +21,9 @@ const jwt = require('jsonwebtoken')
         return res.status(401).json({ message: 'token fails' })
       }
 
-      const decoded = jwt.verify(token, process.env.JWT_SECRET)
+      const decoded = jwt.verify(token, JWT_SECRET)
 
-      req.uid = decoded.uid
+      req.uid = decoded.user_id ?? decoded.uid
       req.user = decoded
 
       next()
