@@ -65,4 +65,5 @@ jobs:
         with:
           name: playwright-test-results
           path: frontend/test-results
+          run: ls -la frontend/test-results || true
 
