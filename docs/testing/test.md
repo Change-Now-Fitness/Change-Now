@@ -25,17 +25,20 @@ This file unit-tests the addSet() API helper in frontend/lib/api.ts. It verifies
 How: fetch is mocked with Jest, so no real network call is made.  
 What we expect: on success, fetch is called with the right endpoint and payload; on failure, addSet throws "Failed to save set".
 
+
 fetchExercises.test.ts:
 
 This file unit-tests fetchExercises() in frontend/lib/api.ts. It checks that the request includes userId in query params, returns the exercise list on success, and throws an ApiError-like object when the response is not ok.  
 How: fetch is mocked and controlled for both success and failure cases.  
 What we expect: correct endpoint usage, expected JSON result, and correct error handling for non-2xx responses.
 
+
 fetchCurrentSets.test.ts:
 
 This file unit-tests fetchCurrentSets() in frontend/lib/api.ts. It verifies that the request URL is built correctly with exerciseId, userId, and date, and returns current-set rows on success. It also verifies rejection behavior when the response is not ok.  
 How: fetch is mocked in Jest to avoid backend dependency.  
 What we expect: correct endpoint call, returned set rows, and thrown error message "Failed to fetch sets" on failure.
+
 
 fetchExerciseHistory.test.ts:
 
