@@ -82,6 +82,8 @@ export default function UserScreen() {
                 style={s.logoutButton}
                 onPress={handleLogOut}
                 activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityLabel="Log Out"
               >
                 <Text style={s.logoutText}>Log Out</Text>
               </TouchableOpacity>

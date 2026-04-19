@@ -35,7 +35,7 @@ const corsOptions = {
                 callback(null, true);
                 return;
             }
-        } catch (error) {
+        } catch  {
             console.log(`Invalid CORS origin: ${origin}`);
         }
 
@@ -80,7 +80,7 @@ app.use("/user", userRouter);
 // Exercise routes are scaffolded separately so the frontend can move to a real
 // API contract without changing its object shape later.
 app.use("/exercises", exerciseRoutes);
-const pool = require('./dbconnection');
+
 app.use("/workouts", workoutRouter)
 
 
@@ -96,16 +96,5 @@ if (require.main === module) {
     });
 }
 
-
-//get all members test
-app.get('/users', async (req, res) => {
-    try {
-        const result = await pool.query('SELECT * FROM users ORDER BY id');
-        res.json(result.rows);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Database error'});
-    }
-});
 
 module.exports = app;

@@ -1,0 +1,80 @@
+name: CI/CD Pipeline
+
+on: 
+  pull_request: 
+    branches: [ ci-pipeline ]
+    types: [ opened, synchronize ]
+  push:
+    branches: [ ci-pipeline ]
+
+permissions: 
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps: 
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm run ci:all
+      - name: Run linter
+        run: npm run lint
+
+  test:
+    runs-on: ubuntu-latest
+    env:
+      EXPO_PUBLIC_API_URL: http://localhost:4000
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            frontend/package-lock.json
+            backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm run ci:all
+
+      #Test if we have all dependencies in server.js smoke test
+      - name: Backend smoke import
+        run: node -e "require('./backend/server.js'); console.log('backend imports ok')"
+        
+      - name: Install Playwright browsers
+        working-directory: frontend
+        run: npx playwright install --with-deps
+
+      - name: Run unit tests (Jest)
+        run: npm test --prefix frontend
+
+      - name: Start backend
+        run: npm start --prefix backend &
+      
+
+      - name: Wait for backend
+        run: npx wait-on --timeout 60000 http://localhost:4000/
+        
+      - name: Run end-to-end tests (Playwright)
+        working-directory: frontend
+        run: npm run test:e2e 
+        
+      - name: Upload Playwright test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-test-results
+          path: frontend/test-results
+

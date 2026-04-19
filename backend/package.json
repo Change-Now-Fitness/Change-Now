@@ -7,7 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
     "sync:exercise-templates": "node scripts/syncExerciseTemplatesFromUser.js",
-    "migrate:exercise-model": "node scripts/migrateNormalizedExerciseModel.js"
+    "migrate:exercise-model": "node scripts/migrateNormalizedExerciseModel.js",
+    "lint": "eslint . "
   },
   "keywords": [],
   "author": "",
@@ -20,6 +21,12 @@
     "jsonwebtoken": "^9.0.3",
     "pg": "^8.19.0",
     "supabase-js": "^0.0.1-security",
+    "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.2.0",
+    "globals": "^17.5.0"
   }
 }

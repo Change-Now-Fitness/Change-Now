@@ -24,7 +24,7 @@ function requireAuth3(req, res, next) {
             console.log('req user on cookie: ', JSON.stringify(req.id));
             return next();
             
-        } catch (error) {
+        } catch {
             console.log('bad cookie');
             return res.status(401).json({success: false, message: 'bad token'});
         }
@@ -40,7 +40,7 @@ function requireAuth3(req, res, next) {
                 req.token = token;
                 req.platform = 'application';
                 return next();
-            } catch (error) {
+            } catch {
                 return res.status(401).json({success: false, message: 'bad token'});
             }
         }

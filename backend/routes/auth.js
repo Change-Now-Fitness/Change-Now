@@ -278,7 +278,7 @@ router.post('/login/', async (req, res) => {
             return res.status(403).json({error: "Incorrect Username or Password"});
         }
     
-    } catch (error) {
+    } catch {
         return res.status(500).json({error: "Server error"});
     }
 
@@ -341,7 +341,7 @@ router.post('/requireAuth/', async (req, res) => {
             const jwtoken = jwt.verify(token, JWT_SECRET);
             console.log('user data sent back from verified cookie');
             return res.status(200).json({jwtoken});
-        } catch (error) {
+        } catch {
             console.log('bad cookie');
             return res.status(401).json({success: false, message: 'bad token'});
         }
@@ -354,7 +354,7 @@ router.post('/requireAuth/', async (req, res) => {
                 const verifiedToken = jwt.verify(token, JWT_SECRET);
                 console.log('token verified');
                 return res.status(200).json({jwtoken: verifiedToken});
-            } catch (error) {
+            } catch {
                 return res.status(401).json({success: false, message: 'bad token'});
             }
         }
@@ -407,7 +407,7 @@ router.post('/requireAuth2/', async (req, res, next) => {
             console.log('req user on cookie: ', JSON.stringify(req.user));
             return next();
             
-        } catch (error) {
+        } catch {
             console.log('bad cookie');
             return res.status(401).json({success: false, message: 'bad token'});
         }
@@ -421,7 +421,7 @@ router.post('/requireAuth2/', async (req, res, next) => {
                 console.log('token verified');
                 req.user = { id: verifiedToken.user_id };
                 return next();
-            } catch (error) {
+            } catch {
                 return res.status(401).json({success: false, message: 'bad token'});
             }
         }
