@@ -9,7 +9,7 @@ import { checkLogin, login } from "@/services/auth";
 import { log } from "node:console";
 
 
-const API_URL = "http://localhost:4000";
+
 
 export default function LoginScreen() {
 
