@@ -32,7 +32,7 @@ jobs:
       EXPO_PUBLIC_API_URL: http://localhost:4000
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
-      
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -58,9 +58,18 @@ jobs:
 
       - name: Start backend
         run: npm start --prefix backend &
+      
+
+      - name: Show backend log
+        if: always()
+        run: |
+          echo "----- backend.log -----"
+          cat backend.log || true
 
       - name: Wait for backend
         run: npx wait-on --timeout 60000 http://localhost:4000/
+
+        
         
       - name: Run end-to-end tests (Playwright)
         working-directory: frontend
