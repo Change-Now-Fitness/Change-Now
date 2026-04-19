@@ -86,7 +86,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
  *                   type: string
  */
     router.post('/signup', async (req, res) => {
-        const { email, password, platform} = req.body;
+        const { email, password, firstName, lastName, platform} = req.body;
         //ensure required fields filled, else returns json w error
         if (email == "" || password == "") {
             return res.status(400).json({ error: 'Email and Password required'});
@@ -103,7 +103,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
             const passwordHash = await argon2.hash(password);
             const newAccount = await pool.query(
             'INSERT INTO users (email, password_hash, first_name, last_name) VALUES ($1, $2, $3, $4) RETURNING id, email',
-            [email, passwordHash, 'first d', 'lastexample']
+            [email, passwordHash, firstName, lastName]
         );
         const user = newAccount.rows[0].id;
 
