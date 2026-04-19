@@ -80,7 +80,7 @@ app.use("/user", userRouter);
 // Exercise routes are scaffolded separately so the frontend can move to a real
 // API contract without changing its object shape later.
 app.use("/exercises", exerciseRoutes);
-const pool = require('./dbconnection');
+
 app.use("/workouts", workoutRouter)
 
 
@@ -95,7 +95,6 @@ if (require.main === module) {
         console.log(`Server listening on port ${port}`);
     });
 }
-
 
 
 module.exports = app;

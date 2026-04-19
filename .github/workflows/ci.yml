@@ -30,6 +30,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       EXPO_PUBLIC_API_URL: http://localhost:4000
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
