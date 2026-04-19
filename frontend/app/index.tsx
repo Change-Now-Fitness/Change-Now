@@ -115,6 +115,7 @@ export default function LoginScreen() {
                 onChangeText={setEmail}
                 autoCapitalize="none"
                 keyboardType="email-address"
+                testID="email"
             />
             <TextInput
                 style={styles.input}
@@ -122,6 +123,7 @@ export default function LoginScreen() {
                 placeholderTextColor = "#666"
                 value = {password}
                 onChangeText = {setPassword}
+                testID="password"
                 secureTextEntry/>
         </View>   
         
@@ -137,7 +139,10 @@ export default function LoginScreen() {
                     onPressOut={handleLoginPressOut}
                     onHoverIn={() => setLoginHovered(true)}
                     onHoverOut={() => setLoginHovered(false)}
+                    accessibilityRole="button"
+                    accessibilityLabel="Log In"
                 >
+                    
                     <Text style={styles.loginButtonText}>Log In</Text>
                 </Pressable>
             </Animated.View>

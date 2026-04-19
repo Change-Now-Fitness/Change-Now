@@ -1,7 +1,5 @@
 name: CI/CD Pipeline
 
-#on push or pr, this will run lint and basic tests and show results in github actions
-#test9
 on: 
   pull_request: 
     branches: [ ci-pipeline ]
@@ -39,8 +37,16 @@ jobs:
         with:
           node-version: 20
           cache: npm
+          cache-dependencies: |
+            package-lock.json
+            frontend/package-lock.json
+            backend/package-lock.json
       - name: Install dependencies
         run: npm run ci:all
-      - name: Run tests
-        run: npm test
+      - name: Install playwright browsers
+        run: npx playwright install --with-deps
+      - name: Run unit tests (Jest)
+        run: npm run test
+      - name: Run end-to-end tests (Playwright)
+        run: npm run test:e2e
 
