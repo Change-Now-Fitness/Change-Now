@@ -1,5 +1,8 @@
 import {defineConfig, devices} from "@playwright/test";
 
+/**
+ * defines the environment for playwright (web ui) tests
+ */
 export default defineConfig({
     testDir: "./test/e2e",
     fullyParallel: true,
