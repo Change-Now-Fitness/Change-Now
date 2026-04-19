@@ -48,6 +48,10 @@ jobs:
 
       - name: Install dependencies
         run: npm run ci:all
+
+      #Test if we have all dependencies in server.js smoke test
+      - name: Backend smoke import
+        run: node -e "require('./backend/server.js'); console.log('backend imports ok')"
         
       - name: Install Playwright browsers
         working-directory: frontend
@@ -68,8 +72,6 @@ jobs:
 
       - name: Wait for backend
         run: npx wait-on --timeout 60000 http://localhost:4000/
-
-        
         
       - name: Run end-to-end tests (Playwright)
         working-directory: frontend
