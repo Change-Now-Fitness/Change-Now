@@ -5,4 +5,8 @@ local testing
 4. npm run test:e2e
 
 
+playwright environment settings in:
+frontend/playwright.config.ts
+
+currently only local tests configured, pushign to prod servers will fail tests
 -sam
