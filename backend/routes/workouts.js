@@ -342,30 +342,34 @@ router.delete("/sets/:setId", async (req, res) => {
   }
 });
 
-/**
+/** 
  * @openapi
  * /routes/{exerciseId}/history:
  *   get:
  *     summary: Get historical workout data grouped by date
- *     tags: [Workout]
+ *     tags:
+ *       - Workout
  *     parameters:
  *       - in: path
  *         name: exerciseId
  *         required: true
+ *         description: The exercise identifier
  *         schema:
  *           type: string
  *       - in: query
  *         name: userId
  *         required: true
+ *         description: The ID of the user
  *         schema:
  *           type: integer
  *     responses:
- *       '200':
+ *       200:
  *         description: Workout history grouped by date
  *         content:
  *           application/json:
  *             schema:
  *               type: object
+ *               description: Object where keys are ISO date strings (YYYY-MM-DD)
  *               additionalProperties:
  *                 type: array
  *                 items:
@@ -373,13 +377,31 @@ router.delete("/sets/:setId", async (req, res) => {
  *                   properties:
  *                     weight:
  *                       type: number
+ *                       nullable: true
+ *                       example: 135
+ *                       description: Weight used for strength exercises
  *                     reps:
  *                       type: integer
- *       '400':
+ *                       nullable: true
+ *                       example: 10
+ *                       description: Number of repetitions
+ *                     duration_seconds:
+ *                       type: integer
+ *                       nullable: true
+ *                       example: 600
+ *                       description: Duration of the exercise in seconds
+ *                     distance:
+ *                       type: number
+ *                       nullable: true
+ *                       example: 1.25
+ *                       description: Distance covered (e.g., miles)
+ *       400:
  *         description: Invalid exerciseId or userId
- *       '500':
+ *       500:
  *         description: Database error
  */
+
+
 router.get("/:exerciseId/history", async (req, res) => {
   const exerciseReference = parseExerciseId(req.params.exerciseId);
   const userId = parseNumber(req.query.userId);
