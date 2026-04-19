@@ -60,7 +60,7 @@ router.get("/:exerciseId/current", async (req, res) => {
     await ensureExerciseCatalogTables();
 
     const result = await pool.query(
-      `SELECT id, reps, weight
+      `SELECT id, reps, weight, duration_seconds, distance
          FROM workout_log
         WHERE ${referenceConfig.whereClause}
           AND user_id = $2
@@ -113,6 +113,48 @@ router.post("/sets", async (req, res) => {
     res.status(500).json({ error: "Database error" });
   }
 });
+
+
+// Add laps for cardio
+router.post("/laps", async (req, res) => {
+  const exerciseReference = parseExerciseId(req.body.exerciseId);
+  const userId = parseNumber(req.body.userId);
+  const durationSeconds = parseNumber(req.body.durationSeconds);
+  const distance = Number.parseFloat(req.body.distance);
+
+  if (!exerciseReference) {
+    return res.status(400).json({ error: "Exercise id is invalid" });
+  }
+
+  if (userId === null) {
+    return res.status(400).json({ error: "A valid userId is required" });
+  }
+
+  if (durationSeconds === null || Number.isNaN(distance)) {
+    return res
+      .status(400)
+      .json({ error: "Duration and distance are required" });
+  }
+
+  const referenceConfig = buildWorkoutReferenceConfig(exerciseReference);
+
+  try {
+    await ensureExerciseCatalogTables();
+
+    const result = await pool.query(
+      `INSERT INTO workout_log (${referenceConfig.insertColumn}, user_id, duration_seconds, distance)
+       VALUES ($1, $2, $3, $4)
+       RETURNING *`,
+      [exerciseReference.id, userId, durationSeconds, distance]
+    );
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
 
 router.delete("/sets/:setId", async (req, res) => {
   const setId = parseNumber(req.params.setId);
