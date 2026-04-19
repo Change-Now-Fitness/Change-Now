@@ -41,6 +41,55 @@ const buildWorkoutReferenceConfig = (exerciseReference) => {
   }
 };
 
+
+/**
+ * @openapi
+ * /routes/{exerciseId}/current:
+ *   get:
+ *     summary: Get today's workout sets/laps for an exercise
+ *     tags: [Workout]
+ *     parameters:
+ *       - in: path
+ *         name: exerciseId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Encoded exercise identifier
+ *       - in: query
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: User ID
+ *     responses:
+ *       '200':
+ *         description: List of today's workout entries
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                   reps:
+ *                     type: integer
+ *                     nullable: true
+ *                   weight:
+ *                     type: number
+ *                     nullable: true
+ *                   duration_seconds:
+ *                     type: integer
+ *                     nullable: true
+ *                   distance:
+ *                     type: number
+ *                     nullable: true
+ *       '400':
+ *         description: Invalid exerciseId or userId
+ *       '500':
+ *         description: Database error
+ */
 router.get("/:exerciseId/current", async (req, res) => {
   const exerciseReference = parseExerciseId(req.params.exerciseId);
   const userId = parseNumber(req.query.userId);
@@ -77,6 +126,41 @@ router.get("/:exerciseId/current", async (req, res) => {
   }
 });
 
+
+/**
+ * @openapi
+ * /routes/sets:
+ *   post:
+ *     summary: Add a strength training set
+ *     tags: [Workout]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - exerciseId
+ *               - userId
+ *               - weight
+ *               - reps
+ *             properties:
+ *               exerciseId:
+ *                 type: string
+ *               userId:
+ *                 type: integer
+ *               weight:
+ *                 type: number
+ *               reps:
+ *                 type: integer
+ *     responses:
+ *       '200':
+ *         description: Created set
+ *       '400':
+ *         description: Missing or invalid fields
+ *       '500':
+ *         description: Database error
+ */
 router.post("/sets", async (req, res) => {
   const exerciseReference = parseExerciseId(req.body.exerciseId);
   const userId = parseNumber(req.body.userId);
@@ -116,6 +200,40 @@ router.post("/sets", async (req, res) => {
 
 
 // Add laps for cardio
+/**
+ * @openapi
+ * /routes/laps:
+ *   post:
+ *     summary: Add a cardio lap entry
+ *     tags: [Workout]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - exerciseId
+ *               - userId
+ *               - durationSeconds
+ *               - distance
+ *             properties:
+ *               exerciseId:
+ *                 type: string
+ *               userId:
+ *                 type: integer
+ *               durationSeconds:
+ *                 type: integer
+ *               distance:
+ *                 type: number
+ *     responses:
+ *       '200':
+ *         description: Created lap entry
+ *       '400':
+ *         description: Missing or invalid fields
+ *       '500':
+ *         description: Database error
+ */
 router.post("/laps", async (req, res) => {
   const exerciseReference = parseExerciseId(req.body.exerciseId);
   const userId = parseNumber(req.body.userId);
@@ -156,6 +274,40 @@ router.post("/laps", async (req, res) => {
 });
 
 
+/**
+ * @openapi
+ * /routes/sets/{setId}:
+ *   delete:
+ *     summary: Delete a workout set
+ *     tags: [Workout]
+ *     parameters:
+ *       - in: path
+ *         name: setId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       '200':
+ *         description: Successfully deleted set
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 deletedSetId:
+ *                   type: integer
+ *       '400':
+ *         description: Invalid setId or userId
+ *       '404':
+ *         description: Set not found
+ *       '500':
+ *         description: Database error
+ */
 router.delete("/sets/:setId", async (req, res) => {
   const setId = parseNumber(req.params.setId);
   const userId = parseNumber(req.query.userId);
@@ -190,6 +342,44 @@ router.delete("/sets/:setId", async (req, res) => {
   }
 });
 
+/**
+ * @openapi
+ * /routes/{exerciseId}/history:
+ *   get:
+ *     summary: Get historical workout data grouped by date
+ *     tags: [Workout]
+ *     parameters:
+ *       - in: path
+ *         name: exerciseId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       '200':
+ *         description: Workout history grouped by date
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               additionalProperties:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     weight:
+ *                       type: number
+ *                     reps:
+ *                       type: integer
+ *       '400':
+ *         description: Invalid exerciseId or userId
+ *       '500':
+ *         description: Database error
+ */
 router.get("/:exerciseId/history", async (req, res) => {
   const exerciseReference = parseExerciseId(req.params.exerciseId);
   const userId = parseNumber(req.query.userId);
@@ -212,7 +402,7 @@ router.get("/:exerciseId/history", async (req, res) => {
     await ensureExerciseCatalogTables();
 
     const result = await pool.query(
-      `SELECT reps, weight, created_at
+      `SELECT reps, weight, duration_seconds, distance, created_at
         FROM workout_log
         WHERE ${referenceConfig.whereClause}
           AND user_id = $2
@@ -226,7 +416,11 @@ router.get("/:exerciseId/history", async (req, res) => {
     for (const row of result.rows) {
       const date = row.created_at.toISOString().split("T")[0];
       if (!grouped[date]) grouped[date] = [];
-      grouped[date].push({ weight: row.weight, reps: row.reps });
+      grouped[date].push({ weight: row.weight, 
+                           reps: row.reps, 
+                           duration_seconds: row.duration_seconds,
+                           distance: row.distance
+                        });
     }
 
     res.json(grouped);

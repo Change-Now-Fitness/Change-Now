@@ -23,8 +23,13 @@ import { useWindowDimensions } from "react-native";
 type WorkoutSet = {
   id?: number;
   set: number;
+  // strength
   weight: number;
   reps: number;
+  // cardio
+  durationSeconds?: number;
+  distance?: number;
+
 };
 
 type PreviousWorkout = {
@@ -85,20 +90,32 @@ export default function SelectedExerciseScreen() {
         const today = new Date().toISOString().split("T")[0];
         const data = await fetchCurrentSets(exerciseId, userId, today);
         const mapped: WorkoutSet[] = data.map((row: any, index: number) => {
-        const isCardioRow =
-          row.duration_seconds !== null && row.duration_seconds !== undefined;
+          const isCardioRow = row.duration_seconds != null;
 
-        return {
-          id: typeof row.id === "number" ? row.id : Number(row.id),
-          set: index + 1,
-          weight: isCardioRow
+          const durationSeconds = isCardioRow
             ? Number(row.duration_seconds)
-            : parseFloat(row.weight),
-          reps: isCardioRow
+            : undefined;
+
+          const distance = isCardioRow
             ? Number(row.distance)
-            : row.reps,
-        };
-      });
+            : undefined;
+
+          return {
+            id: typeof row.id === "number" ? row.id : Number(row.id),
+            set: index + 1,
+
+            weight: isCardioRow
+              ? durationSeconds!
+              : Number(row.weight),
+
+            reps: isCardioRow
+              ? distance!
+              : Number(row.reps),
+
+            durationSeconds,
+            distance,
+          };
+        });
         setCurrentSets(mapped);
       } catch (err: any) {
         console.error("Error fetching sets:", err.message);
@@ -115,36 +132,64 @@ export default function SelectedExerciseScreen() {
     loadCurrentSets();
   }, [exerciseId, userId]);
 
+  
+
   // Fetch previous workouts grouped by date
   useEffect(() => {
-    if (!exerciseId || !userId) return;
+  if (!exerciseId || !userId) return;
 
-    const loadHistory = async () => {
-      setLoadingHistory(true);
-      try {
-        const grouped = await fetchExerciseHistory(exerciseId, userId);
-        const shaped: PreviousWorkout[] = Object.entries(grouped).map(
-          ([date, sets]: [string, any]) => ({
-            date: date as string,
-            sets: sets.map((s: any, i: number) => ({
+  const loadHistory = async () => {
+    setLoadingHistory(true);
+    try {
+      const grouped = await fetchExerciseHistory(exerciseId, userId);
+
+      const shaped: PreviousWorkout[] = Object.entries(grouped).map(
+        ([date, sets]: [string, any]) => ({
+          date,
+          sets: sets.map((setRow: any, i: number) => {
+            const isCardioRow = setRow.duration_seconds != null;
+
+            const durationSeconds = isCardioRow
+              ? Number(setRow.duration_seconds)
+              : undefined;
+
+            const distance = isCardioRow
+              ? Number(setRow.distance)
+              : undefined;
+
+            return {
               set: i + 1,
-              weight: parseFloat(s.weight),
-              reps: s.reps,
-            })),
-          })
-        );
-        // Sort oldest to newest for the chart
-        shaped.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-        setPreviousWorkouts(shaped);
-      } catch (err: any) {
-        console.error("Error fetching history:", err.message);
-      } finally {
-        setLoadingHistory(false);
-      }
-    };
 
-    loadHistory();
-  }, [exerciseId, userId]);
+              weight: isCardioRow
+                ? durationSeconds!
+                : Number(setRow.weight),
+
+              reps: isCardioRow
+                ? distance!
+                : Number(setRow.reps),
+
+              durationSeconds,
+              distance,
+            };
+          }),
+        })
+      );
+
+      // Sort oldest → newest
+      shaped.sort(
+        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+      );
+
+      setPreviousWorkouts(shaped);
+    } catch (err: any) {
+      console.error("Error fetching history:", err.message);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
+  loadHistory();
+}, [exerciseId, userId]);
 
  const handleAddSet = async () => {
   if (!userId || !exerciseId) return;
@@ -293,12 +338,12 @@ export default function SelectedExerciseScreen() {
   const chartValues = setPoints.map((point) => {
     if (!isCardio) return point.weight;
 
-    const time = point.weight;   // seconds
-    const dist = point.reps;     // distance
+    const time = point.weight; // durationSeconds
+    const dist = point.reps;   // distance
 
-    if (!dist || dist === 0) return 0;
+    if (!time || !dist) return 0;
 
-    return -time / dist; 
+    return -time / dist;
   });
 
 
@@ -428,10 +473,10 @@ export default function SelectedExerciseScreen() {
             <View key={set.id ?? set.set} style={s.tableRow}>
               <Text style={s.cell}>{set.set}</Text>
               <Text style={s.cell}>
-                {isCardio ? formatTime(set.weight) : `${set.weight} lbs`}
+                {isCardio ? formatTime(set.durationSeconds!) : `${set.weight} lbs`}
               </Text>
               <Text style={s.cell}>
-                {isCardio ? `${set.reps} mi` : set.reps}
+                {isCardio ? `${set.distance} mi` : set.reps}
               </Text>
               <TouchableOpacity
                 style={s.deleteButton}
@@ -548,14 +593,22 @@ export default function SelectedExerciseScreen() {
             <Text style={s.historyDate}>{workout.date}</Text>
             <View style={s.tableHeader}>
               <Text style={s.headerCell}>Set</Text>
-              <Text style={s.headerCell}>Weight</Text>
-              <Text style={s.headerCell}>Reps</Text>
+              <Text style={s.headerCell}>
+                {isCardio ? "Time" : "Weight"}
+              </Text>
+              <Text style={s.headerCell}>
+                {isCardio ? "Distance" : "Reps"}
+              </Text>
             </View>
             {workout.sets.map((set) => (
               <View key={`${workout.date}-${set.set}`} style={s.tableRow}>
                 <Text style={s.cell}>{set.set}</Text>
-                <Text style={s.cell}>{set.weight} lbs</Text>
-                <Text style={s.cell}>{set.reps}</Text>
+                <Text style={s.cell}>
+                  {isCardio ? formatTime(set.weight) : `${set.weight} lbs`}
+                </Text>
+                <Text style={s.cell}>
+                  {isCardio ? `${set.reps} mi` : set.reps}
+                </Text>
               </View>
             ))}
           </View>
