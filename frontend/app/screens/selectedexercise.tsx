@@ -342,7 +342,13 @@ export default function SelectedExerciseScreen() {
       {/* Header */}
       <View style={s.headerRow}>
         <TouchableOpacity
-          onPress={() => router.back()}
+          onPress={() => {
+            if (router.canGoBack()) {
+              router.back();
+            } else {
+              router.replace("/(tabs)/exerciselibrary"); // go back to this page on refresh
+            }
+          }}
           style={s.backButton}
           accessibilityRole="button"
           accessibilityLabel="Go back"
