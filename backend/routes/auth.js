@@ -88,7 +88,7 @@ const TOKEN_MAX_AGE_MS = 60 * 60 * 1000;
  *                   type: string
  */
     router.post('/signup', async (req, res) => {
-        const { email, password, platform} = req.body;
+        const { email, password, firstName, lastName, platform} = req.body;
         //ensure required fields filled, else returns json w error
         if (!email?.trim() || !password?.trim()) {
             return res.status(400).json({ error: 'Email and Password required'});
@@ -105,7 +105,7 @@ const TOKEN_MAX_AGE_MS = 60 * 60 * 1000;
             const passwordHash = await argon2.hash(password);
             const newAccount = await pool.query(
             'INSERT INTO users (email, password_hash, first_name, last_name) VALUES ($1, $2, $3, $4) RETURNING id, email',
-            [email, passwordHash, 'first d', 'lastexample']
+            [email, passwordHash, firstName, lastName]
         );
         const newUser = newAccount.rows[0];
         const userId = newUser.id;
@@ -122,7 +122,7 @@ const TOKEN_MAX_AGE_MS = 60 * 60 * 1000;
                 user_id: userId
             },
             JWT_SECRET,
-            { expiresIn: '1h'}
+            { expiresIn: '24h'}
 
         );
         if (platform === 'web') {
@@ -250,7 +250,7 @@ router.post('/login/', async (req, res) => {
             //console.log(`id: ${id}`);
             const token = jwt.sign({
                 user_id: `${id}`
-            }, JWT_SECRET, { expiresIn: '1h'});
+            }, JWT_SECRET, { expiresIn: '24h'});
             console.log('token made');
             //console.log(`token: ${token}`);
             //30 sec token for testing
@@ -271,7 +271,7 @@ router.post('/login/', async (req, res) => {
             return res.status(403).json({error: "Incorrect Username or Password"});
         }
     
-    } catch (error) {
+    } catch {
         return res.status(500).json({error: "Server error"});
     }
 
@@ -334,7 +334,7 @@ router.post('/requireAuth/', async (req, res) => {
             const jwtoken = jwt.verify(token, JWT_SECRET);
             console.log('user data sent back from verified cookie');
             return res.status(200).json({jwtoken});
-        } catch (error) {
+        } catch {
             console.log('bad cookie');
             return res.status(401).json({success: false, message: 'bad token'});
         }
@@ -347,7 +347,7 @@ router.post('/requireAuth/', async (req, res) => {
                 const verifiedToken = jwt.verify(token, JWT_SECRET);
                 console.log('token verified');
                 return res.status(200).json({jwtoken: verifiedToken});
-            } catch (error) {
+            } catch {
                 return res.status(401).json({success: false, message: 'bad token'});
             }
         }
@@ -400,7 +400,7 @@ router.post('/requireAuth2/', async (req, res, next) => {
             console.log('req user on cookie: ', JSON.stringify(req.user));
             return next();
             
-        } catch (error) {
+        } catch {
             console.log('bad cookie');
             return res.status(401).json({success: false, message: 'bad token'});
         }
@@ -414,7 +414,7 @@ router.post('/requireAuth2/', async (req, res, next) => {
                 console.log('token verified');
                 req.user = { id: verifiedToken.user_id };
                 return next();
-            } catch (error) {
+            } catch {
                 return res.status(401).json({success: false, message: 'bad token'});
             }
         }

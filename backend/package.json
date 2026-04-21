@@ -8,7 +8,8 @@
     "start": "node server.js",
     "validate:env": "node scripts/validateEnv.js",
     "sync:exercise-templates": "node scripts/syncExerciseTemplatesFromUser.js",
-    "migrate:exercise-model": "node scripts/migrateNormalizedExerciseModel.js"
+    "migrate:exercise-model": "node scripts/migrateNormalizedExerciseModel.js",
+    "lint": "eslint . "
   },
   "keywords": [],
   "author": "",
@@ -23,5 +24,10 @@
     "supabase-js": "^0.0.1-security",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.2.0",
+    "globals": "^17.5.0"
   }
 }

@@ -138,7 +138,7 @@ export async function login(email: string, password: string) {
  * @param password 
  * @returns 
  */
-export async function signUp(email: string, password: string) {
+export async function signUp(email: string, password: string, firstName: string, lastName: string) {
     try {
         const response = await fetch(buildApiUrl("/auth/signup"), {
             method: 'POST',
@@ -146,7 +146,7 @@ export async function signUp(email: string, password: string) {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ email, password, platform }),
+            body: JSON.stringify({ email, password, firstName, lastName, platform }),
         });
           console.log('post response true: ', response.ok);
           const userData = await response.json();

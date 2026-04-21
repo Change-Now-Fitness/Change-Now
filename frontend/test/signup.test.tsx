@@ -29,6 +29,8 @@ describe("Signup screen", () => {
     const { getByPlaceholderText, getByText, findByText } = render(<SignupScreen />);
 
     fireEvent.changeText(getByPlaceholderText("Email"), "test@example.com");
+    fireEvent.changeText(getByPlaceholderText("First Name"), "John");
+    fireEvent.changeText(getByPlaceholderText("Last Name"), "Smith");
     fireEvent.changeText(getByPlaceholderText("Password"), "password123");
     fireEvent.changeText(getByPlaceholderText("Confirm Password"), "different123");
     fireEvent.press(getByText("Create Account"));
@@ -40,6 +42,8 @@ describe("Signup screen", () => {
     const { getByPlaceholderText, getByText, findByText } = render(<SignupScreen />);
 
     fireEvent.changeText(getByPlaceholderText("Email"), "test@example.com");
+    fireEvent.changeText(getByPlaceholderText("First Name"), "John");
+    fireEvent.changeText(getByPlaceholderText("Last Name"), "Smith");
     fireEvent.changeText(getByPlaceholderText("Password"), "123");
     fireEvent.changeText(getByPlaceholderText("Confirm Password"), "123");
     fireEvent.press(getByText("Create Account"));
@@ -52,12 +56,14 @@ describe("Signup screen", () => {
 
     const { getByPlaceholderText, getByText } = render(<SignupScreen />);
     fireEvent.changeText(getByPlaceholderText("Email"), "test@example.com");
+    fireEvent.changeText(getByPlaceholderText("First Name"), "John");
+    fireEvent.changeText(getByPlaceholderText("Last Name"), "Smith");
     fireEvent.changeText(getByPlaceholderText("Password"), "password123");
     fireEvent.changeText(getByPlaceholderText("Confirm Password"), "password123");
     fireEvent.press(getByText("Create Account"));
 
     await waitFor(() => {
-      expect(signUp).toHaveBeenCalledWith("test@example.com", "password123");
+      expect(signUp).toHaveBeenCalledWith("test@example.com", "password123", "John", "Smith");
       expect(mockReplace).toHaveBeenCalledWith("/(tabs)/exerciselibrary");
     });
   });

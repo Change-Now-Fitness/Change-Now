@@ -27,7 +27,7 @@ const JWT_SECRET = process.env.JWT_SECRET || process.env.JWT_KEY || 'dev-secret'
       req.user = decoded
 
       next()
-    } catch (err) {
+    } catch  {
       return res.status(401).json({ message: 'token expired' })
     }
   }

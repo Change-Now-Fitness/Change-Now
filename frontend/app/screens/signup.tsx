@@ -8,6 +8,8 @@ export default function SignupScreen() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [confirmPassword, confirmSetPassword] = useState("");
   const [error, setError] = useState("");
   const [signupHovered, setSignupHovered] = useState(false);
@@ -33,6 +35,11 @@ export default function SignupScreen() {
     console.log('trying signup');
     setError("");
 
+    if (!firstName || !lastName ) {
+      setError("First name and last name must not be empty.");
+      return;
+    }
+
     // Confirm password check
     if (password !== confirmPassword) {
       setError("Passwords do not match");
@@ -44,10 +51,9 @@ export default function SignupScreen() {
       return;
     }
 
-
     try {
       console.log('trying signup');
-      const successBool = await signUp(email, password);
+      const successBool = await signUp(email, password, firstName, lastName);
       console.log('successbool: ', successBool)
       if (successBool) {
         router.replace('/(tabs)/exerciselibrary');
@@ -64,18 +70,35 @@ export default function SignupScreen() {
   }
     
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Sign Up</Text>
-        <View style = {styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          placeholderTextColor="#666"
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          keyboardType="email-address"
-        />
+      <View style={styles.container}>
+        <Text style={styles.title}>Sign Up</Text>
+          <View style = {styles.inputContainer}>
+            <TextInput
+              style={styles.input}
+              placeholder="Email"
+              placeholderTextColor="#666"
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              keyboardType="email-address"
+            />
+            <View style={styles.nameRow}>
+              <TextInput
+                style={styles.nameInput}
+                placeholder="First Name"
+                placeholderTextColor="#666"
+                value={firstName}
+                onChangeText={setFirstName}
+              />
+
+              <TextInput
+                style={styles.nameInput}
+                placeholder="Last Name"
+                placeholderTextColor="#666"
+                value={lastName}
+                onChangeText={setLastName}
+              />
+          </View>
         <TextInput
           style={styles.input}
           placeholder="Password"
@@ -95,7 +118,6 @@ export default function SignupScreen() {
       </View>
 
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
-
 
       <Animated.View style={{ transform: [{scale: signupScaleAnim }]}}>
         <Pressable 
@@ -118,11 +140,26 @@ export default function SignupScreen() {
 }
 
 const styles = StyleSheet.create({
+  
   container: {
     flex: 1,
     justifyContent: "flex-start",
     alignItems: "center",
     backgroundColor: "#48494b",
+  },
+  nameRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 10, 
+  },
+  nameInput: {
+    flex: 1,
+    backgroundColor: "#f5f5f5",
+    color: "#000000",
+    padding: 10,
+    marginBottom: 20,
+    width: "100%",
+    borderRadius: 8,
   },
   title: {
     fontSize: 48,

@@ -353,7 +353,9 @@ export default function ExerciseLibrary() {
                         onPress={() =>
                           router.push({
                             pathname: "../screens/selectedexercise",
-                            params: { name: exercise.name, exerciseId: exercise.id.toString() },
+                            params: { name: exercise.name, 
+                                      exerciseId: exercise.id.toString(), 
+                                      exerciseCategory: exercise.muscleGroup },
                           })
                         }
                       >

@@ -58,7 +58,7 @@ const swaggerOptions = {
             }
         ],
     },
-    apis: ['routes/auth.js', 'routes/user.js'],
+        apis: ['./routes/**/*.js'],
 };
 
 const swaggerSpecifications = swaggerJsdoc(swaggerOptions);
@@ -74,8 +74,10 @@ mountApiRouter("/auth", authRouter);
 mountApiRouter("/user", userRouter);
 // Exercise routes are scaffolded separately so the frontend can move to a real
 // API contract without changing its object shape later.
-mountApiRouter("/exercises", exerciseRoutes);
-mountApiRouter("/workouts", workoutRouter);
+app.use("/exercises", exerciseRoutes);
+
+app.use("/workouts", workoutRouter)
+
 
 app.get('/', (req, res) => {
     res.json({
@@ -132,16 +134,5 @@ if (require.main === module) {
     });
 }
 
-
-//get all members test
-app.get('/users', async (req, res) => {
-    try {
-        const result = await pool.query('SELECT * FROM users ORDER BY id');
-        res.json(result.rows);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Database error'});
-    }
-});
 
 module.exports = app;
