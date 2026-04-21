@@ -119,7 +119,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
                 user_id: user
             },
             JWT_SECRET,
-            { expiresIn: '1h'}
+            { expiresIn: '24h'}
 
         );
         if (platform === 'web') {
@@ -130,7 +130,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
                     httpOnly: true,
                     secure: false,
                     sameSite: "lax",
-                    maxAge: 10 * 60 * 1000
+                    maxAge: 24* 60 * 60 * 1000
             });
             return res.status(200).json({'success': true});
 
@@ -252,7 +252,7 @@ router.post('/login/', async (req, res) => {
             //console.log(`id: ${id}`);
             const token = jwt.sign({
                 user_id: `${id}`
-            }, JWT_SECRET, { expiresIn: '1h'});
+            }, JWT_SECRET, { expiresIn: '24h'});
             console.log('token made');
             //console.log(`token: ${token}`);
             //30 sec token for testing
@@ -261,7 +261,7 @@ router.post('/login/', async (req, res) => {
                     httpOnly: true,
                     secure: false, //on prod, true
                     sameSite: 'lax', //on prod, "none"
-                    maxAge: 10 * 60 * 1000
+                    maxAge: 24* 60 * 60 * 1000
                 });
                 console.log('cookie sent');
                 return res.status(200).json({success: true});
