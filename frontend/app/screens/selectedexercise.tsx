@@ -23,9 +23,11 @@ import { useWindowDimensions } from "react-native";
 type WorkoutSet = {
   id?: number;
   set: number;
+  
   // strength
   weight: number;
   reps: number;
+  
   // cardio
   durationSeconds?: number;
   distance?: number;
@@ -226,7 +228,14 @@ export default function SelectedExerciseScreen() {
     set: currentSets.length + 1,
     weight: isCardio ? durationSeconds! : weight!,
     reps: isCardio ? distance! : reps!,
+
+    // Cardio values
+    durationSeconds: isCardio ? durationSeconds! : undefined,
+    distance: isCardio? distance! : undefined,
+
   };
+
+  const optimisticIndex = currentSets.length;
 
   setCurrentSets((prev) => [...prev, optimisticSet]);
 
@@ -240,14 +249,41 @@ export default function SelectedExerciseScreen() {
   }
   setRepsText("");
 
-  try {
-    if (isCardio) {
-      await addLap(exerciseId, userId, durationSeconds!, distance!);
-    } else {
-      await addSet(exerciseId, userId, weight!, reps!);
-    }
+  
 
-    await loadCurrentSets();
+  try {
+    const created = isCardio
+    ? await addLap(exerciseId, userId, durationSeconds!, distance!)
+    : await addSet(exerciseId, userId, weight!, reps!);
+
+    const normalizedSet: WorkoutSet = {
+      id: created.id,
+      set: optimisticIndex + 1,
+
+      weight: isCardio
+        ? Number(created.duration_seconds)
+        : Number(created.weight),
+
+      reps: isCardio
+        ? Number(created.distance)
+        : Number(created.reps),
+
+      durationSeconds: created.duration_seconds != null
+        ? Number(created.duration_seconds)
+        : undefined,
+
+      distance: created.distance != null
+        ? Number(created.distance)
+        : undefined,
+    };
+
+    // Replace optimistic update with real, so delete and ordering behavior still works
+    setCurrentSets(prev => {
+      const copy = [...prev];
+      copy[optimisticIndex] = normalizedSet;
+      return copy;
+    });
+
   } catch (err: any) {
     setCurrentSets((prev) => prev.slice(0, -1));
     setError(err.message || "Failed to save set");
