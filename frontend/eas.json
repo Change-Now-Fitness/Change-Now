@@ -6,11 +6,17 @@
   "build": {
     "preview": {
       "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://change-now-production.up.railway.app"
+      },
       "android": {
         "buildType": "apk"
       }
     },
     "production": {
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://change-now-production.up.railway.app"
+      },
       "android": {
         "buildType": "app-bundle"
       }
