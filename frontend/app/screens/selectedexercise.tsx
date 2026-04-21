@@ -71,6 +71,9 @@ export default function SelectedExerciseScreen() {
   const [hoursText, setHoursText] = useState("");
   const [minutesText, setMinutesText] = useState("");
   const [secondsText, setSecondsText] = useState("");
+
+  // Range state for graph timespan toggle
+  const [range, setRange] = useState<"week" | "month" | "year">("week");
   
 
   // Get the logged-in user's ID
@@ -350,9 +353,25 @@ export default function SelectedExerciseScreen() {
     ...(todayEntry ? [todayEntry] : []),
   ];
 
+  // Range
+  const now = new Date();
+
+  const filteredWorkouts = allWorkoutsForChart.filter((workout) => {
+    const workoutDate = new Date(workout.date);
+    const diffDays =
+      (now.getTime() - workoutDate.getTime()) / (1000 * 60 * 60 * 24);
+
+    if (range === "week") return diffDays <= 7;
+    if (range === "month") return diffDays <= 30;
+    if (range === "year") return diffDays <= 365;
+
+    return true;
+  });
+
+
   // Build a point for every logged set so the chart shows true set-by-set changes
   // (e.g. 100 -> 120 -> 80 as three consecutive points).
-  const setPoints = allWorkoutsForChart.flatMap((workout) =>
+  const setPoints = filteredWorkouts.flatMap((workout) =>
     workout.sets.map((set, index) => ({
       weight: set.weight,
       reps: set.reps,
@@ -440,8 +459,27 @@ export default function SelectedExerciseScreen() {
         <View style={{ width: 32 }} />
       </View>
 
+      {/* Range Toggle */}
+      <View style={{ flexDirection: "row", gap: 8, marginBottom: 8 }}>
+        {["week", "month", "year"].map((r) => (
+          <TouchableOpacity
+            key={r}
+            onPress={() => setRange(r as any)}
+            style={{
+              paddingVertical: 6,
+              paddingHorizontal: 12,
+              borderRadius: 8,
+              backgroundColor: range === r ? colors.primary : colors.bgInput,
+            }}
+          >
+            <Text style={{ color: colors.text }}>
+              {r.toUpperCase()}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
       {/* Chart */}
-      
       <View style={s.historyCard}>
         {loadingHistory ? (
           <View style={s.centeredRow}>
