@@ -86,7 +86,7 @@ app.use("/workouts", workoutRouter)
 
 //test route
 app.get('/', (req, res) => {
-    res.send('Gym API is running');
+    res.send('Gym API is running!');
 })
 
 
