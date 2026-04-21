@@ -19,6 +19,9 @@ const parseNumber = (value) => {
   return Number.isNaN(parsedValue) ? null : parsedValue;
 };
 
+const MAX_WEIGHT = 999.99;
+const MAX_REPS = 999;
+
 const buildWorkoutReferenceConfig = (exerciseReference) => {
   switch (exerciseReference.source) {
     case TEMPLATE_SOURCE:
@@ -177,6 +180,18 @@ router.post("/sets", async (req, res) => {
 
   if (Number.isNaN(weight) || reps === null) {
     return res.status(400).json({ error: "Weight and reps are required" });
+  }
+
+  if (weight <= 0 || weight > MAX_WEIGHT) {
+    return res.status(400).json({
+      error: `Weight must be between 0.01 and ${MAX_WEIGHT} lbs`,
+    });
+  }
+
+  if (reps <= 0 || reps > MAX_REPS) {
+    return res.status(400).json({
+      error: `Reps must be between 1 and ${MAX_REPS}`,
+    });
   }
 
   const referenceConfig = buildWorkoutReferenceConfig(exerciseReference);

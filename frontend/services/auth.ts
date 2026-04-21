@@ -1,6 +1,7 @@
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { apiRequest } from './middleware';
+import { buildApiUrl } from '@/lib/config';
 /**
  * User authentication functions and middleware
  * 
@@ -11,10 +12,8 @@ import { apiRequest } from './middleware';
  * Functions return a true or false based on success which can be used
  * to use the "router" hook to change pages accordingly
  */
-
-const API_URL = 'http://localhost:4000';
-
 const platform = Platform.OS;
+const TOKEN_KEY = "user_token";
 
 /**
  * Checks for valid token and returns boolean result
@@ -23,25 +22,35 @@ const platform = Platform.OS;
  */
 export async function checkLogin() {
     console.log('login status checking...');
-    if (platform == 'web') {
+    if (platform === 'web') {
         try {
-            const response = await fetch(`${API_URL}/auth/requireAuth`, {
+            const response = await fetch(buildApiUrl("/auth/requireAuth"), {
                 method: 'POST',
                 credentials: 'include'
             });
             const data = await response.json();
             console.log(`server repsonded with user ID:`, data);
-            return {'success': response.ok, 'user_id': data?.jwtoken?.user_id ?? ''};
+            return {
+                success: response.ok,
+                user_id: data?.jwtoken?.user_id ?? '',
+                status: response.status,
+                message: data?.message ?? '',
+            };
         } catch (error) {
             console.log(`auth error: ${error}`);
-            return {'success': false, 'user_id': ''};
+            return {
+                success: false,
+                user_id: '',
+                status: 0,
+                message: error instanceof Error ? error.message : 'Network request failed',
+            };
         }
 
     } else {
-        let checkToken = await SecureStore.getItemAsync('user_token');
+        let checkToken = await SecureStore.getItemAsync(TOKEN_KEY);
         if (checkToken) {
             try {
-                const response = await fetch(`${API_URL}/auth/requireAuth`, {
+                const response = await fetch(buildApiUrl("/auth/requireAuth"), {
                     method: 'POST',
                     headers: {
                         'Content-Type':'application/json',
@@ -49,16 +58,35 @@ export async function checkLogin() {
                     },
                 });
                 const data = await response.json();
-                return {'success': response.ok, 'user_id': data?.jwtoken?.user_id ?? ''}
+                if (!response.ok && response.status === 401) {
+                    await SecureStore.deleteItemAsync(TOKEN_KEY);
+                }
+
+                return {
+                    success: response.ok,
+                    user_id: data?.jwtoken?.user_id ?? '',
+                    status: response.status,
+                    message: data?.message ?? '',
+                };
                 
             } catch (error) {
                 console.log(`Bad token: ${error}`);
-                return {'success': false, 'user_id': ''};
+                return {
+                    success: false,
+                    user_id: '',
+                    status: 0,
+                    message: error instanceof Error ? error.message : 'Network request failed',
+                };
             }
 
         } 
         console.log('no token found');
-        return {'success': false, 'user_id': ''};
+        return {
+            success: false,
+            user_id: '',
+            status: 401,
+            message: 'Authentication token not found',
+        };
     }
 }
 
@@ -72,7 +100,7 @@ export async function checkLogin() {
 export async function login(email: string, password: string) {
     try {
         console.log('request sent to server');
-        const request = await fetch(`${API_URL}/auth/login`, {
+        const request = await fetch(buildApiUrl("/auth/login"), {
             method: 'POST',
             credentials: 'include',
             headers: {
@@ -85,7 +113,7 @@ export async function login(email: string, password: string) {
             return false;
         }
 
-        if (platform == 'web') {
+        if (platform === 'web') {
             console.log('web login function comlete');
             return true;
         } else {
@@ -93,7 +121,7 @@ export async function login(email: string, password: string) {
             const json_response = JSON.stringify(java_obj_response);
             console.log(`response: ${json_response}`);
             console.log('response recieved');
-            await SecureStore.setItemAsync('user_token', java_obj_response.token);
+            await SecureStore.setItemAsync(TOKEN_KEY, java_obj_response.token);
             console.log('mobile login complete');
             return true;
         }
@@ -112,7 +140,7 @@ export async function login(email: string, password: string) {
  */
 export async function signUp(email: string, password: string, firstName: string, lastName: string) {
     try {
-        const response = await fetch(`${API_URL}/auth/signup`, {
+        const response = await fetch(buildApiUrl("/auth/signup"), {
             method: 'POST',
             credentials: 'include',
             headers: {
@@ -130,9 +158,9 @@ export async function signUp(email: string, password: string, firstName: string,
               return false;
           }
 
-        if (platform != "web") {
+        if (platform !== "web") {
 
-            await SecureStore.setItemAsync('user_token', userData.token);
+            await SecureStore.setItemAsync(TOKEN_KEY, userData.token);
             console.log('Signup Success, jwt mobile token saved');
             return true;
 
@@ -160,8 +188,9 @@ export async function signUp(email: string, password: string, firstName: string,
  * Logs user out from userscreen
  */
 export async function logOut() {
-    if (platform != 'web') {
-        await SecureStore.deleteItemAsync("user_token");
+    if (platform !== 'web') {
+        await SecureStore.deleteItemAsync(TOKEN_KEY);
+        return { success: true, data: null };
     } else {
         try {
             const request = await apiRequest("/user/logOut", {
@@ -169,10 +198,10 @@ export async function logOut() {
             })
             if (request.success) {
                 console.log('backend reports logout successful')
-                return {request};  
+                return { success: true, data: request.data };  
             }
             console.log('success fail');
-            return {request};  
+            return { success: false, data: request.data, message: request.message };  
 
     
         } catch (error) {

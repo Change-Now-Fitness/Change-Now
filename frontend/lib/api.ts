@@ -1,38 +1,16 @@
-// lib/api.ts
 import { Platform } from "react-native";
 import * as SecureStore from "expo-secure-store";
+import { buildApiUrl } from "@/lib/config";
 
 
 const TOKEN_KEY = "user_token";
-const normalizeApiBaseUrl = (value?: string) => {
-  const rawValue = value?.trim();
-
-  if (!rawValue) {
-    return "http://localhost:4000";
-  }
-
-  try {
-    const parsedUrl = new URL(rawValue);
-    if (
-      parsedUrl.protocol === "https:" &&
-      ["localhost", "127.0.0.1", "::1"].includes(parsedUrl.hostname)
-    ) {
-      parsedUrl.protocol = "http:";
-    }
-
-    return parsedUrl.toString().replace(/\/$/, "");
-  } catch {
-    return "http://localhost:4000";
-  }
-};
-
-const BASE_URL = normalizeApiBaseUrl(process.env.EXPO_PUBLIC_API_URL);
-console.log("BASE_URL:", BASE_URL);
 
 export interface ApiError {
   status: number;
   message: string;
 }
+
+type ApiRequestError = Error & ApiError;
 
 export interface Exercise {
   id: string | number;
@@ -46,19 +24,20 @@ export interface Exercise {
 const buildApiError = async (
   res: Response,
   fallbackMessage: string
-): Promise<ApiError> => {
+): Promise<ApiRequestError> => {
+  let message = fallbackMessage;
+
   try {
     const data = await res.json();
-    return {
-      status: res.status,
-      message: data.message || data.error || fallbackMessage,
-    };
+    message = data.message || data.error || fallbackMessage;
   } catch {
-    return {
-      status: res.status,
-      message: fallbackMessage,
-    };
+    message = fallbackMessage;
   }
+
+  const error = new Error(message) as ApiRequestError;
+  error.status = res.status;
+  error.message = message;
+  return error;
 };
 export async function getToken(): Promise<string | null> {
   if (Platform.OS === "web") {
@@ -89,7 +68,7 @@ export async function apiFetch<T = any>(
     }
   }
 
-  const res = await fetch(`${BASE_URL}${path}`, {
+  const res = await fetch(buildApiUrl(path), {
     method,
     headers,
     body: body ? JSON.stringify(body) : undefined,
@@ -104,7 +83,10 @@ export async function apiFetch<T = any>(
 
   if (!res.ok) {
     const message = data?.error || `Request failed with status ${res.status}`;
-    throw { status: res.status, message } as ApiError;
+    const error = new Error(message) as ApiRequestError;
+    error.status = res.status;
+    error.message = message;
+    throw error;
   }
 
   return data as T;
@@ -112,9 +94,9 @@ export async function apiFetch<T = any>(
 
 
 export async function fetchExercises(userId: number) {
-  const res = await fetch(
-    `${BASE_URL}/exercises?userId=${encodeURIComponent(userId.toString())}`
-  );
+  const url = new URL(buildApiUrl("/exercises"));
+  url.searchParams.set("userId", userId.toString());
+  const res = await fetch(url.toString());
 
   if (!res.ok) {
     throw await buildApiError(res, "Failed to fetch exercises");
@@ -128,7 +110,7 @@ export async function createExercise(
     userId: number;
   }
 ) {
-  const res = await fetch(`${BASE_URL}/exercises`, {
+  const res = await fetch(buildApiUrl("/exercises"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -142,20 +124,23 @@ export async function createExercise(
 }
 
 export async function fetchCurrentSets(exerciseId: string, userId: number, date: string) {
-  const res = await fetch(
-    `${BASE_URL}/workouts/${exerciseId}/current?userId=${userId}&date=${date}`
-  );
+  const url = new URL(buildApiUrl(`/workouts/${exerciseId}/current`));
+  url.searchParams.set("userId", userId.toString());
+  url.searchParams.set("date", date);
+  const res = await fetch(url.toString());
   if (!res.ok) throw new Error("Failed to fetch sets");
   return res.json();
 }
 
 export async function addSet(exerciseId: string, userId: number, weight: number, reps: number) {
-  const res = await fetch(`${BASE_URL}/workouts/sets`, {
+  const res = await fetch(buildApiUrl("/workouts/sets"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ exerciseId, userId, weight, reps }),
   });
-  if (!res.ok) throw new Error("Failed to save set");
+  if (!res.ok) {
+    throw await buildApiError(res, "Failed to save set");
+  }
   return res.json();
 }
 
@@ -177,15 +162,23 @@ export async function addLap(exerciseId: string,userId: number, durationSeconds:
 }
 
 export async function deleteSet(setId: number, userId: number) {
-  const res = await fetch(`${BASE_URL}/workouts/sets/${setId}?userId=${userId}`, {
+  const url = new URL(buildApiUrl(`/workouts/sets/${setId}`));
+  url.searchParams.set("userId", userId.toString());
+  const res = await fetch(url.toString(), {
     method: "DELETE",
   });
-  if (!res.ok) throw new Error("Failed to delete set");
+  if (!res.ok) {
+    throw await buildApiError(res, "Failed to delete set");
+  }
   return res.json();
 }
 
 export async function fetchExerciseHistory(exerciseId: string, userId: number) {
-  const res = await fetch(`${BASE_URL}/workouts/${exerciseId}/history?userId=${userId}`);
-  if (!res.ok) throw new Error("Failed to fetch history");
+  const url = new URL(buildApiUrl(`/workouts/${exerciseId}/history`));
+  url.searchParams.set("userId", userId.toString());
+  const res = await fetch(url.toString());
+  if (!res.ok) {
+    throw await buildApiError(res, "Failed to fetch history");
+  }
   return res.json();
 }

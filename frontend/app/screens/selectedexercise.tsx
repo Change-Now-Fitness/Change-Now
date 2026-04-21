@@ -39,6 +39,9 @@ type PreviousWorkout = {
   sets: WorkoutSet[];
 };
 
+const MAX_WEIGHT = 999.99;
+const MAX_REPS = 999;
+
 export default function SelectedExerciseScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ 
@@ -143,6 +146,34 @@ export default function SelectedExerciseScreen() {
   useEffect(() => {
   if (!exerciseId || !userId) return;
 
+    const loadHistory = async () => {
+      setLoadingHistory(true);
+      try {
+        const grouped = await fetchExerciseHistory(exerciseId, userId);
+        if (!grouped || typeof grouped !== "object") {
+          setPreviousWorkouts([]);
+          return;
+        }
+
+        const shaped: PreviousWorkout[] = Object.entries(grouped).map(
+          ([date, sets]: [string, any]) => ({
+            date: date as string,
+            sets: (Array.isArray(sets) ? sets : []).map((s: any, i: number) => ({
+              set: i + 1,
+              weight: parseFloat(s.weight),
+              reps: s.reps,
+            })),
+          })
+        );
+        // Sort oldest to newest for the chart
+        shaped.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        setPreviousWorkouts(shaped);
+      } catch (err: any) {
+        console.error("Error fetching history:", err.message);
+      } finally {
+        setLoadingHistory(false);
+      }
+    };
   const loadHistory = async () => {
     setLoadingHistory(true);
     try {
@@ -165,6 +196,26 @@ export default function SelectedExerciseScreen() {
             return {
               set: i + 1,
 
+    if (weight <= 0 || weight > MAX_WEIGHT) {
+      setError(`Weight must be between 0.01 and ${MAX_WEIGHT} lbs`);
+      return;
+    }
+
+    if (reps <= 0 || reps > MAX_REPS) {
+      setError(`Reps must be between 1 and ${MAX_REPS}`);
+      return;
+    }
+
+    const optimisticSet: WorkoutSet = {
+      set: currentSets.length + 1,
+      weight,
+      reps,
+    };
+
+    setError("");
+    setCurrentSets((prev) => [...prev, optimisticSet]);
+    setWeightText("");
+    setRepsText("");
               weight: isCardioRow
                 ? durationSeconds!
                 : Number(setRow.weight),

@@ -2,10 +2,11 @@
   "name": "backend",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
+    "validate:env": "node scripts/validateEnv.js",
     "sync:exercise-templates": "node scripts/syncExerciseTemplatesFromUser.js",
     "migrate:exercise-model": "node scripts/migrateNormalizedExerciseModel.js",
     "lint": "eslint . "

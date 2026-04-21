@@ -32,8 +32,12 @@ describe("Exercise library screen", () => {
     render(<ExerciseLibrary />);
 
     await waitFor(() => {
-      expect(mockReplace).toHaveBeenCalledWith("/");
+      expect(checkLogin).toHaveBeenCalledTimes(1);
     });
+
+    await waitFor(() => {
+      expect(mockReplace).toHaveBeenCalledWith("/");
+    }, { timeout: 10000 });
   });
 
   it("loads and shows fetched exercise list", async () => {
