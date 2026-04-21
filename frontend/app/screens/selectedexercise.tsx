@@ -144,10 +144,11 @@ export default function SelectedExerciseScreen() {
 
   // Fetch previous workouts grouped by date
   useEffect(() => {
-  if (!exerciseId || !userId) return;
+    if (!exerciseId || !userId) return;
 
     const loadHistory = async () => {
       setLoadingHistory(true);
+
       try {
         const grouped = await fetchExerciseHistory(exerciseId, userId);
         if (!grouped || typeof grouped !== "object") {
@@ -157,16 +158,30 @@ export default function SelectedExerciseScreen() {
 
         const shaped: PreviousWorkout[] = Object.entries(grouped).map(
           ([date, sets]: [string, any]) => ({
-            date: date as string,
-            sets: (Array.isArray(sets) ? sets : []).map((s: any, i: number) => ({
-              set: i + 1,
-              weight: parseFloat(s.weight),
-              reps: s.reps,
-            })),
+            date,
+            sets: (Array.isArray(sets) ? sets : []).map((setRow: any, i: number) => {
+              const isCardioRow = setRow.duration_seconds != null;
+              const durationSeconds = isCardioRow
+                ? Number(setRow.duration_seconds)
+                : undefined;
+              const distance = isCardioRow ? Number(setRow.distance) : undefined;
+
+              return {
+                set: i + 1,
+                weight: isCardioRow ? durationSeconds! : Number(setRow.weight),
+                reps: isCardioRow ? distance! : Number(setRow.reps),
+                durationSeconds,
+                distance,
+              };
+            }),
           })
         );
-        // Sort oldest to newest for the chart
-        shaped.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+        // Sort oldest to newest
+        shaped.sort(
+          (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+        );
+
         setPreviousWorkouts(shaped);
       } catch (err: any) {
         console.error("Error fetching history:", err.message);
@@ -174,80 +189,11 @@ export default function SelectedExerciseScreen() {
         setLoadingHistory(false);
       }
     };
-  const loadHistory = async () => {
-    setLoadingHistory(true);
-    try {
-      const grouped = await fetchExerciseHistory(exerciseId, userId);
 
-      const shaped: PreviousWorkout[] = Object.entries(grouped).map(
-        ([date, sets]: [string, any]) => ({
-          date,
-          sets: sets.map((setRow: any, i: number) => {
-            const isCardioRow = setRow.duration_seconds != null;
+    void loadHistory();
+  }, [exerciseId, userId]);
 
-            const durationSeconds = isCardioRow
-              ? Number(setRow.duration_seconds)
-              : undefined;
-
-            const distance = isCardioRow
-              ? Number(setRow.distance)
-              : undefined;
-
-            return {
-              set: i + 1,
-
-    if (weight <= 0 || weight > MAX_WEIGHT) {
-      setError(`Weight must be between 0.01 and ${MAX_WEIGHT} lbs`);
-      return;
-    }
-
-    if (reps <= 0 || reps > MAX_REPS) {
-      setError(`Reps must be between 1 and ${MAX_REPS}`);
-      return;
-    }
-
-    const optimisticSet: WorkoutSet = {
-      set: currentSets.length + 1,
-      weight,
-      reps,
-    };
-
-    setError("");
-    setCurrentSets((prev) => [...prev, optimisticSet]);
-    setWeightText("");
-    setRepsText("");
-              weight: isCardioRow
-                ? durationSeconds!
-                : Number(setRow.weight),
-
-              reps: isCardioRow
-                ? distance!
-                : Number(setRow.reps),
-
-              durationSeconds,
-              distance,
-            };
-          }),
-        })
-      );
-
-      // Sort oldest → newest
-      shaped.sort(
-        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-      );
-
-      setPreviousWorkouts(shaped);
-    } catch (err: any) {
-      console.error("Error fetching history:", err.message);
-    } finally {
-      setLoadingHistory(false);
-    }
-  };
-
-  loadHistory();
-}, [exerciseId, userId]);
-
- const handleAddSet = async () => {
+  const handleAddSet = async () => {
   if (!userId || !exerciseId) return;
 
   let weight: number | null = null;
@@ -275,9 +221,21 @@ export default function SelectedExerciseScreen() {
     reps = parseInt(repsText, 10);
 
     if (isNaN(weight) || isNaN(reps)) return;
+
+    if (weight <= 0 || weight > MAX_WEIGHT) {
+      setError(`Weight must be between 0.01 and ${MAX_WEIGHT} lbs`);
+      return;
+    }
+
+    if (reps <= 0 || reps > MAX_REPS) {
+      setError(`Reps must be between 1 and ${MAX_REPS}`);
+      return;
+    }
   }
 
   // Optimistic UI update
+  setError("");
+
   const optimisticSet: WorkoutSet = {
     set: currentSets.length + 1,
     weight: isCardio ? durationSeconds! : weight!,

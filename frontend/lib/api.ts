@@ -146,8 +146,13 @@ export async function addSet(exerciseId: string, userId: number, weight: number,
 
 
 // Cardio function, uses new field distance and durationSeconds
-export async function addLap(exerciseId: string,userId: number, durationSeconds: number, distance: number) {
-  const res = await fetch(`${BASE_URL}/workouts/laps`, {
+export async function addLap(
+  exerciseId: string,
+  userId: number,
+  durationSeconds: number,
+  distance: number
+) {
+  const res = await fetch(buildApiUrl("/workouts/laps"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -157,7 +162,9 @@ export async function addLap(exerciseId: string,userId: number, durationSeconds:
       distance,
     }),
   });
-  if (!res.ok) throw new Error("Failed to save lap");
+  if (!res.ok) {
+    throw await buildApiError(res, "Failed to save lap");
+  }
   return res.json();
 }
 
