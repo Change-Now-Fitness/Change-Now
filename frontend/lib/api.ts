@@ -160,6 +160,31 @@ export async function addSet(exerciseId: string, userId: number, weight: number,
   return res.json();
 }
 
+
+// Cardio function, uses new field distance and durationSeconds
+export async function addLap(exerciseId: string,userId: number, durationSeconds: number, distance: number) {
+  const res = await fetch(`${BASE_URL}/workouts/laps`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      exerciseId,
+      userId,
+      durationSeconds,
+      distance,
+    }),
+  });
+  if (!res.ok) throw new Error("Failed to save lap");
+  return res.json();
+}
+
+export async function deleteSet(setId: number, userId: number) {
+  const res = await fetch(`${BASE_URL}/workouts/sets/${setId}?userId=${userId}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) throw new Error("Failed to delete set");
+  return res.json();
+}
+
 export async function fetchExerciseHistory(exerciseId: string, userId: number) {
   const res = await fetch(`${BASE_URL}/workouts/${exerciseId}/history?userId=${userId}`);
   if (!res.ok) throw new Error("Failed to fetch history");

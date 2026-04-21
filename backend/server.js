@@ -1,12 +1,18 @@
 require('dotenv').config();
-
 const express = require('express');
 const authRouter = require("./routes/auth");
 const exerciseRoutes = require("./routes/exerciseRoutes");
 const workoutRouter = require("./routes/workouts");
+const userRouter = require("./routes/user");
+const swaggerJsdoc = require('swagger-jsdoc');
+const swaggerUi = require('swagger-ui-express');
+
 const app = express();
 //my browser requires whitelisted address if api and frontend addresses are different
 const cors = require("cors");
+
+//start server
+const port = process.env.PORT || 4000;
 
 const isPrivateHostname = (hostname) =>
     hostname === "localhost" ||
@@ -29,25 +35,52 @@ const corsOptions = {
                 callback(null, true);
                 return;
             }
-        } catch (error) {
+        } catch  {
             console.log(`Invalid CORS origin: ${origin}`);
         }
 
         callback(new Error(`Origin not allowed by CORS: ${origin}`));
     },
     credentials: true,
-};
-
+}
 app.use(cors({
     ...corsOptions
 }));
 
+;
+
+const swaggerOptions = {
+    definition: {
+        openapi: '3.0.0',
+        info: {
+            title: 'Change Now API Docs', 
+            version: '5.10.26'
+        },
+        servers: [
+            {
+                url : 'http://localhost:4000',
+                 description: 'Dev Server'
+                }
+            ],
+    },
+        apis: ['./routes/**/*.js'],
+};
+
+const swaggerSpecifications = swaggerJsdoc(swaggerOptions);
+
 app.use(express.json());
+
+app.use('/api-docs',
+    swaggerUi.serve, 
+    swaggerUi.setup(swaggerSpecifications, {explorer: true})
+);
+
 app.use("/auth", authRouter);
+app.use("/user", userRouter);
 // Exercise routes are scaffolded separately so the frontend can move to a real
 // API contract without changing its object shape later.
 app.use("/exercises", exerciseRoutes);
-const pool = require('./dbconnection');
+
 app.use("/workouts", workoutRouter)
 
 
@@ -56,8 +89,6 @@ app.get('/', (req, res) => {
     res.send('Gym API is running');
 })
 
-//start server
-const port = process.env.PORT || 4000;
 
 if (require.main === module) {
     app.listen(port, '', () => {
@@ -65,16 +96,5 @@ if (require.main === module) {
     });
 }
 
-
-//get all members test
-app.get('/users', async (req, res) => {
-    try {
-        const result = await pool.query('SELECT * FROM users ORDER BY id');
-        res.json(result.rows);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Database error'});
-    }
-});
 
 module.exports = app;

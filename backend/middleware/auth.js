@@ -26,9 +26,8 @@ const jwt = require('jsonwebtoken')
       req.user = decoded
 
       next()
-    } catch (err) {
+    } catch  {
       return res.status(401).json({ message: 'token expired' })
     }
   }
-
   module.exports = authMiddleware

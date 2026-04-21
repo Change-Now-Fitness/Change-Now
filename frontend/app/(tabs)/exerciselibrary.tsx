@@ -63,6 +63,7 @@ export default function ExerciseLibrary() {
   const { width } = useWindowDimensions();
   const scrollRef = useRef<ScrollView | null>(null);
   const sectionOffsets = useRef<Record<string, number>>({});
+  const isProgrammaticScrollRef = useRef(false);
 
   const [searchText, setSearchText] = useState("");
   const [selectedMuscleGroup, setSelectedMuscleGroup] = useState("chest");
@@ -145,18 +146,25 @@ export default function ExerciseLibrary() {
   // The sidebar uses measured section offsets so a tap can jump the main list
   // to the matching muscle group without introducing nested routes/screens.
   const scrollToSection = (muscleGroup: string) => {
+    // Keep the sidebar highlight fixed on the tapped group while the
+    // right panel performs a smooth programmatic scroll.
+    isProgrammaticScrollRef.current = true;
     setSelectedMuscleGroup(muscleGroup);
 
     const sectionOffset = sectionOffsets.current[muscleGroup] ?? 0;
     scrollRef.current?.scrollTo({
       y: Math.max(sectionOffset - 8, 0),
-      animated: true,
+      animated: false,
     });
   };
 
   const handleScroll = (
     event: NativeSyntheticEvent<NativeScrollEvent>
   ) => {
+    if (isProgrammaticScrollRef.current) {
+      return;
+    }
+
     // As the user scrolls, keep the sidebar highlight in sync with the section
     // currently closest to the top of the viewport.
     const scrollY = event.nativeEvent.contentOffset.y + 40;
@@ -289,6 +297,13 @@ export default function ExerciseLibrary() {
             contentContainerStyle={styles.exerciseScrollContent}
             showsVerticalScrollIndicator={false}
             onScroll={handleScroll}
+            onMomentumScrollEnd={() => {
+              isProgrammaticScrollRef.current = false;
+            }}
+            onScrollEndDrag={() => {
+              // Release the lock for non-momentum scroll end cases.
+              isProgrammaticScrollRef.current = false;
+            }}
             scrollEventThrottle={16}
           >
             {isLoadingExercises ? (
@@ -338,7 +353,9 @@ export default function ExerciseLibrary() {
                         onPress={() =>
                           router.push({
                             pathname: "../screens/selectedexercise",
-                            params: { name: exercise.name, exerciseId: exercise.id.toString() },
+                            params: { name: exercise.name, 
+                                      exerciseId: exercise.id.toString(), 
+                                      exerciseCategory: exercise.muscleGroup },
                           })
                         }
                       >
@@ -574,13 +591,13 @@ const styles = StyleSheet.create({
   sidebar: {
     width: "24%",
     backgroundColor: "#34393f",
-    borderRadius: 20,
+    borderRadius: 24,
     marginRight: 8,
   },
 
   sidebarContent: {
     paddingVertical: 16,
-    paddingHorizontal: 8,
+    paddingHorizontal: 10,
   },
 
   sidebarHeading: {
@@ -594,10 +611,10 @@ const styles = StyleSheet.create({
   },
 
   sidebarItem: {
-    paddingVertical: 10,
-    paddingHorizontal: 10,
-    borderRadius: 12,
-    marginBottom: 6,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 18,
+    marginBottom: 10,
   },
 
   sidebarItemSelected: {
@@ -606,8 +623,9 @@ const styles = StyleSheet.create({
 
   sidebarItemText: {
     color: "#c6ccd1",
-    fontSize: 13,
-    fontWeight: "600",
+    fontSize: 14,
+    fontWeight: "700",
+    lineHeight: 20,
   },
 
   sidebarItemTextSelected: {
