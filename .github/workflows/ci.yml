@@ -28,7 +28,7 @@ jobs:
         run: npm run lint
 
   test:
-    if: false #enable on production 
+    if: false #enable on production!
     runs-on: ubuntu-latest
     env:
       EXPO_PUBLIC_API_URL: http://localhost:4000
