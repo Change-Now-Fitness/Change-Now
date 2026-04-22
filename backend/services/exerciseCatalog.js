@@ -1,3 +1,11 @@
+/**
+ * Exercise catalog service (templates + per-user custom exercises).
+ *
+ * How it fits:
+ * - Supports exercise library + workout logging endpoints.
+ * - Creates/updates normalized tables (exercise_templates, user_custom_exercises).
+ * - Provides a fallback template list so the app can function before a full sync.
+ */
 const pool = require("../dbconnection");
 
 const DEFAULT_TEMPLATE_USER_EMAIL = "DEFAULT_EXERCISES";
@@ -73,6 +81,9 @@ const normalizeTemplate = (exercise) => ({
   ),
 });
 
+/**
+ * Ensure the template table exists and has its expected uniqueness constraint.
+ */
 async function ensureExerciseTemplatesTable() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS exercise_templates (
@@ -93,6 +104,9 @@ async function ensureExerciseTemplatesTable() {
   `);
 }
 
+/**
+ * Ensure the per-user custom exercise table exists.
+ */
 async function ensureUserCustomExercisesTable() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS user_custom_exercises (
@@ -111,11 +125,19 @@ async function ensureUserCustomExercisesTable() {
   `);
 }
 
+/**
+ * Ensure the exercise catalog tables exist.
+ *
+ * Called by endpoints before reads/writes so fresh environments self-heal.
+ */
 async function ensureExerciseCatalogTables() {
   await ensureExerciseTemplatesTable();
   await ensureUserCustomExercisesTable();
 }
 
+/**
+ * Read the template exercise catalog; fall back to a baked-in list if empty.
+ */
 async function getExerciseTemplates() {
   await ensureExerciseTemplatesTable();
 
@@ -135,6 +157,9 @@ async function getExerciseTemplates() {
   return FALLBACK_EXERCISE_TEMPLATES.map(normalizeTemplate);
 }
 
+/**
+ * Build a single INSERT statement for bulk template upserts.
+ */
 const buildTemplateInsertStatement = (exercises) => {
   const values = [];
   const placeholders = exercises.map((exercise, index) => {
@@ -157,6 +182,11 @@ const buildTemplateInsertStatement = (exercises) => {
   };
 };
 
+/**
+ * Admin sync: rebuild `exercise_templates` from a designated "template user".
+ *
+ * Used by scripts and operational workflows.
+ */
 async function syncExerciseTemplatesFromUser(
   templateEmail = DEFAULT_TEMPLATE_USER_EMAIL
 ) {

@@ -1,11 +1,11 @@
 const jwt = require('jsonwebtoken')
 const JWT_SECRET = process.env.JWT_SECRET || process.env.JWT_KEY || 'dev-secret';
 /**
- * 
- * @param {*} req 
- * @param {*} res 
- * @param {*} next 
- * @returns userid and username(it is not required)
+ * Bearer-token authentication middleware (mobile/app style).
+ *
+ * How it fits:
+ * - Used by routes that expect `Authorization: Bearer <jwt>`
+ * - Decodes JWT and attaches `req.uid` + `req.user` for downstream handlers
  */
   function authMiddleware(req, res, next) {
     try {

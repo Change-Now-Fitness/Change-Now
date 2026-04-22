@@ -1,3 +1,10 @@
+/**
+ * CLI script: validate required runtime configuration.
+ *
+ * How it fits:
+ * - Uses the same validation rules as `backend/server.js` startup.
+ * - Intended for CI or manual checks before deploying.
+ */
 require("dotenv").config();
 
 const { getRuntimeConfigIssues } = require("../config/runtime");

@@ -2,8 +2,15 @@ const jwt = require('jsonwebtoken');
 
 const JWT_SECRET = process.env.JWT_SECRET || process.env.JWT_KEY || 'dev-secret'; 
 /**
- * @openapi
- * canajnkljandna
+ * Authentication guard middleware used by routes that require a signed JWT.
+ *
+ * How it fits:
+ * - Web: reads the `token` cookie (httpOnly cookie set by auth routes)
+ * - Mobile/app: reads the `Authorization: Bearer <token>` header
+ *
+ * On success it attaches:
+ * - `req.id`: authenticated user id
+ * - `req.platform`: "web" or "application"
  */
 function requireAuth3(req, res, next) {
     const headers = req.headers;
@@ -50,10 +57,9 @@ function requireAuth3(req, res, next) {
     return res.status(401).json({success: false, message: 'no valid cookie'});
 };
 /**
- * checks cookie for a val, null otherwise
- * @param {*} cookieHeader 
- * @param {*} name of value prefix in cookie
- * @returns 
+ * Extract a cookie value from the raw Cookie header.
+ *
+ * Used by `requireAuth3` to find the `token` cookie.
  */
 function getCookieValue(cookieHeader, name) {
     if (!cookieHeader) {

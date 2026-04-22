@@ -1,5 +1,14 @@
-
-
+/**
+ * Authentication endpoints.
+ *
+ * Mount points (see `backend/server.js`):
+ * - `/auth/*`
+ * - `/api/auth/*` (alias)
+ *
+ * Notes:
+ * - Web uses an httpOnly `token` cookie.
+ * - Mobile/app uses `Authorization: Bearer <token>`.
+ */
 const argon2 = require("argon2");
 const pool = require('../dbconnection')
 const jwt = require('jsonwebtoken');
@@ -151,7 +160,7 @@ const TOKEN_MAX_AGE_MS = 60 * 60 * 1000;
 
 /**
  * @openapi
- * /auth/login/:
+ * /auth/login:
  *   post:
  *     summary: Log in (web uses cookie; mobile returns JWT in JSON)
  *     tags: [Auth]
@@ -285,7 +294,7 @@ router.post('/login/', async (req, res) => {
 
 /**
  * @openapi
- * /auth/requireAuth/:
+ * /auth/requireAuth:
  *   post:
  *     summary: Validate session (cookie or Bearer token)
  *     tags: [Auth]
