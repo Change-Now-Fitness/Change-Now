@@ -7,7 +7,7 @@
     "preview": {
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://change-now-production.up.railway.app"
+        "EXPO_PUBLIC_API_URL": "https://api.changenow.fit"
       },
       "android": {
         "buildType": "apk"
@@ -15,7 +15,7 @@
     },
     "production": {
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://change-now-production.up.railway.app"
+        "EXPO_PUBLIC_API_URL": "https://api.changenow.fit"
       },
       "android": {
         "buildType": "app-bundle"

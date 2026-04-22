@@ -1,247 +1,139 @@
-# Welcome to ChangeNow 🔩
+# ChangeNow
 
-ChangeNow is a workout tracking mobile application built with:
+ChangeNow is a workout tracking app built with:
 
-**Frontend:** Expo (React Native)
+- Frontend: Expo / React Native
+- Backend: Express.js REST API
+- Database: PostgreSQL (Supabase)
 
-**Backend:** Express.js REST API
+## Project Structure
 
-**Database:** PostgreSQL (Supabase)
-
----
-## Project Structure 📁
-
-```
+```text
 Change-Now/
-├── frontend/   # Expo mobile app
-├── backend/    # Express REST API
-└── assets/     # Shared assets
+|-- frontend/   # Expo mobile + web client
+|-- backend/    # Express REST API
+|-- docs/       # deployment and testing docs
+`-- binary/     # course release artifacts
 ```
----
 
-## Dependencies for devs:
+## Dependencies For Devs
 
-Github Branch: alpha
-Node.js: v20.20.0
-npm: 10.8.2
+- Branch in active Android release work: `turning-it-into-an-app`
+- Node.js: `v20.20.0`
+- npm: `10.8.2`
 
-## Backend (API Server) 🚀
+## Backend (API Server)
 
 ### Setup
-```
+
+```bash
 cd backend
 npm install
 ```
 
-### Run the backend
-```
+### Run locally
+
+```bash
 npm start
 ```
-Backend runs at: http://localhost:4000
 
-### Available Test Endpoints
-GET / → Server health check
+Local backend default:
 
-GET /users → Returns users from database
+- `http://localhost:4000`
 
----
-## Frontend (Expo App) 📱
+## Frontend (Expo App + Web)
 
 ### Setup
-```
+
+```bash
 cd frontend
 npm install
 ```
 
-### Run the frontend
-```
+### Run the app
+
+```bash
 npx expo start
 ```
-Frontend runs at: http://localhost:8081
 
----
+### Run the web client
 
-## Hosted Testing Checklist
+```bash
+npx expo start --web
+```
 
-Before sending Android builds to testers:
+## Current Hosted API Target
 
-- deploy the backend to a public host
-- set `PUBLIC_API_URL` and backend env vars on that host
+The frontend is now prepared to use:
+
+- `https://api.changenow.fit`
+
+This hosted API target is already wired into:
+
+- `frontend/.env`
+- `frontend/eas.json`
+- `frontend/playwright.config.ts`
+- the frontend runtime fallback in `frontend/lib/config.ts`
+
+If you still need to test against a local backend temporarily, override:
+
+```env
+EXPO_PUBLIC_API_URL=http://localhost:4000
+```
+
+## Hosted Backend Cutover Checklist
+
+Before merging the hosted-backend cutover to `main`:
+
+- finish configuring the server behind `https://api.changenow.fit`
+- set `PUBLIC_API_URL=https://api.changenow.fit`
+- set backend env vars on that host
 - run `npm run validate:env` in `backend/`
 - verify `GET /health` and `GET /ready`
-- set `EXPO_PUBLIC_API_URL` in the frontend build environment
-- rebuild the Android app after the API URL changes
+- confirm login, exercises, and workouts all work against the hosted backend
+- rebuild Android binaries after the API URL is final
 
-Detailed steps are in:
+Detailed backend deployment notes live in:
 
 ```text
 docs/deployment/android-testing-backend.md
 ```
 
----
+## Testing
 
-## Backend Deployment (AWS EC2) ☁️
+Testing documentation is maintained in:
 
-The backend is deployed on an AWS EC2 instance and managed using **PM2**.
-
-### Connect to the server
-
-ssh -i change-now-key.pem ec2-user@18.224.229.202
-
-
-### Navigate to the backend
-
-cd ~/Change-Now/backend
-
-
-### Pull latest backend changes
-
-cd ~/Change-Now
-git pull origin putting-backend-on-server
-cd backend
-
-
-### Install dependencies (if needed)
-
-npm install
-
-
-### Start the backend with PM2
-
-pm2 start server.js --name changenow-backend
-pm2 save
-
-
-### Restart the backend after updates
-
-pm2 restart changenow-backend
-
-
-### Check server status
-
-pm2 status
-
-
-### View logs
-
-pm2 logs changenow-backend
-
----
-
-### Live Backend API
-
-### Live Backend API
-
-http://18.224.229.202:4000
-
----
-
-## Beta Release Notes 🧪
-
-### Currently Working Features
-
-* User signup and login
-* Exercise library with muscle group navigation
-* Search functionality
-* Add custom exercise modal
-* Selected exercise view
-* Add workout sets
-* View current workout sets
-* View historical workout logs
-* Backend API and database integration
-* Live backend deployment on AWS EC2
-
-### Features In Progress
-
-* Graph and analytics visualization refinements
-* Additional workout trend metrics
-* UI responsiveness improvements
-
-### Known Issues
-
-* Graph display formatting is still being refined
-* Minor mobile styling inconsistencies on smaller screens
-* Some API error messages are still being improved for user clarity
-
----
-
-## Testing 🧪
-
-Testing documentation is maintained separately in the project documentation folder for ease of maintenance and future expansion.
-
-Detailed testing instructions, test cases, and validation workflows can be found in:
-
-```text id="wjlwm7"
+```text
 docs/testing/
 ```
 
-This includes:
+Relevant commands:
 
-* unit test documentation
-* system / integration test workflows
-* manual test procedures
-* known issue validation steps
-
-A new developer should refer to this folder for full test execution details and expected outputs.
-
-
-## Bug Tracking + Features 🐞
-
-The ChangeNow team uses **GitHub Issues** to track bugs, missing features, and release milestones. This keeps project management centralized with the codebase and allows tasks to be assigned to individual team members.
-
-Tracked items include:
-
-* bugs
-* feature requests
-* API milestones
-* beta blockers
-* final release tasks
-
-Our main project schedule was initially maintained in a master planning document, and we are currently migrating active tasks and bug reports into GitHub Issues for better coordination and developer visibility.
-
----
-
-## Change Logs 📝
-
-Project evolution and developer changes are documented in:
-
-```text
-docs/changelog.md
-docs/changes/
+```bash
+cd frontend
+npm test
+npm run test:e2e
 ```
 
-Individual developer logs include:
+By default, Playwright web E2E tests now point at `https://api.changenow.fit`. You can still override `EXPO_PUBLIC_API_URL` locally if needed.
 
-* `adam.md`
-* `sam.md`
-* `alex.md`
-* `chenqi.md`
-* `jules.md`
+## Current Product Status
 
-These logs document feature additions, design updates, bug fixes, and milestone progress.
+Working areas:
 
----
+- User signup and login
+- Exercise library with muscle group navigation
+- Search functionality
+- Add custom exercise modal
+- Selected exercise view
+- Add workout sets
+- View current workout sets
+- View historical workout logs
+- Backend API and database integration
 
-## Developer Handoff 👨‍💻
+Known active focus areas:
 
-This repository contains all source code, documentation, deployment instructions, and testing resources required for continued development from the beta milestone.
-
-Primary development folders:
-
-```text
-frontend/
-backend/
-docs/
-testing/
-```
-
-A new developer can use this README to:
-
-* install dependencies
-* run the backend
-* run the frontend
-* deploy updates to EC2
-* execute tests
-* review active issues and historical changes
-
-This is a new update, our main project schedule is in a master document and we're in the process of migrating this over to Issues. Issues is used mainly for our "current" checklist or features that are next in line. Some features that were implemented in the past have not been added to Issues.
+- final hosted backend cutover
+- Android release validation
+- graph and analytics polish
+- broader bug logging before final release

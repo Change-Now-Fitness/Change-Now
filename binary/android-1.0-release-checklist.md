@@ -19,7 +19,7 @@ This checklist tracks the minimum work to get ChangeNow into Android testing qui
 
 - `frontend/app.json` has a valid Android package name and version code.
 - `frontend/assets/images/` contains the icon, splash image, and adaptive icon assets used by Expo config.
-- `EXPO_PUBLIC_API_URL` points to a reachable backend for preview and production builds.
+- `EXPO_PUBLIC_API_URL` points to `https://api.changenow.fit` or another reachable hosted backend before preview and production builds are cut.
 - Backend secrets remain server-side only.
 
 ## Rapid Test Build

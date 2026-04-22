@@ -1,13 +1,16 @@
-local testing
-1. run backend server 
-2. navigate to Change-Now/frontend
-3. npm install
-4. npx playwright install (in case it's not already installed)
-4. npm run test:e2e
+Playwright web E2E testing
 
+Default API target:
+- `https://api.changenow.fit`
 
-playwright environment settings in:
-frontend/playwright.config.ts
+Run steps:
+1. Navigate to `Change-Now/frontend`
+2. Run `npm install`
+3. Run `npx playwright install` if the browser binaries are not already installed
+4. Run `npm run test:e2e`
 
-currently only local tests configured, pushign to prod servers will fail tests
--sam
+Optional local backend override:
+- If you want the web app to hit a local backend instead, set `EXPO_PUBLIC_API_URL=http://localhost:4000` in the same terminal before running `npm run test:e2e`
+
+Playwright environment settings live in:
+- `frontend/playwright.config.ts`

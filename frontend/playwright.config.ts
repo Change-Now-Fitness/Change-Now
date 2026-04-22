@@ -1,5 +1,8 @@
 import {defineConfig, devices} from "@playwright/test";
 
+const PLAYWRIGHT_API_URL =
+    process.env.EXPO_PUBLIC_API_URL || "https://api.changenow.fit";
+
 /**
  * defines the environment for playwright (web ui) tests
  */
@@ -20,7 +23,7 @@ export default defineConfig({
         timeout: 180_000,
         env: { 
             CI: "true",
-            EXPO_PUBLIC_API_URL: "http://localhost:4000",
+            EXPO_PUBLIC_API_URL: PLAYWRIGHT_API_URL,
          },
     },
 });
