@@ -60,6 +60,7 @@ const swaggerOptions = {
     },
         apis: ['./routes/**/*.js'],
 };
+swaggerOptions.apis.push('./server.js');
 
 const swaggerSpecifications = swaggerJsdoc(swaggerOptions);
 
@@ -79,6 +80,16 @@ app.use("/exercises", exerciseRoutes);
 app.use("/workouts", workoutRouter)
 
 
+/**
+ * @openapi
+ * /:
+ *   get:
+ *     summary: Get API metadata and route aliases
+ *     tags: [Meta]
+ *     responses:
+ *       '200':
+ *         description: Backend metadata
+ */
 app.get('/', (req, res) => {
     res.json({
         name: "ChangeNow API",
@@ -97,6 +108,17 @@ app.get('/', (req, res) => {
     });
 });
 
+/**
+ * @openapi
+ * /health:
+ *   get:
+ *     summary: Check whether the backend process is healthy
+ *     tags: [Meta]
+ *     description: Also available at `/api/health`.
+ *     responses:
+ *       '200':
+ *         description: Service health information
+ */
 app.get(['/health', '/api/health'], (req, res) => {
     res.status(200).json({
         status: "ok",
@@ -106,6 +128,19 @@ app.get(['/health', '/api/health'], (req, res) => {
     });
 });
 
+/**
+ * @openapi
+ * /ready:
+ *   get:
+ *     summary: Check whether the backend and database are ready
+ *     tags: [Meta]
+ *     description: Also available at `/api/ready`.
+ *     responses:
+ *       '200':
+ *         description: Database connectivity verified
+ *       '503':
+ *         description: Database unavailable
+ */
 app.get(['/ready', '/api/ready'], async (req, res) => {
     try {
         await pool.query('SELECT 1');
