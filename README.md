@@ -9,239 +9,104 @@ ChangeNow is a fitness logging & Visualization mobile/web application built with
 **Database:** PostgreSQL (Supabase)
 
 ---
-## Project Structure 📁
-
-```
+## Project structure
+```text
 Change-Now/
 ├── frontend/   # Expo mobile app
 ├── backend/    # Express REST API
+├── docs/       # Deployment/testing/admin docs
 └── assets/     # Shared assets
 ```
 ---
-
-## Dependencies for devs:
-
-Github Branch: alpha
-Node.js: v20.20.0
-npm: 10.8.2
-
-## Backend (API Server) 🚀
-
-### Setup
+## Prerequisites
+- **Node.js**: 20.x
+- **npm**: 10.x
+---
+## Quickstart (run everything locally)
+```bash
+npm run install:all
+npm run start
 ```
+- **Backend**: `http://localhost:4000`
+- **Expo dev server**: printed by Expo (often `http://localhost:8081`)
+---
+## Environment variables
+### Backend (`backend/.env`)
+Copy `backend/.env.example` → `backend/.env`.
+- **Required (production)**:
+  - `DATABASE_URL` (Supabase Postgres connection string/URI)
+  - `JWT_SECRET`
+  - `PUBLIC_API_URL` (must be **HTTPS** in production)
+- **Common runtime flags**:
+  - `CORS_ALLOWED_ORIGINS`
+  - `CORS_ALLOW_ALL`
+  - `COOKIE_SECURE`
+  - `COOKIE_SAME_SITE`
+  - `TRUST_PROXY`
+Validate env before running:
+```bash
+cd backend
+npm run validate:env
+```
+### Frontend (`frontend/.env`)
+Copy `frontend/.env.example` → `frontend/.env`.
+- `EXPO_PUBLIC_API_URL` (base URL for the backend)
+  - Local dev: `http://localhost:4000`
+  - Device/testing builds: **public HTTPS URL**
+---
+## Backend (API)
+```bash
 cd backend
 npm install
-```
-
-### Run the backend
-```
+npm run validate:env
 npm start
 ```
-Backend runs at: http://localhost:4000
-
-### Available Test Endpoints
-GET / → Server health check
-
-GET /users → Returns users from database
-
+### Useful endpoints
+- **Docs**: `GET /api-docs`
+- **Health (liveness)**: `GET /health` (alias: `/api/health`)
+- **Ready (readiness + DB check)**: `GET /ready` (alias: `/api/ready`)
+- **Route map**: `GET /` (returns route aliases + CORS info)
 ---
-## Frontend (Expo App) 📱
-
-### Setup
-```
+## Frontend (Expo)
+```bash
 cd frontend
 npm install
+npm start
 ```
-
-### Run the frontend
+---
+## Testing
+### Frontend unit tests (Jest)
+```bash
+npm test --prefix frontend
 ```
-npx expo start
+### End-to-end tests (Playwright)
+```bash
+npm run test:e2e --prefix frontend
 ```
-Frontend runs at: http://localhost:8081
-
+### Manual testing checklist
+See `docs/testing/manual.md`.
 ---
-
-## Hosted Testing Checklist
-
-Before sending Android builds to testers:
-
-- deploy the backend to a public host
-- set `PUBLIC_API_URL` and backend env vars on that host
-- run `npm run validate:env` in `backend/`
-- verify `GET /health` and `GET /ready`
-- set `EXPO_PUBLIC_API_URL` in the frontend build environment
-- rebuild the Android app after the API URL changes
-
-Detailed steps are in:
-
-```text
-docs/deployment/android-testing-backend.md
-```
-
+## Hosted Android testing checklist
+See `docs/deployment/android-testing-backend.md`.
+Highlights:
+- Deploy backend to a **public HTTPS** host
+- Set backend env vars (including `PUBLIC_API_URL`)
+- Run `npm run validate:env` in `backend/`
+- Verify `/health`, `/ready`, and `/api-docs`
+- Set `EXPO_PUBLIC_API_URL` for the build environment
+- Rebuild the Android app after the API URL changes
 ---
-
-## Backend Deployment (AWS EC2) ☁️
-
-The backend is deployed on an AWS EC2 instance and managed using **PM2**.
-
-### Connect to the server
-
-ssh -i change-now-key.pem ec2-user@18.224.229.202
-
-
-### Navigate to the backend
-
-cd ~/Change-Now/backend
-
-
-### Pull latest backend changes
-
-cd ~/Change-Now
-git pull origin putting-backend-on-server
-cd backend
-
-
-### Install dependencies (if needed)
-
-npm install
-
-
-### Start the backend with PM2
-
-pm2 start server.js --name changenow-backend
-pm2 save
-
-
-### Restart the backend after updates
-
-pm2 restart changenow-backend
-
-
-### Check server status
-
-pm2 status
-
-
-### View logs
-
-pm2 logs changenow-backend
-
+## Production deployment (current)
+Backend is deployed as a **Docker container on EC2**, behind **Nginx**, deployed via **GitHub Actions → ECR → SSM → EC2**.
+Key docs:
+- `docs/admin/CI_CD.md`
+- `docs/admin/CLOUD_EC2_NGINX`
+- `docs/admin/RUNETIME_SECRETS.md`
+- `docs/admin/TROUBLESHOOTING.md`
+Notes:
+- Production runtime env on EC2: `/opt/change-now/backend.env`
+- Deploy script on EC2: `/opt/change-now/deploy-backend.sh <git-sha>`
 ---
-
-### Live Backend API
-
-### Live Backend API
-
-http://18.224.229.202:4000
-
----
-
-## Beta Release Notes 🧪
-
-### Currently Working Features
-
-* User signup and login
-* Exercise library with muscle group navigation
-* Search functionality
-* Add custom exercise modal
-* Selected exercise view
-* Add workout sets
-* View current workout sets
-* View historical workout logs
-* Backend API and database integration
-* Live backend deployment on AWS EC2
-
-### Features In Progress
-
-* Graph and analytics visualization refinements
-* Additional workout trend metrics
-* UI responsiveness improvements
-
-### Known Issues
-
-* Graph display formatting is still being refined
-* Minor mobile styling inconsistencies on smaller screens
-* Some API error messages are still being improved for user clarity
-
----
-
-## Testing 🧪
-
-Testing documentation is maintained separately in the project documentation folder for ease of maintenance and future expansion.
-
-Detailed testing instructions, test cases, and validation workflows can be found in:
-
-```text id="wjlwm7"
-docs/testing/
-```
-
-This includes:
-
-* unit test documentation
-* system / integration test workflows
-* manual test procedures
-* known issue validation steps
-
-A new developer should refer to this folder for full test execution details and expected outputs.
-
-
-## Bug Tracking + Features 🐞
-
-The ChangeNow team uses **GitHub Issues** to track bugs, missing features, and release milestones. This keeps project management centralized with the codebase and allows tasks to be assigned to individual team members.
-
-Tracked items include:
-
-* bugs
-* feature requests
-* API milestones
-* beta blockers
-* final release tasks
-
-Our main project schedule was initially maintained in a master planning document, and we are currently migrating active tasks and bug reports into GitHub Issues for better coordination and developer visibility.
-
----
-
-## Change Logs 📝
-
-Project evolution and developer changes are documented in:
-
-```text
-docs/changelog.md
-docs/changes/
-```
-
-Individual developer logs include:
-
-* `adam.md`
-* `sam.md`
-* `alex.md`
-* `chenqi.md`
-* `jules.md`
-
-These logs document feature additions, design updates, bug fixes, and milestone progress.
-
----
-
-## Developer Handoff 👨‍💻
-
-This repository contains all source code, documentation, deployment instructions, and testing resources required for continued development from the beta milestone.
-
-Primary development folders:
-
-```text
-frontend/
-backend/
-docs/
-testing/
-```
-
-A new developer can use this README to:
-
-* install dependencies
-* run the backend
-* run the frontend
-* deploy updates to EC2
-* execute tests
-* review active issues and historical changes
-
-This is a new update, our main project schedule is in a master document and we're in the process of migrating this over to Issues. Issues is used mainly for our "current" checklist or features that are next in line. Some features that were implemented in the past have not been added to Issues.
+## Contributing / tracking work
+- **Issues**: GitHub Issues for bugs + upcoming features.
+- **Docs-first**: keep runbooks in `docs/` so the README stays high-signal.
