@@ -1,6 +1,6 @@
 # Welcome to ChangeNow 🔩
 
-ChangeNow is a workout tracking mobile application built with:
+ChangeNow is a fitness logging & Visualization mobile/web application built with:
 
 **Frontend:** Expo (React Native)
 

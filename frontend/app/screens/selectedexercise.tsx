@@ -86,8 +86,11 @@ export default function SelectedExerciseScreen() {
       if (success) {
         setUserId(parseInt(user_id));
       }
+      console.log('check login failed');
+      router.replace('/');
     };
     loadUserId();
+    
   }, []);
 
   const loadCurrentSets = async () => {
@@ -97,6 +100,7 @@ export default function SelectedExerciseScreen() {
       try {
         const today = new Date().toISOString().split("T")[0];
         const data = await fetchCurrentSets(exerciseId, userId, today);
+
         const mapped: WorkoutSet[] = data.map((row: any, index: number) => {
           const isCardioRow = row.duration_seconds != null;
 
