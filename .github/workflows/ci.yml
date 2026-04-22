@@ -4,15 +4,9 @@ on:
   pull_request: 
     branches: [ main, ci-pipeline ]
     types: [ opened, synchronize ]
-    paths-ignore:
-      - "docs/**"
-      - "README.md"
   push:
     branches: [ main, ci-pipeline ]
-    paths-ignore:
-      - "docs/**"
-      - "README.md"
-      
+
 permissions: 
   contents: read
   id-token: write
@@ -32,6 +26,21 @@ jobs:
         run: npm run ci:all
       - name: Run linter
         run: npm run lint
+
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      deploy: ${{ steps.filter.outputs.deploy }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            deploy:
+              - "**"
+              - "!docs/**"
+              - "!README.md"
 
   test:
     if: false #enable on production
@@ -87,9 +96,9 @@ jobs:
           path: frontend/test-results
 
   build_and_push:
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && needs.changes.outputs.deploy == 'true'
     runs-on: ubuntu-latest
-    needs: [lint] #add test back on prod
+    needs: [lint, changes] #add test back on prod
     permissions:
       contents: read
       id-token: write
@@ -117,7 +126,7 @@ jobs:
 
   
   deploy_backend:
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && needs.changes.outputs.deploy == 'true'
     runs-on: ubuntu-latest
     needs: [build_and_push]
     permissions:
