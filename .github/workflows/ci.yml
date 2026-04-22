@@ -4,9 +4,15 @@ on:
   pull_request: 
     branches: [ main, ci-pipeline ]
     types: [ opened, synchronize ]
+    paths-ignore:
+      - "docs/**"
+      - "README.md"
   push:
     branches: [ main, ci-pipeline ]
-
+    paths-ignore:
+      - "docs/**"
+      - "README.md"
+      
 permissions: 
   contents: read
   id-token: write
