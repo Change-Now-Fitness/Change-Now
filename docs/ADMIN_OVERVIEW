@@ -1,0 +1,48 @@
+Admin overview (Frontend, Backend, CI/CD, Cloud) 
+
+Author: Samuel Mount
+Date Updated: 4/22/26
+
+This project has:
+
+Frontend: Expo/React Native app (and web via Expo/React)
+Backend: Node/Express API running in Docker on an EC2 instance
+Database: Supabase Postgres (backend connects via DATABASE_URL)
+CI/CD: GitHub Actions builds backend Docker image, pushes to ECR, deploys to EC2 via SSM
+Edge: Nginx on EC2 (reverse proxy to backend container)
+Key idea:
+
+Code is built in GitHub Actions.
+Artifacts are Docker images in Amazon ECR tagged by git commit SHA.
+EC2 pulls the exact SHA tag and restarts the backend container.
+Nginx routes internet traffic to the backend container on the server.
+
+What to read next (more technical):
+
+docs/admin/FRONTEND.md
+docs/admin/BACKEND.md
+docs/admin/CI_CD.md
+docs/admin/CLOUD_EC2_NGINX.md
+docs/admin/RUNTIME_SECRETS.md
+docs/admin/TROUBLESHOOTING.md
+Quick “where is stuff” map:
+
+GitHub Actions workflow: .github/workflows/ci.yml
+Backend Dockerfile: backend/Dockerfile
+Backend server entry: backend/server.js
+Backend runtime config helper (if present): backend/config/runtime.js
+Frontend env/config: frontend/.env (local), plus frontend config files in frontend/
+EC2 deploy script (on server): /opt/change-now/deploy-backend.sh
+EC2 backend env file (on server): /opt/change-now/backend.env
+Nginx config (on server): typically /etc/nginx/sites-enabled/... (exact name depends on setup)
+ECR repo (AWS): change-now-backend in us-east-2
+SSM: AWS Systems Manager “Fleet Manager” shows EC2 node online; deploy uses Run Command
+Environments:
+
+Local dev: run backend/frontend locally, talk to Supabase dev DB if configured
+CI: runs lint/tests, builds image
+Production: EC2 + Docker + Nginx; backend talks to Supabase using production DATABASE_URL
+Security notes:
+
+Do not commit production secrets. Production secrets live on EC2 (/opt/change-now/backend.env) or in a secret store.
+If a secret appears in screenshots/chats/logs, rotate it (DB password, JWT secret).

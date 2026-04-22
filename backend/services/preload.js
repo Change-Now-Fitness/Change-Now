@@ -1,8 +1,10 @@
 const { preloadExerciseCatalog } = require("./exerciseCatalog");
 /**
- * Used by signup function in auth to preload exercises to a user
- * @param {*} user_id 
- * @returns 
+ * Preload helper called during signup.
+ *
+ * How it fits:
+ * - `routes/auth.js` calls this after creating a new user so the exercise
+ *   catalog tables exist and baseline data is ready for the frontend.
  */
 async function preload_workouts(user_id) {
     try {

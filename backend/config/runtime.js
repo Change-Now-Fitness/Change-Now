@@ -1,3 +1,11 @@
+/**
+ * Runtime configuration helpers shared across backend routes.
+ *
+ * How it fits:
+ * - Centralizes production checks (required env vars, HTTPS public URL)
+ * - Defines CORS policy used by `backend/server.js`
+ * - Defines cookie options used by auth + logout routes
+ */
 const parseBoolean = (value, fallback = false) => {
   if (typeof value !== "string") {
     return fallback;
@@ -84,6 +92,11 @@ const buildTokenCookieClearOptions = () => ({
   path: "/",
 });
 
+/**
+ * Decide whether a browser `Origin` should be allowed.
+ *
+ * Used by `getCorsOptions()`.
+ */
 const isAllowedOrigin = (origin) => {
   if (!origin) {
     return true;
@@ -105,6 +118,9 @@ const isAllowedOrigin = (origin) => {
   return false;
 };
 
+/**
+ * Express CORS options used by `cors()` middleware in `backend/server.js`.
+ */
 const getCorsOptions = () => ({
   origin(origin, callback) {
     if (isAllowedOrigin(origin)) {
@@ -117,6 +133,11 @@ const getCorsOptions = () => ({
   credentials: true,
 });
 
+/**
+ * Validate runtime environment and return hard errors + softer warnings.
+ *
+ * `assertValidRuntimeConfig()` throws on errors at server startup.
+ */
 const getRuntimeConfigIssues = () => {
   const errors = [];
   const warnings = [];
@@ -167,6 +188,9 @@ const getRuntimeConfigIssues = () => {
   return { errors, warnings };
 };
 
+/**
+ * Enforce required runtime configuration (especially in production).
+ */
 const assertValidRuntimeConfig = () => {
   const { errors } = getRuntimeConfigIssues();
   if (errors.length > 0) {

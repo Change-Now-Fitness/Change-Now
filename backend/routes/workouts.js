@@ -14,6 +14,20 @@ const {
   parseExerciseId,
 } = require("../services/exerciseIdentifiers");
 
+/**
+ * Workout logging endpoints (sets/laps/history).
+ *
+ * Mount point (see `backend/server.js`):
+ * - `/workouts/*`
+ *
+ * Note: These endpoints expect a `userId` parameter in query/body and do not
+ * currently use auth middleware. Clients must ensure they only request their
+ * own data.
+ */
+
+/**
+ * Parse an integer from request query/body.
+ */
 const parseNumber = (value) => {
   const parsedValue = Number.parseInt(String(value ?? ""), 10);
   return Number.isNaN(parsedValue) ? null : parsedValue;
@@ -22,6 +36,9 @@ const parseNumber = (value) => {
 const MAX_WEIGHT = 999.99;
 const MAX_REPS = 999;
 
+/**
+ * Map a parsed exercise identifier to the correct SQL columns for logging.
+ */
 const buildWorkoutReferenceConfig = (exerciseReference) => {
   switch (exerciseReference.source) {
     case TEMPLATE_SOURCE:
@@ -47,7 +64,7 @@ const buildWorkoutReferenceConfig = (exerciseReference) => {
 
 /**
  * @openapi
- * /routes/{exerciseId}/current:
+ * /workouts/{exerciseId}/current:
  *   get:
  *     summary: Get today's workout sets/laps for an exercise
  *     tags: [Workout]
@@ -132,7 +149,7 @@ router.get("/:exerciseId/current", async (req, res) => {
 
 /**
  * @openapi
- * /routes/sets:
+ * /workouts/sets:
  *   post:
  *     summary: Add a strength training set
  *     tags: [Workout]
@@ -217,7 +234,7 @@ router.post("/sets", async (req, res) => {
 // Add laps for cardio
 /**
  * @openapi
- * /routes/laps:
+ * /workouts/laps:
  *   post:
  *     summary: Add a cardio lap entry
  *     tags: [Workout]
@@ -291,7 +308,7 @@ router.post("/laps", async (req, res) => {
 
 /**
  * @openapi
- * /routes/sets/{setId}:
+ * /workouts/sets/{setId}:
  *   delete:
  *     summary: Delete a workout set
  *     tags: [Workout]
@@ -359,7 +376,7 @@ router.delete("/sets/:setId", async (req, res) => {
 
 /** 
  * @openapi
- * /routes/{exerciseId}/history:
+ * /workouts/{exerciseId}/history:
  *   get:
  *     summary: Get historical workout data grouped by date
  *     tags:

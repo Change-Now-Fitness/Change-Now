@@ -1,4 +1,12 @@
-//main server file
+/**
+ * Backend HTTP server entrypoint.
+ *
+ * Responsibilities:
+ * - Loads runtime config (env, CORS, proxy settings)
+ * - Mounts API routers (auth/user/exercises/workouts)
+ * - Serves OpenAPI docs at `/api-docs`
+ * - Provides simple health/readiness endpoints used by deploy tooling and ops
+ */
 require('dotenv').config();
 const express = require('express');
 const authRouter = require("./routes/auth");
@@ -45,12 +53,31 @@ const mountApiRouter = (basePath, router) => {
     app.use(`/api${basePath}`, router);
 };
 
+/**
+ * Swagger/OpenAPI generator configuration.
+ *
+ * We scan the backend codebase for `@openapi` blocks so route docs can live
+ * next to the handlers/middleware that enforce behavior.
+ */
 const swaggerOptions = {
     definition: {
         openapi: '3.0.0',
         info: {
             title: 'Change Now API Docs', 
             version: '5.10.26'
+        },
+        components: {
+            securitySchemes: {
+                bearerAuth: {
+                    type: "http",
+                    scheme: "bearer",
+                },
+                cookieAuth: {
+                    type: "apiKey",
+                    in: "cookie",
+                    name: "token",
+                },
+            },
         },
         servers: [
             {
@@ -59,7 +86,14 @@ const swaggerOptions = {
             }
         ],
     },
-        apis: ['./routes/**/*.js'],
+    apis: [
+        './server.js',
+        './routes/**/*.js',
+        './controllers/**/*.js',
+        './middleware/**/*.js',
+        './services/**/*.js',
+        './config/**/*.js',
+    ],
 };
 
 const swaggerSpecifications = swaggerJsdoc(swaggerOptions);
@@ -80,6 +114,16 @@ app.use("/exercises", exerciseRoutes);
 app.use("/workouts", workoutRouter)
 
 
+/**
+ * @openapi
+ * /:
+ *   get:
+ *     summary: API landing page and route map
+ *     tags: [Meta]
+ *     responses:
+ *       '200':
+ *         description: Service metadata
+ */
 app.get('/', (req, res) => {
     res.json({
         name: "ChangeNow API",
@@ -98,6 +142,23 @@ app.get('/', (req, res) => {
     });
 });
 
+/**
+ * @openapi
+ * /health:
+ *   get:
+ *     summary: Liveness check
+ *     tags: [Meta]
+ *     responses:
+ *       '200':
+ *         description: Service is running
+ * /api/health:
+ *   get:
+ *     summary: Liveness check (aliased)
+ *     tags: [Meta]
+ *     responses:
+ *       '200':
+ *         description: Service is running
+ */
 app.get(['/health', '/api/health'], (req, res) => {
     res.status(200).json({
         status: "ok",
@@ -107,6 +168,27 @@ app.get(['/health', '/api/health'], (req, res) => {
     });
 });
 
+/**
+ * @openapi
+ * /ready:
+ *   get:
+ *     summary: Readiness check (includes database connectivity)
+ *     tags: [Meta]
+ *     responses:
+ *       '200':
+ *         description: Service and database are ready
+ *       '503':
+ *         description: Database unavailable
+ * /api/ready:
+ *   get:
+ *     summary: Readiness check (aliased)
+ *     tags: [Meta]
+ *     responses:
+ *       '200':
+ *         description: Service and database are ready
+ *       '503':
+ *         description: Database unavailable
+ */
 app.get(['/ready', '/api/ready'], async (req, res) => {
     try {
         await pool.query('SELECT 1');
