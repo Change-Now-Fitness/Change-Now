@@ -26,6 +26,7 @@ const TOKEN_MAX_AGE_MS = 60 * 60 * 1000;
  * DEV: 
  * Takes credentials from client, encrypts a jwt token. 
  * Next, it sends it back as cookie for web and raw jwt mobile
+ * 
  */
 
 /**
