@@ -7,9 +7,20 @@ The bug database for this project is GitHub Issues:
 - Repository: `https://github.com/Change-Now-Fitness/Change-Now`
 - Issues: `https://github.com/Change-Now-Fitness/Change-Now/issues`
 
+Known open issues referenced in the binary release notes currently include:
+
+- `#59` Historical data for workout sets
+- `#69` Same custom exercise name with different tags
+- `#70` Confusing UI
+- `#86` Adding sets causes a visible reload in selected exercise screen after update
+
 ## System Database Access
 
 The application uses a PostgreSQL database hosted outside this package. The database itself is intentionally not bundled.
+
+The Android binary is expected to use the hosted backend at:
+
+- `https://api.changenow.fit`
 
 For grading convenience, the packaged backend already includes a ready-to-run `.env` file containing the course-use backend connection values.
 

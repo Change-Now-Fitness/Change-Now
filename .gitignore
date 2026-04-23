@@ -46,3 +46,7 @@ app-example
 
 #cursor -sam
 .cursor/rules/rules.md
+
+# generated binary release artifacts
+binary/ChangeNow-Binary-Release-*/
+binary/ChangeNow-Binary-Release-*.zip

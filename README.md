@@ -29,6 +29,14 @@ npm run start
 ```
 - **Backend**: `http://localhost:4000`
 - **Expo dev server**: printed by Expo (often `http://localhost:8081`)
+
+## Current hosted API target
+
+The app and web client are now being prepared to use:
+
+- `https://api.changenow.fit`
+
+Frontend defaults and Android build profiles should point there unless you intentionally override them for local backend testing.
 ---
 ## Environment variables
 ### Backend (`backend/.env`)
@@ -51,7 +59,8 @@ npm run validate:env
 ### Frontend (`frontend/.env`)
 Copy `frontend/.env.example` → `frontend/.env`.
 - `EXPO_PUBLIC_API_URL` (base URL for the backend)
-  - Local dev: `http://localhost:4000`
+  - Hosted default: `https://api.changenow.fit`
+  - Local dev override: `http://localhost:4000`
   - Device/testing builds: **public HTTPS URL**
 ---
 ## Backend (API)
@@ -90,10 +99,10 @@ See `docs/testing/manual.md`.
 See `docs/deployment/android-testing-backend.md`.
 Highlights:
 - Deploy backend to a **public HTTPS** host
-- Set backend env vars (including `PUBLIC_API_URL`)
+- Set backend env vars (including `PUBLIC_API_URL=https://api.changenow.fit`)
 - Run `npm run validate:env` in `backend/`
 - Verify `/health`, `/ready`, and `/api-docs`
-- Set `EXPO_PUBLIC_API_URL` for the build environment
+- Set `EXPO_PUBLIC_API_URL=https://api.changenow.fit` for the build environment
 - Rebuild the Android app after the API URL changes
 ---
 ## Production deployment (current)
