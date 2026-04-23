@@ -15,9 +15,8 @@ import { fetchCurrentSets, fetchExerciseHistory, addSet, deleteSet, addLap } fro
 import React, { useState, useEffect } from "react";
 import { checkLogin } from "../../services/auth";
 import { colors, spacing, fontSize, borderRadius } from "@/lib/theme";
-import { LineChart } from "react-native-gifted-charts";
+import { LineChart } from "react-native-chart-kit";
 import { useWindowDimensions } from "react-native";
-import { yAxisSides } from "gifted-charts-core";
 
 
 
@@ -45,12 +44,12 @@ const MAX_REPS = 999;
 
 export default function SelectedExerciseScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{
-    name?: string;
+  const params = useLocalSearchParams<{ 
+    name?: string; 
     exerciseId?: string;
     exerciseCategory?: string;
   }>();
-
+  
   const { width } = useWindowDimensions();
   const exerciseId = params.exerciseId ?? "";
   const isCardio = params.exerciseCategory === "cardio";
@@ -58,7 +57,7 @@ export default function SelectedExerciseScreen() {
     typeof params.name === "string" && params.name.length > 0
       ? params.name
       : "Selected Exercise";
-
+  
 
   console.log('exerciseId param received:', exerciseId);
 
@@ -79,9 +78,9 @@ export default function SelectedExerciseScreen() {
   // Range state for graph timespan toggle
   const [range, setRange] = useState<"week" | "month" | "year">("week");
 
-  // Current metric, used to toggle between graphs
+  // Metric for weight/reps toggle
   const [metric, setMetric] = useState<"weight" | "reps">("weight");
-
+  
 
   // Get the logged-in user's ID
   useEffect(() => {
@@ -89,56 +88,51 @@ export default function SelectedExerciseScreen() {
       const { success, user_id } = await checkLogin();
       if (success) {
         setUserId(parseInt(user_id));
-      } else {
-        console.log('check login failed, routing to login');
-        router.replace('/');
       }
-
     };
     loadUserId();
-    
   }, []);
 
   const loadCurrentSets = async () => {
     if (!exerciseId || !userId) return;
 
-    setLoadingCurrent(true);
-    try {
-      const data = await fetchCurrentSets(exerciseId, userId);
-      const mapped: WorkoutSet[] = data.map((row: any, index: number) => {
-        const isCardioRow = row.duration_seconds != null;
+      setLoadingCurrent(true);
+      try {
+        const data = await fetchCurrentSets(exerciseId, userId);
+        const mapped: WorkoutSet[] = data.map((row: any, index: number) => {
+          const isCardioRow = row.duration_seconds != null;
 
-        const durationSeconds = isCardioRow
-          ? Number(row.duration_seconds)
-          : undefined;
+          const durationSeconds = isCardioRow
+            ? Number(row.duration_seconds)
+            : undefined;
 
-        const distance = isCardioRow
-          ? Number(row.distance)
-          : undefined;
+          const distance = isCardioRow
+            ? Number(row.distance)
+            : undefined;
 
-        return {
-          id: typeof row.id === "number" ? row.id : Number(row.id),
-          set: index + 1,
+          return {
+            id: typeof row.id === "number" ? row.id : Number(row.id),
+            set: index + 1,
 
-          weight: isCardioRow
-            ? durationSeconds!
-            : Number(row.weight),
+            weight: isCardioRow
+              ? durationSeconds!
+              : Number(row.weight),
 
-          reps: isCardioRow
-            ? distance!
-            : Number(row.reps),
+            reps: isCardioRow
+              ? distance!
+              : Number(row.reps),
 
-          durationSeconds,
-          distance,
-        };
-      });
-      setCurrentSets(mapped);
-    } catch (err: any) {
-      console.error("Error fetching sets:", err.message);
-      setError(err.message || "Failed to load today's sets");
-    } finally {
-      setLoadingCurrent(false);
-    }
+            durationSeconds,
+            distance,
+          };
+        });
+        setCurrentSets(mapped);
+      } catch (err: any) {
+        console.error("Error fetching sets:", err.message);
+        setError(err.message || "Failed to load today's sets");
+      } finally {
+        setLoadingCurrent(false);
+      }
   };
 
   // Fetch today's sets
@@ -148,7 +142,7 @@ export default function SelectedExerciseScreen() {
     loadCurrentSets();
   }, [exerciseId, userId]);
 
-
+  
 
   // Fetch previous workouts grouped by date
   useEffect(() => {
@@ -159,7 +153,6 @@ export default function SelectedExerciseScreen() {
 
       try {
         const grouped = await fetchExerciseHistory(exerciseId, userId);
-
         if (!grouped || typeof grouped !== "object") {
           setPreviousWorkouts([]);
           return;
@@ -168,35 +161,23 @@ export default function SelectedExerciseScreen() {
         const shaped: PreviousWorkout[] = Object.entries(grouped).map(
           ([date, sets]: [string, any]) => ({
             date,
-            sets: sets.map((setRow: any, i: number) => {
+            sets: (Array.isArray(sets) ? sets : []).map((setRow: any, i: number) => {
               const isCardioRow = setRow.duration_seconds != null;
-
               const durationSeconds = isCardioRow
                 ? Number(setRow.duration_seconds)
                 : undefined;
-
-              const distance = isCardioRow
-                ? Number(setRow.distance)
-                : undefined;
+              const distance = isCardioRow ? Number(setRow.distance) : undefined;
 
               return {
                 set: i + 1,
-                weight: isCardioRow
-                  ? durationSeconds!
-                  : Number(setRow.weight),
-                reps: isCardioRow
-                  ? distance!
-                  : Number(setRow.reps),
+                weight: isCardioRow ? durationSeconds! : Number(setRow.weight),
+                reps: isCardioRow ? distance! : Number(setRow.reps),
                 durationSeconds,
                 distance,
               };
             }),
           })
         );
-
-        const today = new Date().toLocaleDateString("en-CA");
-        const filtered = shaped.filter(w => w.date !== today);
-        setPreviousWorkouts(filtered);
 
         // Sort oldest to newest
         shaped.sort(
@@ -217,10 +198,10 @@ export default function SelectedExerciseScreen() {
   const handleAddSet = async () => {
   if (!userId || !exerciseId) return;
 
-    let weight: number | null = null;
-    let durationSeconds: number | null = null;
-    let distance: number | null = null;
-    let reps: number | null = null;
+  let weight: number | null = null;
+  let durationSeconds: number | null = null;
+  let distance: number | null = null;
+  let reps: number | null = null;
 
   if (isCardio) {
     // Build duration
@@ -372,10 +353,11 @@ export default function SelectedExerciseScreen() {
   const todayEntry: PreviousWorkout | null =
     currentSets.length > 0
       ? {
-        date: new Date().toLocaleDateString("en-CA"),
-        sets: currentSets,
-      }
+          date: new Date().toISOString().split("T")[0],
+          sets: currentSets,
+        }
       : null;
+      
 
   // Combines history + today's sets, oldest to newest
   const allWorkoutsForChart = [
@@ -384,18 +366,19 @@ export default function SelectedExerciseScreen() {
   ];
 
   // Range
-  const now = new Date();
 
   const filteredWorkouts = allWorkoutsForChart.filter((workout) => {
-    const workoutDate = new Date(workout.date);
-    const diffDays =
-      (now.getTime() - workoutDate.getTime()) / (1000 * 60 * 60 * 24);
+    const [year, month, day] = workout.date.split("-").map(Number);
+    const workoutDate = new Date(year, month - 1, day);
 
-    if (range === "week") return diffDays <= 7;
-    if (range === "month") return diffDays <= 30;
-    if (range === "year") return diffDays <= 365;
+    const cutoff = new Date();
+    cutoff.setHours(0, 0, 0, 0);
 
-    return true;
+    if (range === "week") cutoff.setDate(cutoff.getDate() - 7);
+    if (range === "month") cutoff.setDate(cutoff.getDate() - 30);
+    if (range === "year") cutoff.setDate(cutoff.getDate() - 365);
+
+    return workoutDate >= cutoff;
   });
 
 
@@ -421,56 +404,52 @@ export default function SelectedExerciseScreen() {
 
   // Calculates pace (time / distance) as the y-axis for the chart
   const chartValues = setPoints.map((point) => {
-    if (!isCardio) return point.weight;
+    if (isCardio) {
+      const time = point.weight;
+      const dist = point.reps;
+      if (!time || !dist) return 0;
+      return time / dist; 
+    }
 
-    const time = point.weight; // durationSeconds
-    const dist = point.reps;   // distance
-
-    if (!time || !dist) return 0;
-
-    return time / dist;
+    return metric === "weight" ? point.weight : point.reps;
   });
 
-  const chartReps = setPoints.map((point) => {
-    if (!isCardio) return point.reps;
+  // Padded values, so that line shows around center of the graph 
+  let paddedValues = [...chartValues];
 
-    const time = point.weight; // durationSeconds
-    const dist = point.reps;   // distance
+  if (paddedValues.length === 1) {
+    const v = paddedValues[0];
+    paddedValues = [v - 1, v, v + 1];
+  }
 
-    if (!time || !dist) return 0;
+  const min = Math.min(...paddedValues);
+  const max = Math.max(...paddedValues);
 
-    return -time / dist;
-  });
-
+  if (min === max) {
+    paddedValues = paddedValues.map(v => v - 1);
+    paddedValues.push(max + 1);
+  }
 
 
   const chartData =
     setPoints.length > 0
-      ? setPoints.map((point, index) => ({
-          value: metric === "weight" ? point.weight : point.reps,
-          label: labels[index] ?? "",
-        }))
-      : [];
-
-  const values = chartData.map(d => d.value);
-
-  const maxVal = values.length ? Math.max(...values) : 10;
-  const minVal = values.length ? Math.min(...values) : 0;
-  const valueRange = maxVal - minVal;
-
-  const sections =
-    valueRange <= 2 ? 2 :
-    valueRange <= 10 ? 4 :
-    valueRange <= 50 ? 5 :
-    6;
-
-  const chartDataOfReps =
-    setPoints.length > 0
-      ? chartReps.map((value, index) => ({
-        value,
-        label: labels[index] ?? "",
-      }))
-      : [];
+      ? {
+          labels,
+          datasets: [
+            {
+            data: chartValues,
+              color: () => colors.primary,
+            },
+          ],
+          legend: [
+            isCardio
+              ? "Pace by Lap (time/mi)"
+              : metric === "weight"
+              ? "Weight by Set (lbs)"
+              : "Reps by Set"
+          ],
+        }
+      : null;
 
 
   // Maps time from duration_seconds
@@ -485,14 +464,13 @@ export default function SelectedExerciseScreen() {
 
   // Formatting for the cardio Y-axis
   const formatPace = (secondsPerUnit: number) => {
-    if (!secondsPerUnit || !isFinite(secondsPerUnit)) return "--";
+  if (!secondsPerUnit || !isFinite(secondsPerUnit)) return "--";
 
-    const m = Math.floor(secondsPerUnit / 60);
-    const s = Math.round(secondsPerUnit % 60);
+  const m = Math.floor(secondsPerUnit / 60);
+  const s = Math.round(secondsPerUnit % 60);
 
-    return `${m}:${s.toString().padStart(2, "0")}/mi`;
-  };
-
+  return `${m}:${s.toString().padStart(2, "0")}/mi`;
+};
 
   return (
     <ScrollView style={s.scrollView} showsVerticalScrollIndicator={false}>
@@ -535,51 +513,61 @@ export default function SelectedExerciseScreen() {
           </TouchableOpacity>
         ))}
       </View>
-      <View style={{ flexDirection: "row", gap: 8, marginBottom: 8 }}>
-        {["weight", "reps"].map((m) => (
-          <TouchableOpacity
-            key={m}
-            onPress={() => setMetric(m as any)}
-            style={{
-              paddingVertical: 6,
-              paddingHorizontal: 12,
-              borderRadius: 8,
-              backgroundColor: metric === m ? colors.primary : colors.bgInput,
-            }}
-          >
-            <Text style={{ color: colors.text }}>
-              {m.toUpperCase()}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+
+       {/* Metric toggle */}
+      {!isCardio && (
+        <View style={{ flexDirection: "row", gap: 8, marginBottom: 8 }}>
+          {["weight", "reps"].map((m) => (
+            <TouchableOpacity
+              key={m}
+              onPress={() => setMetric(m as any)}
+              style={{
+                paddingVertical: 6,
+                paddingHorizontal: 12,
+                borderRadius: 8,
+                backgroundColor: metric === m ? colors.primary : colors.bgInput,
+              }}
+            >
+              <Text style={{ color: colors.text }}>
+                {m.toUpperCase()}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
 
       {/* Chart */}
-      <Text style={s.sectionTitle}>
-        {metric === "weight" ? "Weight Progress" : "Reps Progress"}
-      </Text>
       <View style={s.historyCard}>
         {loadingHistory ? (
           <View style={s.centeredRow}>
             <ActivityIndicator color={colors.primary} />
           </View>
         ) : chartData ? (
-         <LineChart
+          <LineChart
             data={chartData}
-
-            maxValue={Math.max(5, maxVal * 1.1)}
-            noOfSections={sections}
-
-            width={width - 110}
+            width={width - 80}
             height={220}
-            color={colors.primary}
-            thickness={2}
-            curved
-            adjustToWidth
-
+            chartConfig={{
+              backgroundGradientFrom: colors.bgCard,
+              backgroundGradientTo: colors.bgCard,
+              color: () => colors.primary,
+              labelColor: () => colors.textSecondary,
+              style: { borderRadius: borderRadius.md },
+              propsForBackgroundLines: {
+                strokeDasharray: "5,5",
+                stroke: "rgba(255,255,255,0.15)",
+              },
+               propsForDots: {
+                r: "4",
+              },
+              propsForLabels: {
+                dy: -5,
+              },
+            }}
             formatYLabel={(value) =>
-              Math.round(Number(value)).toString()
+              isCardio ? formatPace(Math.abs(Number(value))) : value
             }
+            bezier
           />
         ) : (
           <View style={{ height: 220, justifyContent: "center", alignItems: "center" }}>
@@ -614,7 +602,7 @@ export default function SelectedExerciseScreen() {
         ) : currentSets.length === 0 ? (
           <View style={s.centeredRow}>
             <Text style={s.emptyText}>
-              {isCardio ? "No laps logged today" : "No sets logged today"}
+              {isCardio ? "No laps logged today" : "No sets logged today" }
             </Text>
           </View>
         ) : (
@@ -688,27 +676,27 @@ export default function SelectedExerciseScreen() {
             </>
           ) : (
             <>
-              {/* Strength inputs */}
-              <TextInput
-                style={s.setInput}
-                placeholder="Weight"
-                placeholderTextColor={colors.textMuted}
-                keyboardType="numeric"
-                value={weightText}
-                onChangeText={(text) =>
-                  setWeightText(text.replace(/[^0-9.]/g, ""))
-                }
-              />
-              <TextInput
-                style={s.setInput}
-                placeholder="Reps"
-                placeholderTextColor={colors.textMuted}
-                keyboardType="numeric"
-                value={repsText}
-                onChangeText={(text) =>
-                  setRepsText(text.replace(/[^0-9]/g, ""))
-                }
-              />
+            {/* Strength inputs */}
+            <TextInput
+              style={s.setInput}
+              placeholder="Weight"
+              placeholderTextColor={colors.textMuted}
+              keyboardType="numeric"
+              value={weightText}
+              onChangeText={(text) =>
+                setWeightText(text.replace(/[^0-9.]/g, ""))
+              }
+            />
+            <TextInput
+              style={s.setInput}
+              placeholder="Reps"
+              placeholderTextColor={colors.textMuted}
+              keyboardType="numeric"
+              value={repsText}
+              onChangeText={(text) =>
+                setRepsText(text.replace(/[^0-9]/g, ""))
+              }
+            />
             </>
           )}
         </View>
@@ -880,10 +868,10 @@ const s = StyleSheet.create({
     backgroundColor: colors.bgInput,
   },
   timeGroup: {
-    flexDirection: "row",
-    flex: 2,
-    gap: 6,
-    minWidth: 140,
+  flexDirection: "row",
+  flex: 2,
+  gap: 6,
+  minWidth: 140, 
   },
   timeInput: {
     flex: 1,
@@ -930,7 +918,6 @@ const s = StyleSheet.create({
     borderColor: colors.border,
     padding: spacing.sm,
     marginBottom: spacing.sm,
-    overflow: "hidden",
   },
   historyDate: {
     fontSize: fontSize.sm,
