@@ -7,6 +7,7 @@
  * - Serves OpenAPI docs at `/api-docs`
  * - Provides simple health/readiness endpoints used by deploy tooling and ops
  */
+
 require('dotenv').config();
 const express = require('express');
 const authRouter = require("./routes/auth");
