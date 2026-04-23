@@ -46,7 +46,7 @@ describe("Login screen", () => {
   });
 
   it("calls login service and redirects on success", async () => {
-    (login as jest.Mock).mockResolvedValue(true);
+    (login as jest.Mock).mockResolvedValue({ success: true, status: 200, message: "" });
 
     const { getByPlaceholderText, getByText } = render(<LoginScreen />);
     fireEvent.changeText(getByPlaceholderText("Email"), "test@example.com");
@@ -57,5 +57,21 @@ describe("Login screen", () => {
       expect(login).toHaveBeenCalledWith("test@example.com", "password123");
       expect(mockReplace).toHaveBeenCalledWith("/(tabs)/exerciselibrary");
     });
+  });
+
+  it("shows a friendly message on login failure", async () => {
+    (login as jest.Mock).mockResolvedValue({
+      success: false,
+      status: 401,
+      message: "Incorrect email or password.",
+    });
+
+    const { getByPlaceholderText, getByText, findByTestId } = render(<LoginScreen />);
+    fireEvent.changeText(getByPlaceholderText("Email"), "test@example.com");
+    fireEvent.changeText(getByPlaceholderText("Password"), "wrong");
+    fireEvent.press(getByText("Log In"));
+
+    const msg = await findByTestId("login-message");
+    expect(msg).toBeTruthy();
   });
 });
