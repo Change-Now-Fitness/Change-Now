@@ -4,17 +4,18 @@ This binary package is intended for course staff to install and evaluate the And
 
 ## Package Contents
 
-- `android/ChangeNow-1.0-local-emulator-release.apk`
+- `android/ChangeNow-1.0-release.apk`
 - `server/ChangeNow-backend-server.zip`
 - `RELEASE_NOTES.md`
+- `PRODUCT_DOCUMENTATION.md`
 - `COURSE_STAFF_ACCESS.md`
 
 ## What This Binary Is
 
 - The Android APK is a standalone release build.
 - It does not require Expo Go, Metro, or `adb reverse`.
-- It is configured for the Android emulator to call a backend running on the same machine at `http://10.0.2.2:4000`.
-- The backend server package is included separately because the Android app depends on API routes for login, exercise loading, and workout logging.
+- It is configured to call the hosted backend at `https://api.changenow.fit`.
+- The backend server package is still included separately so an administrator can install and inspect the server application if needed.
 
 ## Required Software
 
@@ -29,52 +30,14 @@ Install these before running the package:
 
 The commands below assume Windows PowerShell.
 
-### 1. Unzip the server package
+### 1. Verify the hosted backend is reachable
 
-Unzip `server/ChangeNow-backend-server.zip` somewhere on the grading machine.
+Check these in a browser:
 
-### 2. Verify the backend environment file is present
+- `https://api.changenow.fit/health`
+- `https://api.changenow.fit/ready`
 
-The packaged backend already includes a ready-to-run `.env` file for course evaluation.
-
-In the unzipped backend folder, confirm these files exist:
-
-- `.env`
-- `.env.example`
-
-You do not need to create `.env` manually.
-
-If `.env` is missing for any reason, copy `.env.example` to `.env` and contact the team for the prefilled course credentials.
-
-### 3. Install backend dependencies
-
-```powershell
-npm install
-```
-
-### 4. Validate the backend configuration
-
-```powershell
-npm run validate:env
-```
-
-Expected result:
-
-- The command exits successfully.
-- A local warning about CORS may appear if `CORS_ALLOWED_ORIGINS` is empty. That is acceptable for local emulator grading when `CORS_ALLOW_ALL=true`.
-
-### 5. Start the backend server
-
-```powershell
-npm start
-```
-
-Expected result:
-
-- The server starts on port `4000`.
-- Visiting `http://localhost:4000/health` in a browser returns JSON.
-
-### 6. Create and boot an Android emulator
+### 2. Create and boot an Android emulator
 
 In Android Studio:
 
@@ -83,12 +46,12 @@ In Android Studio:
 3. Choose a recent Android image such as `API 35`.
 4. Start the emulator and wait for it to fully boot.
 
-### 7. Install the Android APK
+### 3. Install the Android APK
 
 Open a new PowerShell window and run:
 
 ```powershell
-& "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" install -r .\android\ChangeNow-1.0-local-emulator-release.apk
+& "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" install -r .\android\ChangeNow-1.0-release.apk
 ```
 
 Expected result:
@@ -96,9 +59,23 @@ Expected result:
 - PowerShell prints `Success`.
 - The app appears on the emulator as `Change-Now`.
 
-### 8. Launch and evaluate the app
+### 4. Launch and evaluate the app
 
-Open `Change-Now` on the emulator and use the backend running in step 5.
+Open `Change-Now` on the emulator and use the hosted backend at `https://api.changenow.fit`.
+
+### 5. Optional server package install
+
+If the evaluator wants to install the backend package separately:
+
+1. Unzip `server/ChangeNow-backend-server.zip`.
+2. Review the included `.env` or provide the correct hosted env values.
+3. Run:
+
+```powershell
+npm install
+npm run validate:env
+npm start
+```
 
 ## Working Commands / Features
 
@@ -114,9 +91,15 @@ The following user-facing commands are working in the current binary when the ba
 - Delete workout set
 - Load history data for an exercise
 
+## Product Documentation
+
+For a concise overview of the product architecture, main user flows, and major components, see:
+
+- `PRODUCT_DOCUMENTATION.md`
+
 ## Recommended Demo Flow
 
-1. Start the backend server.
+1. Confirm the hosted backend health endpoint works.
 2. Start the Android emulator.
 3. Install the APK.
 4. Create a new account.
@@ -127,11 +110,19 @@ The following user-facing commands are working in the current binary when the ba
 9. Verify the set appears in the UI.
 10. Delete the set and confirm it disappears.
 
-## Known Issues
+## Known Issues And Release Limitations
 
-- This APK is configured for the Android emulator only. It points to `10.0.2.2`, which is the emulator alias for the host machine. A physical phone would require a rebuild with a hosted backend URL or the host machine's LAN IP.
+### Tracked product issues
+
+- Graph and history clarity still need polish. See [Issue #59](https://github.com/Change-Now-Fitness/Change-Now/issues/59): `Historical data for workout sets`.
+- The selected exercise screen still has a visible reload after adding a set. See [Issue #86](https://github.com/Change-Now-Fitness/Change-Now/issues/86): `Adding sets causes a visible reload in selected exercise screen after update. Makes UI slightly clunky`.
+- Duplicate custom exercise naming rules still need tightening. See [Issue #69](https://github.com/Change-Now-Fitness/Change-Now/issues/69): `Same custom exercise name with different tags`.
+- Some set-entry UI labels and cues can still be confusing to new users. See [Issue #70](https://github.com/Change-Now-Fitness/Change-Now/issues/70): `Confusing UI`.
+
+### Release limitations
+
+- This APK depends on `https://api.changenow.fit` being up and correctly configured.
 - The release APK is signed with the default debug keystore for course distribution. It is installable, but it is not suitable for Google Play submission.
-- Offline behavior is limited. Some previously loaded data may remain visible, but actions that require the API will fail without network/database access.
-- Graph and history UX still have rough edges. The graph is present, but detailed interaction is limited.
-- The production hosted Railway backend is not relied on in this package because it was not stable enough for course submission at packaging time.
+- Offline behavior is limited. Some previously loaded data may remain visible, but actions that require the API will fail without network or hosted backend access.
+- The included backend server package still needs correct env values if it is installed separately.
 - The packaged `.env` contains course-use credentials for grading convenience and should be rotated after grading is complete.
