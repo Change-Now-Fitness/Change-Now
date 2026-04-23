@@ -95,6 +95,7 @@ const swaggerOptions = {
         './config/**/*.js',
     ],
 };
+swaggerOptions.apis.push('./server.js');
 
 const swaggerSpecifications = swaggerJsdoc(swaggerOptions);
 
@@ -118,11 +119,11 @@ app.use("/workouts", workoutRouter)
  * @openapi
  * /:
  *   get:
- *     summary: API landing page and route map
+ *     summary: Get API metadata and route aliases
  *     tags: [Meta]
  *     responses:
  *       '200':
- *         description: Service metadata
+ *         description: Backend metadata
  */
 app.get('/', (req, res) => {
     res.json({
@@ -146,18 +147,12 @@ app.get('/', (req, res) => {
  * @openapi
  * /health:
  *   get:
- *     summary: Liveness check
+ *     summary: Check whether the backend process is healthy
  *     tags: [Meta]
+ *     description: Also available at `/api/health`.
  *     responses:
  *       '200':
- *         description: Service is running
- * /api/health:
- *   get:
- *     summary: Liveness check (aliased)
- *     tags: [Meta]
- *     responses:
- *       '200':
- *         description: Service is running
+ *         description: Service health information
  */
 app.get(['/health', '/api/health'], (req, res) => {
     res.status(200).json({
