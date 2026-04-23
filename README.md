@@ -1,8 +1,13 @@
-# ChangeNow
-ChangeNow is a workout tracking mobile app.
-- **Frontend**: Expo (React Native) (`frontend/`)
-- **Backend**: Express REST API (`backend/`)
-- **Database**: PostgreSQL (Supabase via `DATABASE_URL`)
+# Welcome to ChangeNow 🔩
+
+ChangeNow is a fitness logging & Visualization mobile/web application built with:
+
+**Frontend:** Expo (React Native)
+
+**Backend:** Express.js REST API
+
+**Database:** PostgreSQL (Supabase)
+
 ---
 ## Project structure
 ```text

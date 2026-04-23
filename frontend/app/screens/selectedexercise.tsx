@@ -87,9 +87,14 @@ export default function SelectedExerciseScreen() {
       const { success, user_id } = await checkLogin();
       if (success) {
         setUserId(parseInt(user_id));
+      } else {
+        console.log('check login failed, routing to login');
+        router.replace('/');
       }
+
     };
     loadUserId();
+    
   }, []);
 
   const loadCurrentSets = async () => {

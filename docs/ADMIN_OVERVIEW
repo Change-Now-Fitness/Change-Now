@@ -25,6 +25,7 @@ docs/admin/CI_CD.md
 docs/admin/CLOUD_EC2_NGINX.md
 docs/admin/RUNTIME_SECRETS.md
 docs/admin/TROUBLESHOOTING.md
+docs/admin/TESTING.md
 Quick “where is stuff” map:
 
 GitHub Actions workflow: .github/workflows/ci.yml
