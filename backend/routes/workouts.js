@@ -1,8 +1,8 @@
 
-
 const express = require("express");
 
 const router = express.Router();
+const authMiddleware = require("../middleware/auth");
 const pool = require("../dbconnection");
 const {
   ensureExerciseCatalogTables,
@@ -483,6 +483,4 @@ router.get("/:exerciseId/history", async (req, res) => {
     res.status(500).json({ error: "Database error" });
   }
 });
-
-
 module.exports = router;

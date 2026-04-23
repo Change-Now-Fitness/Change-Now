@@ -39,6 +39,7 @@ const buildApiError = async (
   error.message = message;
   return error;
 };
+
 export async function getToken(): Promise<string | null> {
   if (Platform.OS === "web") {
     return typeof window !== "undefined"

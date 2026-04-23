@@ -15,8 +15,9 @@ import { fetchCurrentSets, fetchExerciseHistory, addSet, deleteSet, addLap } fro
 import React, { useState, useEffect } from "react";
 import { checkLogin } from "../../services/auth";
 import { colors, spacing, fontSize, borderRadius } from "@/lib/theme";
-import { LineChart } from "react-native-chart-kit";
+import { LineChart } from "react-native-gifted-charts";
 import { useWindowDimensions } from "react-native";
+import { yAxisSides } from "gifted-charts-core";
 
 
 
@@ -44,12 +45,12 @@ const MAX_REPS = 999;
 
 export default function SelectedExerciseScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ 
-    name?: string; 
+  const params = useLocalSearchParams<{
+    name?: string;
     exerciseId?: string;
     exerciseCategory?: string;
   }>();
-  
+
   const { width } = useWindowDimensions();
   const exerciseId = params.exerciseId ?? "";
   const isCardio = params.exerciseCategory === "cardio";
@@ -57,7 +58,7 @@ export default function SelectedExerciseScreen() {
     typeof params.name === "string" && params.name.length > 0
       ? params.name
       : "Selected Exercise";
-  
+
 
   console.log('exerciseId param received:', exerciseId);
 
@@ -75,9 +76,10 @@ export default function SelectedExerciseScreen() {
   const [minutesText, setMinutesText] = useState("");
   const [secondsText, setSecondsText] = useState("");
 
+
   // Range state for graph timespan toggle
   const [range, setRange] = useState<"week" | "month" | "year">("week");
-  
+
 
   // Get the logged-in user's ID
   useEffect(() => {
@@ -93,44 +95,44 @@ export default function SelectedExerciseScreen() {
   const loadCurrentSets = async () => {
     if (!exerciseId || !userId) return;
 
-      setLoadingCurrent(true);
-      try {
-        const today = new Date().toISOString().split("T")[0];
-        const data = await fetchCurrentSets(exerciseId, userId, today);
-        const mapped: WorkoutSet[] = data.map((row: any, index: number) => {
-          const isCardioRow = row.duration_seconds != null;
+    setLoadingCurrent(true);
+    try {
+      const today = new Date().toISOString().split("T")[0];
+      const data = await fetchCurrentSets(exerciseId, userId, today);
+      const mapped: WorkoutSet[] = data.map((row: any, index: number) => {
+        const isCardioRow = row.duration_seconds != null;
 
-          const durationSeconds = isCardioRow
-            ? Number(row.duration_seconds)
-            : undefined;
+        const durationSeconds = isCardioRow
+          ? Number(row.duration_seconds)
+          : undefined;
 
-          const distance = isCardioRow
-            ? Number(row.distance)
-            : undefined;
+        const distance = isCardioRow
+          ? Number(row.distance)
+          : undefined;
 
-          return {
-            id: typeof row.id === "number" ? row.id : Number(row.id),
-            set: index + 1,
+        return {
+          id: typeof row.id === "number" ? row.id : Number(row.id),
+          set: index + 1,
 
-            weight: isCardioRow
-              ? durationSeconds!
-              : Number(row.weight),
+          weight: isCardioRow
+            ? durationSeconds!
+            : Number(row.weight),
 
-            reps: isCardioRow
-              ? distance!
-              : Number(row.reps),
+          reps: isCardioRow
+            ? distance!
+            : Number(row.reps),
 
-            durationSeconds,
-            distance,
-          };
-        });
-        setCurrentSets(mapped);
-      } catch (err: any) {
-        console.error("Error fetching sets:", err.message);
-        setError(err.message || "Failed to load today's sets");
-      } finally {
-        setLoadingCurrent(false);
-      }
+          durationSeconds,
+          distance,
+        };
+      });
+      setCurrentSets(mapped);
+    } catch (err: any) {
+      console.error("Error fetching sets:", err.message);
+      setError(err.message || "Failed to load today's sets");
+    } finally {
+      setLoadingCurrent(false);
+    }
   };
 
   // Fetch today's sets
@@ -140,10 +142,11 @@ export default function SelectedExerciseScreen() {
     loadCurrentSets();
   }, [exerciseId, userId]);
 
-  
+
 
   // Fetch previous workouts grouped by date
   useEffect(() => {
+    if (!exerciseId || !userId) return;
     if (!exerciseId || !userId) return;
 
     const loadHistory = async () => {
@@ -159,17 +162,28 @@ export default function SelectedExerciseScreen() {
         const shaped: PreviousWorkout[] = Object.entries(grouped).map(
           ([date, sets]: [string, any]) => ({
             date,
-            sets: (Array.isArray(sets) ? sets : []).map((setRow: any, i: number) => {
+            sets: sets.map((setRow: any, i: number) => {
               const isCardioRow = setRow.duration_seconds != null;
+
               const durationSeconds = isCardioRow
                 ? Number(setRow.duration_seconds)
                 : undefined;
-              const distance = isCardioRow ? Number(setRow.distance) : undefined;
+
+              const distance = isCardioRow
+                ? Number(setRow.distance)
+                : undefined;
 
               return {
                 set: i + 1,
-                weight: isCardioRow ? durationSeconds! : Number(setRow.weight),
-                reps: isCardioRow ? distance! : Number(setRow.reps),
+
+                weight: isCardioRow
+                  ? durationSeconds!
+                  : Number(setRow.weight),
+
+                reps: isCardioRow
+                  ? distance!
+                  : Number(setRow.reps),
+
                 durationSeconds,
                 distance,
               };
@@ -189,6 +203,13 @@ export default function SelectedExerciseScreen() {
         setLoadingHistory(false);
       }
     };
+        setPreviousWorkouts(shaped);
+      } catch (err: any) {
+        console.error("Error fetching history:", err.message);
+      } finally {
+        setLoadingHistory(false);
+      }
+    };
 
     void loadHistory();
   }, [exerciseId, userId]);
@@ -196,10 +217,10 @@ export default function SelectedExerciseScreen() {
   const handleAddSet = async () => {
   if (!userId || !exerciseId) return;
 
-  let weight: number | null = null;
-  let durationSeconds: number | null = null;
-  let distance: number | null = null;
-  let reps: number | null = null;
+    let weight: number | null = null;
+    let durationSeconds: number | null = null;
+    let distance: number | null = null;
+    let reps: number | null = null;
 
   if (isCardio) {
     // Build duration
@@ -351,9 +372,9 @@ export default function SelectedExerciseScreen() {
   const todayEntry: PreviousWorkout | null =
     currentSets.length > 0
       ? {
-          date: new Date().toISOString().split("T")[0],
-          sets: currentSets,
-        }
+        date: new Date().toISOString().split("T")[0],
+        sets: currentSets,
+      }
       : null;
 
   // Combines history + today's sets, oldest to newest
@@ -410,20 +431,34 @@ export default function SelectedExerciseScreen() {
     return -time / dist;
   });
 
+  const chartReps = setPoints.map((point) => {
+    if (!isCardio) return point.reps;
+
+    const time = point.weight; // durationSeconds
+    const dist = point.reps;   // distance
+
+    if (!time || !dist) return 0;
+
+    return -time / dist;
+  });
+
+
 
   const chartData =
     setPoints.length > 0
-      ? {
-          labels,
-          datasets: [
-            {
-              data: chartValues,
-              color: () => colors.primary,
-            },
-          ],
-          legend: [isCardio ? "Pace by Lap (time/mi)" : "Weight by Set (lbs)"],
-        }
-      : null;
+      ? chartValues.map((value, index) => ({
+        value,
+        label: labels[index] ?? "",
+      }))
+      : [];
+
+  const chartDataOfReps =
+    setPoints.length > 0
+      ? chartReps.map((value, index) => ({
+        value,
+        label: labels[index] ?? "",
+      }))
+      : [];
 
 
   // Maps time from duration_seconds
@@ -438,13 +473,13 @@ export default function SelectedExerciseScreen() {
 
   // Formatting for the cardio Y-axis
   const formatPace = (secondsPerUnit: number) => {
-  if (!secondsPerUnit || !isFinite(secondsPerUnit)) return "--";
+    if (!secondsPerUnit || !isFinite(secondsPerUnit)) return "--";
 
-  const m = Math.floor(secondsPerUnit / 60);
-  const s = Math.round(secondsPerUnit % 60);
+    const m = Math.floor(secondsPerUnit / 60);
+    const s = Math.round(secondsPerUnit % 60);
 
-  return `${m}:${s.toString().padStart(2, "0")}/mi`;
-};
+    return `${m}:${s.toString().padStart(2, "0")}/mi`;
+  };
 
   return (
     <ScrollView style={s.scrollView} showsVerticalScrollIndicator={false}>
@@ -497,23 +532,45 @@ export default function SelectedExerciseScreen() {
         ) : chartData ? (
           <LineChart
             data={chartData}
-            width={width - 80}
+            secondaryData={chartDataOfReps}
+            width={width - 110}
             height={220}
-            chartConfig={{
-              backgroundGradientFrom: colors.bgCard,
-              backgroundGradientTo: colors.bgCard,
-              color: () => colors.primary,
-              labelColor: () => colors.textSecondary,
-              style: { borderRadius: borderRadius.md },
-              propsForBackgroundLines: {
-                strokeDasharray: "5,5",
-                stroke: "rgba(255,255,255,0.15)",
-              },
+            backgroundColor={colors.bgCard}
+            color={colors.primary}
+            thickness={2}
+            curved
+            adjustToWidth
+            initialSpacing={24}
+            endSpacing={4}
+            yAxisColor="rgba(255,255,255,0.18)"
+            xAxisColor="rgba(255,255,255,0.18)"
+            rulesColor="rgba(255,255,255,0.15)"
+            rulesType="dashed"
+            dashWidth={5}
+            dashGap={5}
+            yAxisTextStyle={{
+              color: colors.textSecondary,
+              fontSize: fontSize.sm,
             }}
+            xAxisLabelTextStyle={{
+              color: colors.textSecondary,
+              fontSize: fontSize.xs,
+            }}
+            yAxisLabelWidth={16}
             formatYLabel={(value) =>
               isCardio ? formatPace(Math.abs(Number(value))) : value
             }
-            bezier
+            secondaryYAxis={{
+              yAxisTextStyle: {
+                color: colors.textSecondary,
+                fontSize: fontSize.sm,
+              },
+            }}
+            secondaryLineConfig={{
+              color: "#ff9f43",
+              thickness: 2,
+              curved: true,
+            }}
           />
         ) : (
           <View style={{ height: 220, justifyContent: "center", alignItems: "center" }}>
@@ -548,7 +605,7 @@ export default function SelectedExerciseScreen() {
         ) : currentSets.length === 0 ? (
           <View style={s.centeredRow}>
             <Text style={s.emptyText}>
-              {isCardio ? "No laps logged today" : "No sets logged today" }
+              {isCardio ? "No laps logged today" : "No sets logged today"}
             </Text>
           </View>
         ) : (
@@ -622,27 +679,27 @@ export default function SelectedExerciseScreen() {
             </>
           ) : (
             <>
-            {/* Strength inputs */}
-            <TextInput
-              style={s.setInput}
-              placeholder="Weight"
-              placeholderTextColor={colors.textMuted}
-              keyboardType="numeric"
-              value={weightText}
-              onChangeText={(text) =>
-                setWeightText(text.replace(/[^0-9.]/g, ""))
-              }
-            />
-            <TextInput
-              style={s.setInput}
-              placeholder="Reps"
-              placeholderTextColor={colors.textMuted}
-              keyboardType="numeric"
-              value={repsText}
-              onChangeText={(text) =>
-                setRepsText(text.replace(/[^0-9]/g, ""))
-              }
-            />
+              {/* Strength inputs */}
+              <TextInput
+                style={s.setInput}
+                placeholder="Weight"
+                placeholderTextColor={colors.textMuted}
+                keyboardType="numeric"
+                value={weightText}
+                onChangeText={(text) =>
+                  setWeightText(text.replace(/[^0-9.]/g, ""))
+                }
+              />
+              <TextInput
+                style={s.setInput}
+                placeholder="Reps"
+                placeholderTextColor={colors.textMuted}
+                keyboardType="numeric"
+                value={repsText}
+                onChangeText={(text) =>
+                  setRepsText(text.replace(/[^0-9]/g, ""))
+                }
+              />
             </>
           )}
         </View>
@@ -814,10 +871,10 @@ const s = StyleSheet.create({
     backgroundColor: colors.bgInput,
   },
   timeGroup: {
-  flexDirection: "row",
-  flex: 2,
-  gap: 6,
-  minWidth: 140, 
+    flexDirection: "row",
+    flex: 2,
+    gap: 6,
+    minWidth: 140,
   },
   timeInput: {
     flex: 1,
@@ -864,6 +921,7 @@ const s = StyleSheet.create({
     borderColor: colors.border,
     padding: spacing.sm,
     marginBottom: spacing.sm,
+    overflow: "hidden",
   },
   historyDate: {
     fontSize: fontSize.sm,
