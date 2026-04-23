@@ -8,20 +8,17 @@ import {
   TouchableOpacity,
   View,
   StyleSheet,
-  Dimensions,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { fetchCurrentSets, fetchExerciseHistory, addSet, deleteSet, addLap } from "../../lib/api";
 import React, { useState, useEffect } from "react";
 import { checkLogin } from "../../services/auth";
 import { colors, spacing, fontSize, borderRadius } from "@/lib/theme";
-import { LineChart } from "react-native-chart-kit";
 import { useWindowDimensions } from "react-native";
 import {
   VictoryChart,
   VictoryLine,
   VictoryAxis,
-  VictoryTheme,
   VictoryScatter,
 } from "victory";
 
@@ -84,9 +81,6 @@ export default function SelectedExerciseScreen() {
 
   // Range state for graph timespan toggle
   const [range, setRange] = useState<"week" | "month" | "year">("week");
-
-  // Metric for weight/reps toggle
-  const [metric, setMetric] = useState<"weight" | "reps">("weight");
   
 
   // Get the logged-in user's ID
@@ -408,83 +402,182 @@ export default function SelectedExerciseScreen() {
       : `#${point.setNumber}`
   );
 
+  // =====================
+  // CHART SYSTEM (Victory)
+  // =====================
+  // Uses dual-axis overlay:
+  // - Weight (or pace) on left axis
+  // - Reps on right axis (strength only)
+  // Cardio uses pace = time / distance
 
-  // Calculates pace (time / distance) as the y-axis for the chart
-  const chartValues = setPoints.map((point) => {
-    if (isCardio) {
-      const time = point.weight;
-      const dist = point.reps;
-      if (!time || !dist) return 0;
-      return time / dist; 
-    }
+  const dynamicHeight = 400;
 
-    return metric === "weight" ? point.weight : point.reps;
-  });
 
-  const chartDataPoints = chartValues.map((y, i) => ({
+  // 1. Raw datasets
+  const weightData = setPoints.map((p, i) => ({
     x: i + 1,
-    y,
+    y: p.weight,
   }));
 
-  const min = Math.min(...chartValues);
-  const max = Math.max(...chartValues);
+  const repsData = setPoints.map((p, i) => ({
+    x: i + 1,
+    y: p.reps,
+  }));
 
-  let yMin = min;
-  let yMax = max;
+  // =====================
+  // 2. Domains
+  // =====================
 
-  if (chartValues.length === 1) {
-    const padding = Math.max(1, Math.abs(min) * 0.2);
-    yMin = min - padding;
-    yMax = min + padding;
+  const paceData = setPoints.map((p, i) => {
+      const time = p.weight;   // durationSeconds
+      const dist = p.reps;     // distance
+
+      if (!time || !dist) {
+        return { x: i + 1, y: 0 };
+      }
+
+      return {
+        x: i + 1,
+        y: time / dist, 
+      };
+    });
+
+  // Select correct Y dataset
+  const primaryData = isCardio ? paceData : weightData;
+
+  // ---------- PRIMARY AXIS (Weight OR Pace) ----------
+  const wMinRaw = Math.min(...primaryData.map(d => d.y));
+  const wMaxRaw = Math.max(...primaryData.map(d => d.y));
+
+  let wMin: number;
+  let wMax: number;
+
+  if (wMinRaw === wMaxRaw) {
+    const padding = Math.max(1, Math.abs(wMinRaw) * 0.2);
+
+    wMin = Math.max(0, wMinRaw - padding);
+    wMax = wMaxRaw + padding;
+
   } else {
-    const range = max - min;
+    const range = wMaxRaw - wMinRaw;
 
-    if (range === 0) {
-      const padding = Math.max(1, Math.abs(min) * 0.2);
-      yMin = min - padding;
-      yMax = max + padding;
+    const paddingTop = range * 0.2;
+    const paddingBottom = range * 0.05;
+
+    wMin = Math.max(0, wMinRaw - paddingBottom);
+    wMax = wMaxRaw + paddingTop;
+  }
+
+
+  // ---------- SECONDARY AXIS (Reps ONLY if strength) ----------
+  let rMin = 0;
+  let rMax = 0;
+
+  if (!isCardio) {
+    const rMinRaw = Math.min(...repsData.map(d => d.y));
+    const rMaxRaw = Math.max(...repsData.map(d => d.y));
+
+    if (rMinRaw === rMaxRaw) {
+      const padding = Math.max(1, Math.abs(rMinRaw) * 0.2);
+
+      rMin = Math.max(0, rMinRaw - padding);
+      rMax = rMaxRaw + padding;
+
     } else {
+      const range = rMaxRaw - rMinRaw;
+
       const paddingTop = range * 0.2;
       const paddingBottom = range * 0.05;
 
-      yMin = min - paddingBottom;
-      yMax = max + paddingTop;
+      rMin = Math.max(0, rMinRaw - paddingBottom);
+      rMax = rMaxRaw + paddingTop;
     }
   }
 
-  yMin = Math.max(0, yMin);
 
-  const rangeVals = yMax - yMin;
+  // =====================
+  // Tick values
+  // =====================
 
-  // choose step size based on magnitude
-  let step = 1;
+  // Reps ticks (ONLY for strength)
+  const repsTickValues = !isCardio
+    ? (() => {
+        const range = rMax - rMin;
 
-  if (rangeVals > 100) step = 20;
-  else if (rangeVals > 50) step = 10;
-  else if (rangeVals > 20) step = 5;
-  else if (rangeVals > 10) step = 2;
-  else step = 1;
+        let step = 1;
+        if (range > 50) step = 10;
+        else if (range > 20) step = 5;
+        else if (range > 10) step = 2;
+        else step = 1;
 
-  const tickValues = [];
-  for (let v = Math.floor(yMin); v <= yMax; v += step) {
-    tickValues.push(v);
-  }
+        const ticks = [];
+        for (let v = Math.floor(rMin); v <= rMax; v += step) {
+          ticks.push(v);
+        }
 
-  const dynamicHeight = Math.min(
-    400,
-    Math.max(220, tickValues.length * 40)
-  );
+        return ticks;
+      })()
+    : [];
 
 
-  // Maps time from duration_seconds
-  const formatTime = (seconds: number) => {
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = seconds % 60;
-    return `${h}:${m.toString().padStart(2, "0")}:${s
-      .toString()
-      .padStart(2, "0")}`;
-  };
+  // Weight / Pace ticks
+  const weightTickValues = (() => {
+    const range = wMax - wMin;
+
+    // =====================
+    // CARDIO (PACE)
+    // =====================
+    if (isCardio) {
+      let step: number;
+
+      if (range <= 120) step = 15;        // 0:15
+      else if (range <= 300) step = 30;   // 0:30
+      else if (range <= 600) step = 60;   // 1:00
+      else step = 120;                    // 2:00+
+
+      const start = Math.floor(wMin / step) * step;
+      const end = Math.ceil(wMax / step) * step;
+
+      const ticks = [];
+      for (let v = start; v <= end; v += step) {
+        ticks.push(v);
+      }
+
+      return ticks;
+    }
+
+    // =====================
+    // STRENGTH (WEIGHT)
+    // =====================
+    let step = 1;
+    if (range > 100) step = 20;
+    else if (range > 50) step = 10;
+    else if (range > 20) step = 5;
+    else if (range > 10) step = 2;
+
+    const start = Math.floor(wMin / step) * step;
+    const end = Math.ceil(wMax / step) * step;
+
+    const ticks = [];
+    for (let v = start; v <= end; v += step) {
+      ticks.push(v);
+    }
+
+    return ticks;
+  })();
+
+    // Maps time from duration_seconds
+    const formatTime = (seconds: number) => {
+      const h = Math.floor(seconds / 3600);
+      const m = Math.floor((seconds % 3600) / 60);
+      const s = seconds % 60;
+      return `${h}:${m.toString().padStart(2, "0")}:${s
+        .toString()
+        .padStart(2, "0")}`;
+    };
+
+    
+
 
   // Formatting for the cardio Y-axis
   const formatPace = (secondsPerUnit: number) => {
@@ -538,83 +631,177 @@ export default function SelectedExerciseScreen() {
         ))}
       </View>
 
-       {/* Metric toggle */}
-      {!isCardio && (
-        <View style={{ flexDirection: "row", gap: 8, marginBottom: 8 }}>
-          {["weight", "reps"].map((m) => (
-            <TouchableOpacity
-              key={m}
-              onPress={() => setMetric(m as any)}
-              style={{
-                paddingVertical: 6,
-                paddingHorizontal: 12,
-                borderRadius: 8,
-                backgroundColor: metric === m ? colors.primary : colors.bgInput,
-              }}
-            >
-              <Text style={{ color: colors.text }}>
-                {m.toUpperCase()}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      )}
-
       {/* Chart */}
       <View style={s.historyCard}>
         {loadingHistory ? (
           <View style={s.centeredRow}>
             <ActivityIndicator color={colors.primary} />
           </View>
-        ) : chartDataPoints ? (
-            <VictoryChart
-              width={width - 40}
-              height={dynamicHeight}
-              domain={{ y: [yMin, yMax] }}
-              domainPadding={{ y: 10 }}
-              padding={{ top: 10, bottom: 30, left: isCardio ? 70 : 50, right: 15 }}
-            >
+        ) : primaryData.length > 0 ? (
+          
+          <View style={{ position: "relative" }}>
+            <View style={{ flexDirection: "row", gap: 12, marginBottom: 6, justifyContent: "center", alignItems: "center" }}>
+              {isCardio ? (
+                <Text style={{ color: colors.primary }}>
+                  ● Pace (Time/Distance)
+                </Text>
+              ) : (
+                <>
+                  <Text style={{ color: colors.primary }}>● Weight</Text>
+                  <Text style={{ color: "#FF9800" }}>● Reps</Text>
+                </>
+              )}
+           </View>
+            {/* ===================== */}
+            {/* CARDIO MODE (SINGLE LINE) */}
+            {/* ===================== */}
+            {isCardio ? (
+              <VictoryChart
+                width={width - 40}
+                height={dynamicHeight}
+                domain={{ y: [wMin, wMax] }}
+                domainPadding={{ y: 10 }}
+                padding={{ top: 10, bottom: 30, left: 70, right: 20 }}
+              >
+                {/* Y AXIS (PACE) */}
+                <VictoryAxis
+                  dependentAxis
+                  tickValues={weightTickValues}
+                  tickFormat={(t) =>
+                    isCardio
+                      ? formatPace(t)
+                      : Math.round(t)}
+                  style={{
+                    axis: { stroke: colors.border },
+                    grid: { stroke: "rgba(255,255,255,0.1)" },
+                    tickLabels: { fill: colors.primary },
+                  }}
+                />
 
-              <VictoryAxis
-                dependentAxis
-                tickValues={tickValues}
-                tickFormat={(t) =>
-                  isCardio ? formatPace(Math.abs(t)) : t
-                }
-                style={{
-                  axis: { stroke: colors.border },
-                  grid: { stroke: "rgba(255,255,255,0.1)" },
-                  tickLabels: { fill: colors.textSecondary },
-                }}
-              />
+                {/* X AXIS */}
+                <VictoryAxis
+                  crossAxis={false}
+                  tickValues={primaryData.map(d => d.x)}
+                  tickFormat={(t) => labels[t - 1] || ""}
+                  style={{
+                    axis: { stroke: colors.border },
+                    tickLabels: { fill: colors.textSecondary, fontSize: 10 },
+                  }}
+                />
 
-              <VictoryAxis
-                crossAxis={false}
-                tickValues={chartDataPoints.map(d => d.x)}
-                tickFormat={(t) => {
-                  const point = chartDataPoints.find(d => d.x === t);
-                  return point ? labels[t - 1] : "";
-                }}
-                style={{
-                  axis: { stroke: colors.border },
-                  tickLabels: { fill: colors.textSecondary, fontSize: 10 },
-                }}
-              />
+                {/* PACE LINE */}
+                <VictoryLine
+                  data={primaryData}
+                  interpolation="monotoneX"
+                  style={{
+                    data: { stroke: colors.primary, strokeWidth: 3 },
+                  }}
+                />
 
-              <VictoryLine
-                data={chartDataPoints}
-                style={{
-                  data: { stroke: colors.primary, strokeWidth: 2 },
-                }}
-              />
-              <VictoryScatter
-                data={chartDataPoints}
-                size={4}
-                style={{
-                  data: { fill: colors.primary },
-                }}
-              />
-            </VictoryChart>
+                <VictoryScatter
+                  data={primaryData}
+                  size={4}
+                  style={{ data: { fill: colors.primary } }}
+                />
+              </VictoryChart>
+            ) : (
+              
+              /* ===================== */
+              /* STRENGTH MODE (DUAL AXIS) */
+              /* ===================== */
+              <>
+                {/* BASE (WEIGHT) */}
+                <VictoryChart
+                  width={width - 40}
+                  height={dynamicHeight}
+                  domain={{ y: [wMin, wMax] }}
+                  domainPadding={{ y: 10 }}
+                  padding={{ top: 10, bottom: 30, left: 50, right: 60 }}
+                >
+                  <VictoryAxis
+                    dependentAxis
+                    tickValues={weightTickValues}
+                    tickFormat={(t) => Math.round(t)}
+                    style={{
+                      axis: { stroke: colors.border },
+                      grid: { stroke: "rgba(255,255,255,0.1)" },
+                      tickLabels: { fill: colors.primary },
+                    }}
+                  />
+
+                  <VictoryAxis
+                    crossAxis={false}
+                    tickValues={weightData.map(d => d.x)}
+                    tickFormat={(t) => labels[t - 1] || ""}
+                    style={{
+                      axis: { stroke: colors.border },
+                      tickLabels: { fill: colors.textSecondary, fontSize: 10 },
+                    }}
+                  />
+
+                  <VictoryLine
+                    data={weightData}
+                    interpolation="monotoneX"
+                    style={{
+                      data: { stroke: colors.primary, strokeWidth: 3 },
+                    }}
+                  />
+
+                  <VictoryScatter
+                    data={weightData}
+                    size={4}
+                    style={{ data: { fill: colors.primary } }}
+                  />
+                </VictoryChart>
+
+                {/* OVERLAY (REPS) */}
+                <VictoryChart
+                  width={width - 40}
+                  height={dynamicHeight}
+                  domain={{ y: [rMin, rMax] }}
+                  domainPadding={{ y: 0 }}
+                  padding={{ top: 25, bottom: 18, left: 50, right: 60 }}
+                  style={{
+                    parent: {
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                    },
+                  }}
+                >
+                  <VictoryAxis
+                    dependentAxis
+                    orientation="right"
+                    tickValues={repsTickValues}
+                    tickFormat={(t) => t}
+                    style={{
+                      axis: { stroke: colors.border },
+                      tickLabels: { fill: "#FF9800" },
+                      grid: { stroke: "transparent" },
+                    }}
+                  />
+
+                  <VictoryLine
+                    data={repsData}
+                    interpolation="monotoneX"
+                    style={{
+                      data: {
+                        stroke: "#FF9800",
+                        strokeWidth: 3,
+                        strokeDasharray: "6,4",
+                      },
+                    }}
+                  />
+
+                  <VictoryScatter
+                    data={repsData}
+                    size={4}
+                    style={{ data: { fill: "#FF9800" } }}
+                  />
+                </VictoryChart>
+              </>
+            )}
+          </View>
         ) : (
           <View style={{ height: 220, justifyContent: "center", alignItems: "center" }}>
             <Text style={{ color: colors.textSecondary, fontSize: fontSize.sm }}>
