@@ -1,4 +1,4 @@
-# Welcome to ChangeNow 🔩
+# Welcome to ChangeNow 
 
 ChangeNow is a fitness logging & Visualization mobile/web application built with:
 
