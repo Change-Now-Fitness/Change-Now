@@ -1,9 +1,26 @@
+/**
+ * Exercise identifier helpers.
+ *
+ * How it fits:
+ * - The frontend can treat all exercise types as a single `id` string.
+ * - The backend decodes/encodes that id to map requests to the right tables.
+ */
 const TEMPLATE_SOURCE = "template";
 const CUSTOM_SOURCE = "custom";
 const LEGACY_SOURCE = "legacy";
 
+/**
+ * Encode `(source, numericId)` into a stable string id for API responses.
+ */
 const serializeExerciseId = (source, id) => `${source}:${id}`;
 
+/**
+ * Parse an encoded exercise id used by API routes.
+ *
+ * Accepts:
+ * - `template:<n>` / `custom:<n>`
+ * - legacy numeric ids (`<n>`) for back-compat
+ */
 const parseExerciseId = (value) => {
   const rawValue = typeof value === "string" ? value.trim() : String(value ?? "").trim();
 

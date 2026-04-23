@@ -1,3 +1,12 @@
+/**
+ * Backend HTTP server entrypoint.
+ *
+ * Responsibilities:
+ * - Loads runtime config (env, CORS, proxy settings)
+ * - Mounts API routers (auth/user/exercises/workouts)
+ * - Serves OpenAPI docs at `/api-docs`
+ * - Provides simple health/readiness endpoints used by deploy tooling and ops
+ */
 require('dotenv').config();
 const express = require('express');
 const authRouter = require("./routes/auth");
@@ -44,12 +53,31 @@ const mountApiRouter = (basePath, router) => {
     app.use(`/api${basePath}`, router);
 };
 
+/**
+ * Swagger/OpenAPI generator configuration.
+ *
+ * We scan the backend codebase for `@openapi` blocks so route docs can live
+ * next to the handlers/middleware that enforce behavior.
+ */
 const swaggerOptions = {
     definition: {
         openapi: '3.0.0',
         info: {
             title: 'Change Now API Docs', 
             version: '5.10.26'
+        },
+        components: {
+            securitySchemes: {
+                bearerAuth: {
+                    type: "http",
+                    scheme: "bearer",
+                },
+                cookieAuth: {
+                    type: "apiKey",
+                    in: "cookie",
+                    name: "token",
+                },
+            },
         },
         servers: [
             {
@@ -58,7 +86,14 @@ const swaggerOptions = {
             }
         ],
     },
-        apis: ['./routes/**/*.js'],
+    apis: [
+        './server.js',
+        './routes/**/*.js',
+        './controllers/**/*.js',
+        './middleware/**/*.js',
+        './services/**/*.js',
+        './config/**/*.js',
+    ],
 };
 swaggerOptions.apis.push('./server.js');
 
@@ -132,12 +167,20 @@ app.get(['/health', '/api/health'], (req, res) => {
  * @openapi
  * /ready:
  *   get:
- *     summary: Check whether the backend and database are ready
+ *     summary: Readiness check (includes database connectivity)
  *     tags: [Meta]
- *     description: Also available at `/api/ready`.
  *     responses:
  *       '200':
- *         description: Database connectivity verified
+ *         description: Service and database are ready
+ *       '503':
+ *         description: Database unavailable
+ * /api/ready:
+ *   get:
+ *     summary: Readiness check (aliased)
+ *     tags: [Meta]
+ *     responses:
+ *       '200':
+ *         description: Service and database are ready
  *       '503':
  *         description: Database unavailable
  */

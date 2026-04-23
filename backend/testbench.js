@@ -1,8 +1,12 @@
 /**
- * checks cookie for a val, null otherwise
- * @param {*} cookieHeader 
- * @param {*} name 
- * @returns 
+ * Dev-only scratchpad.
+ *
+ * How it fits:
+ * - Not used by the server at runtime.
+ * - Used to sanity-check helper parsing behavior during development.
+ */
+/**
+ * Extract a cookie value from a Cookie header string.
  */
 function getCookieValue(cookieHeader, name) {
     if (!cookieHeader) {

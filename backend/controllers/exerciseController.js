@@ -56,6 +56,13 @@ const mapCustomRow = (row) => ({
   userId: row.user_id,
 });
 
+/**
+ * Exercise controller layer.
+ *
+ * How it fits:
+ * - These handlers are mounted by `backend/routes/exerciseRoutes.js`.
+ * - They unify legacy/template/custom exercise models into one API shape for the frontend.
+ */
 const getExercises = async (req, res) => {
   const search = normalizeValue(req.query.search, "");
   const muscleGroup = normalizeValue(req.query.muscleGroup, "");
@@ -126,6 +133,11 @@ const getExercises = async (req, res) => {
   }
 };
 
+/**
+ * Create a user custom exercise if it doesn't already exist.
+ *
+ * Used by POST `/exercises`.
+ */
 const createExercise = async (req, res) => {
   const name = normalizeName(req.body.name);
   const userId = parseUserId(req.body.userId);
@@ -183,6 +195,11 @@ const createExercise = async (req, res) => {
   }
 };
 
+/**
+ * Delete a user custom exercise.
+ *
+ * Used by DELETE `/exercises/{id}`.
+ */
 const deleteExercise = async (req, res) => {
   const parsedExerciseId = parseExerciseId(req.params.id);
   const userId = parseUserId(req.query.userId ?? req.body?.userId);

@@ -3,11 +3,19 @@ const router = express.Router();
 const { requireAuth3 } = require('../middleware/requireAuth3');
 const pool = require('../dbconnection');
 const { buildTokenCookieClearOptions } = require('../config/runtime');
+
+/**
+ * User/profile endpoints.
+ *
+ * Mount points (see `backend/server.js`):
+ * - `/user/*`
+ * - `/api/user/*` (alias)
+ */
 /**
  * @openapi
- * /routes/getName:
+ * /user/getName:
  *   post:
- *     summary: Get user's name from DB and return it
+ *     summary: Get the authenticated user's full name
  *     tags: [Profile]
  *     responses:
  *       '200':
@@ -15,6 +23,15 @@ const { buildTokenCookieClearOptions } = require('../config/runtime');
  *       '500':
  *         description: Database request error
  *         
+ * /api/user/getName:
+ *   post:
+ *     summary: Get the authenticated user's full name (aliased)
+ *     tags: [Profile]
+ *     responses:
+ *       '200':
+ *         description: OK
+ *       '500':
+ *         description: Database request error
  */
 router.post('/getName', requireAuth3, async (req, res) => {
     const user_id = req.id;
@@ -39,11 +56,18 @@ router.post('/getName', requireAuth3, async (req, res) => {
 });
 /**
  * @openapi
- * /routes/logOut:
+ * /user/logOut:
  *   post:
  *     summary: Checks the platform for web and clears cookie, 
  *              mobile token deleted on clientside
  *              
+ *     tags: [Profile]
+ *     responses:
+ *       '200':
+ *         description: Backend was able to destroy cookie or inform frontend mobile request leaked through
+ * /api/user/logOut:
+ *   post:
+ *     summary: Log out (aliased)
  *     tags: [Profile]
  *     responses:
  *       '200':
