@@ -17,6 +17,13 @@ import { checkLogin } from "../../services/auth";
 import { colors, spacing, fontSize, borderRadius } from "@/lib/theme";
 import { LineChart } from "react-native-chart-kit";
 import { useWindowDimensions } from "react-native";
+import {
+  VictoryChart,
+  VictoryLine,
+  VictoryAxis,
+  VictoryTheme,
+  VictoryScatter,
+} from "victory";
 
 
 
@@ -414,42 +421,59 @@ export default function SelectedExerciseScreen() {
     return metric === "weight" ? point.weight : point.reps;
   });
 
-  // Padded values, so that line shows around center of the graph 
-  let paddedValues = [...chartValues];
+  const chartDataPoints = chartValues.map((y, i) => ({
+    x: i + 1,
+    y,
+  }));
 
-  if (paddedValues.length === 1) {
-    const v = paddedValues[0];
-    paddedValues = [v - 1, v, v + 1];
+  const min = Math.min(...chartValues);
+  const max = Math.max(...chartValues);
+
+  let yMin = min;
+  let yMax = max;
+
+  if (chartValues.length === 1) {
+    const padding = Math.max(1, Math.abs(min) * 0.2);
+    yMin = min - padding;
+    yMax = min + padding;
+  } else {
+    const range = max - min;
+
+    if (range === 0) {
+      const padding = Math.max(1, Math.abs(min) * 0.2);
+      yMin = min - padding;
+      yMax = max + padding;
+    } else {
+      const paddingTop = range * 0.2;
+      const paddingBottom = range * 0.05;
+
+      yMin = min - paddingBottom;
+      yMax = max + paddingTop;
+    }
   }
 
-  const min = Math.min(...paddedValues);
-  const max = Math.max(...paddedValues);
+  yMin = Math.max(0, yMin);
 
-  if (min === max) {
-    paddedValues = paddedValues.map(v => v - 1);
-    paddedValues.push(max + 1);
+  const rangeVals = yMax - yMin;
+
+  // choose step size based on magnitude
+  let step = 1;
+
+  if (rangeVals > 100) step = 20;
+  else if (rangeVals > 50) step = 10;
+  else if (rangeVals > 20) step = 5;
+  else if (rangeVals > 10) step = 2;
+  else step = 1;
+
+  const tickValues = [];
+  for (let v = Math.floor(yMin); v <= yMax; v += step) {
+    tickValues.push(v);
   }
 
-
-  const chartData =
-    setPoints.length > 0
-      ? {
-          labels,
-          datasets: [
-            {
-            data: chartValues,
-              color: () => colors.primary,
-            },
-          ],
-          legend: [
-            isCardio
-              ? "Pace by Lap (time/mi)"
-              : metric === "weight"
-              ? "Weight by Set (lbs)"
-              : "Reps by Set"
-          ],
-        }
-      : null;
+  const dynamicHeight = Math.min(
+    400,
+    Math.max(220, tickValues.length * 40)
+  );
 
 
   // Maps time from duration_seconds
@@ -542,33 +566,55 @@ export default function SelectedExerciseScreen() {
           <View style={s.centeredRow}>
             <ActivityIndicator color={colors.primary} />
           </View>
-        ) : chartData ? (
-          <LineChart
-            data={chartData}
-            width={width - 80}
-            height={220}
-            chartConfig={{
-              backgroundGradientFrom: colors.bgCard,
-              backgroundGradientTo: colors.bgCard,
-              color: () => colors.primary,
-              labelColor: () => colors.textSecondary,
-              style: { borderRadius: borderRadius.md },
-              propsForBackgroundLines: {
-                strokeDasharray: "5,5",
-                stroke: "rgba(255,255,255,0.15)",
-              },
-               propsForDots: {
-                r: "4",
-              },
-              propsForLabels: {
-                dy: -5,
-              },
-            }}
-            formatYLabel={(value) =>
-              isCardio ? formatPace(Math.abs(Number(value))) : value
-            }
-            bezier
-          />
+        ) : chartDataPoints ? (
+            <VictoryChart
+              width={width - 40}
+              height={dynamicHeight}
+              domain={{ y: [yMin, yMax] }}
+              domainPadding={{ y: 10 }}
+              padding={{ top: 10, bottom: 30, left: isCardio ? 70 : 50, right: 15 }}
+            >
+
+              <VictoryAxis
+                dependentAxis
+                tickValues={tickValues}
+                tickFormat={(t) =>
+                  isCardio ? formatPace(Math.abs(t)) : t
+                }
+                style={{
+                  axis: { stroke: colors.border },
+                  grid: { stroke: "rgba(255,255,255,0.1)" },
+                  tickLabels: { fill: colors.textSecondary },
+                }}
+              />
+
+              <VictoryAxis
+                crossAxis={false}
+                tickValues={chartDataPoints.map(d => d.x)}
+                tickFormat={(t) => {
+                  const point = chartDataPoints.find(d => d.x === t);
+                  return point ? labels[t - 1] : "";
+                }}
+                style={{
+                  axis: { stroke: colors.border },
+                  tickLabels: { fill: colors.textSecondary, fontSize: 10 },
+                }}
+              />
+
+              <VictoryLine
+                data={chartDataPoints}
+                style={{
+                  data: { stroke: colors.primary, strokeWidth: 2 },
+                }}
+              />
+              <VictoryScatter
+                data={chartDataPoints}
+                size={4}
+                style={{
+                  data: { fill: colors.primary },
+                }}
+              />
+            </VictoryChart>
         ) : (
           <View style={{ height: 220, justifyContent: "center", alignItems: "center" }}>
             <Text style={{ color: colors.textSecondary, fontSize: fontSize.sm }}>
