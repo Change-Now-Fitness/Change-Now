@@ -108,26 +108,45 @@ export async function login(email: string, password: string) {
             },
             body: JSON.stringify({ email, password, platform })
         });
+        let data: any = null;
+        try {
+            data = await request.json();
+        } catch {
+            data = null;
+        }
+
         if (!request.ok) {
+            const message =
+                data?.message ||
+                data?.error ||
+                (request.status === 401
+                    ? "Incorrect email or password."
+                    : "We couldn’t log you in right now. Please try again.");
             console.log(`platform: ${platform}, Error: ${request.status}`);
-            return false;
+            return { success: false, status: request.status, message };
         }
 
         if (platform === 'web') {
             console.log('web login function comlete');
-            return true;
+            return { success: true, status: request.status, message: "" };
         } else {
-            const java_obj_response = await request.json();
+            const java_obj_response = data;
             const json_response = JSON.stringify(java_obj_response);
             console.log(`response: ${json_response}`);
             console.log('response recieved');
-            await SecureStore.setItemAsync(TOKEN_KEY, java_obj_response.token);
+            if (java_obj_response?.token) {
+                await SecureStore.setItemAsync(TOKEN_KEY, java_obj_response.token);
+            }
             console.log('mobile login complete');
-            return true;
+            return { success: true, status: request.status, message: "" };
         }
     } catch (error) {
         console.log(`error: ${error}`);
-        return false;
+        return {
+            success: false,
+            status: 0,
+            message: error instanceof Error ? error.message : "Network request failed",
+        };
     }
 }
 
