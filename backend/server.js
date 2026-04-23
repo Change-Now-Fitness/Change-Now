@@ -9,6 +9,7 @@
  * x
  */
 require('dotenv').config();
+
 const express = require('express');
 const authRouter = require("./routes/auth");
 const exerciseRoutes = require("./routes/exerciseRoutes");
