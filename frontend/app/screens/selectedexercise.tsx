@@ -76,9 +76,11 @@ export default function SelectedExerciseScreen() {
   const [minutesText, setMinutesText] = useState("");
   const [secondsText, setSecondsText] = useState("");
 
-
   // Range state for graph timespan toggle
   const [range, setRange] = useState<"week" | "month" | "year">("week");
+
+  // Current metric, used to toggle between graphs
+  const [metric, setMetric] = useState<"weight" | "reps">("weight");
 
 
   // Get the logged-in user's ID
@@ -102,8 +104,7 @@ export default function SelectedExerciseScreen() {
 
     setLoadingCurrent(true);
     try {
-      const today = new Date().toISOString().split("T")[0];
-      const data = await fetchCurrentSets(exerciseId, userId, today);
+      const data = await fetchCurrentSets(exerciseId, userId);
       const mapped: WorkoutSet[] = data.map((row: any, index: number) => {
         const isCardioRow = row.duration_seconds != null;
 
@@ -152,13 +153,13 @@ export default function SelectedExerciseScreen() {
   // Fetch previous workouts grouped by date
   useEffect(() => {
     if (!exerciseId || !userId) return;
-    if (!exerciseId || !userId) return;
 
     const loadHistory = async () => {
       setLoadingHistory(true);
 
       try {
         const grouped = await fetchExerciseHistory(exerciseId, userId);
+
         if (!grouped || typeof grouped !== "object") {
           setPreviousWorkouts([]);
           return;
@@ -180,15 +181,12 @@ export default function SelectedExerciseScreen() {
 
               return {
                 set: i + 1,
-
                 weight: isCardioRow
                   ? durationSeconds!
                   : Number(setRow.weight),
-
                 reps: isCardioRow
                   ? distance!
                   : Number(setRow.reps),
-
                 durationSeconds,
                 distance,
               };
@@ -196,18 +194,15 @@ export default function SelectedExerciseScreen() {
           })
         );
 
+        const today = new Date().toLocaleDateString("en-CA");
+        const filtered = shaped.filter(w => w.date !== today);
+        setPreviousWorkouts(filtered);
+
         // Sort oldest to newest
         shaped.sort(
           (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
         );
 
-        setPreviousWorkouts(shaped);
-      } catch (err: any) {
-        console.error("Error fetching history:", err.message);
-      } finally {
-        setLoadingHistory(false);
-      }
-    };
         setPreviousWorkouts(shaped);
       } catch (err: any) {
         console.error("Error fetching history:", err.message);
@@ -377,7 +372,7 @@ export default function SelectedExerciseScreen() {
   const todayEntry: PreviousWorkout | null =
     currentSets.length > 0
       ? {
-        date: new Date().toISOString().split("T")[0],
+        date: new Date().toLocaleDateString("en-CA"),
         sets: currentSets,
       }
       : null;
@@ -433,7 +428,7 @@ export default function SelectedExerciseScreen() {
 
     if (!time || !dist) return 0;
 
-    return -time / dist;
+    return time / dist;
   });
 
   const chartReps = setPoints.map((point) => {
@@ -451,11 +446,23 @@ export default function SelectedExerciseScreen() {
 
   const chartData =
     setPoints.length > 0
-      ? chartValues.map((value, index) => ({
-        value,
-        label: labels[index] ?? "",
-      }))
+      ? setPoints.map((point, index) => ({
+          value: metric === "weight" ? point.weight : point.reps,
+          label: labels[index] ?? "",
+        }))
       : [];
+
+  const values = chartData.map(d => d.value);
+
+  const maxVal = values.length ? Math.max(...values) : 10;
+  const minVal = values.length ? Math.min(...values) : 0;
+  const valueRange = maxVal - minVal;
+
+  const sections =
+    valueRange <= 2 ? 2 :
+    valueRange <= 10 ? 4 :
+    valueRange <= 50 ? 5 :
+    6;
 
   const chartDataOfReps =
     setPoints.length > 0
@@ -485,6 +492,7 @@ export default function SelectedExerciseScreen() {
 
     return `${m}:${s.toString().padStart(2, "0")}/mi`;
   };
+
 
   return (
     <ScrollView style={s.scrollView} showsVerticalScrollIndicator={false}>
@@ -527,55 +535,51 @@ export default function SelectedExerciseScreen() {
           </TouchableOpacity>
         ))}
       </View>
+      <View style={{ flexDirection: "row", gap: 8, marginBottom: 8 }}>
+        {["weight", "reps"].map((m) => (
+          <TouchableOpacity
+            key={m}
+            onPress={() => setMetric(m as any)}
+            style={{
+              paddingVertical: 6,
+              paddingHorizontal: 12,
+              borderRadius: 8,
+              backgroundColor: metric === m ? colors.primary : colors.bgInput,
+            }}
+          >
+            <Text style={{ color: colors.text }}>
+              {m.toUpperCase()}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
 
       {/* Chart */}
+      <Text style={s.sectionTitle}>
+        {metric === "weight" ? "Weight Progress" : "Reps Progress"}
+      </Text>
       <View style={s.historyCard}>
         {loadingHistory ? (
           <View style={s.centeredRow}>
             <ActivityIndicator color={colors.primary} />
           </View>
         ) : chartData ? (
-          <LineChart
+         <LineChart
             data={chartData}
-            secondaryData={chartDataOfReps}
+
+            maxValue={Math.max(5, maxVal * 1.1)}
+            noOfSections={sections}
+
             width={width - 110}
             height={220}
-            backgroundColor={colors.bgCard}
             color={colors.primary}
             thickness={2}
             curved
             adjustToWidth
-            initialSpacing={24}
-            endSpacing={4}
-            yAxisColor="rgba(255,255,255,0.18)"
-            xAxisColor="rgba(255,255,255,0.18)"
-            rulesColor="rgba(255,255,255,0.15)"
-            rulesType="dashed"
-            dashWidth={5}
-            dashGap={5}
-            yAxisTextStyle={{
-              color: colors.textSecondary,
-              fontSize: fontSize.sm,
-            }}
-            xAxisLabelTextStyle={{
-              color: colors.textSecondary,
-              fontSize: fontSize.xs,
-            }}
-            yAxisLabelWidth={16}
+
             formatYLabel={(value) =>
-              isCardio ? formatPace(Math.abs(Number(value))) : value
+              Math.round(Number(value)).toString()
             }
-            secondaryYAxis={{
-              yAxisTextStyle: {
-                color: colors.textSecondary,
-                fontSize: fontSize.sm,
-              },
-            }}
-            secondaryLineConfig={{
-              color: "#ff9f43",
-              thickness: 2,
-              curved: true,
-            }}
           />
         ) : (
           <View style={{ height: 220, justifyContent: "center", alignItems: "center" }}>

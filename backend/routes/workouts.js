@@ -113,7 +113,7 @@ const buildWorkoutReferenceConfig = (exerciseReference) => {
 router.get("/:exerciseId/current", async (req, res) => {
   const exerciseReference = parseExerciseId(req.params.exerciseId);
   const userId = parseNumber(req.query.userId);
-  const today = new Date().toISOString().split("T")[0];
+  const tz = req.query.tz || "UTC";
 
   if (!exerciseReference) {
     return res.status(400).json({ error: "Exercise id is invalid" });
@@ -128,15 +128,19 @@ router.get("/:exerciseId/current", async (req, res) => {
   try {
     await ensureExerciseCatalogTables();
 
+    // Compute today in the user's timezone
+    const today = new Date().toLocaleDateString("en-CA", {
+      timeZone: tz,
+    });
+
     const result = await pool.query(
       `SELECT id, reps, weight, duration_seconds, distance
          FROM workout_log
         WHERE ${referenceConfig.whereClause}
           AND user_id = $2
-          AND created_at >= $3::date
-          AND created_at < ($3::date + interval '1 day')
+          AND DATE(created_at AT TIME ZONE $3) = $4
         ORDER BY created_at ASC`,
-      [exerciseReference.id, userId, today]
+      [exerciseReference.id, userId, tz, today]
     );
 
     res.json(result.rows);
@@ -437,10 +441,10 @@ router.delete("/sets/:setId", async (req, res) => {
 router.get("/:exerciseId/history", async (req, res) => {
   const exerciseReference = parseExerciseId(req.params.exerciseId);
   const userId = parseNumber(req.query.userId);
-  const today = new Date().toISOString().split("T")[0];
-
-  console.log('exerciseReference:', exerciseReference);
-  console.log('userId:', userId);
+  const tz = req.query.tz || "UTC";
+  const today = new Date().toLocaleDateString("en-CA", {
+      timeZone: tz,
+    });
 
   if (!exerciseReference) {
     return res.status(400).json({ error: "Exercise id is invalid" });
@@ -457,24 +461,29 @@ router.get("/:exerciseId/history", async (req, res) => {
 
     const result = await pool.query(
       `SELECT reps, weight, duration_seconds, distance, created_at
-        FROM workout_log
-        WHERE ${referenceConfig.whereClause}
-          AND user_id = $2
-          AND created_at < $3::date
-        ORDER BY created_at DESC`,
-      [exerciseReference.id, userId, today]
+      FROM workout_log
+      WHERE ${referenceConfig.whereClause}
+        AND user_id = $2
+        AND DATE(created_at AT TIME ZONE $3) < $4
+      ORDER BY created_at DESC`,
+      [exerciseReference.id, userId, tz, today]
     );
 
-    // Group rows by date
+    // Group by USER LOCAL DATE (not UTC)
     const grouped = {};
+
     for (const row of result.rows) {
-      const date = row.created_at.toISOString().split("T")[0];
+      const date = new Date(row.created_at)
+        .toLocaleDateString("en-CA", { timeZone: tz });
+
       if (!grouped[date]) grouped[date] = [];
-      grouped[date].push({ weight: row.weight, 
-                           reps: row.reps, 
-                           duration_seconds: row.duration_seconds,
-                           distance: row.distance
-                        });
+
+      grouped[date].push({
+        weight: row.weight,
+        reps: row.reps,
+        duration_seconds: row.duration_seconds,
+        distance: row.distance,
+      });
     }
 
     res.json(grouped);
