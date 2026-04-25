@@ -394,9 +394,37 @@ export default function SelectedExerciseScreen() {
     }))
   );
 
+  let adjustedSetPoints = [...setPoints];
+
+  // Detect cases
+  const isSinglePoint = setPoints.length === 1;
+
+  const isFlat =
+    setPoints.length > 1 &&
+    setPoints.every(
+      p =>
+        p.weight === setPoints[0].weight &&
+        p.reps === setPoints[0].reps
+    );
+
+  // Add baseline only when needed
+  if (!isCardio && (isSinglePoint || isFlat)) {
+    adjustedSetPoints = [
+      {
+        weight: 0,
+        reps: 0,
+        dateLabel: setPoints[0]?.dateLabel ?? "",
+        setNumber: 0,
+      },
+      ...setPoints,
+    ];
+  }
+
+
+
   // Reduce X-axis clutter: show date on the first set of each day,
   // then show only set numbers for the remaining sets on that same day.
-  const labels = setPoints.map((point) =>
+  const labels = adjustedSetPoints.map((point) =>
     point.setNumber === 1
       ? `${point.dateLabel} #${point.setNumber}`
       : `#${point.setNumber}`
@@ -414,12 +442,12 @@ export default function SelectedExerciseScreen() {
 
 
   // 1. Raw datasets
-  const weightData = setPoints.map((p, i) => ({
+  const weightData = adjustedSetPoints.map((p, i) => ({
     x: i + 1,
     y: p.weight,
   }));
 
-  const repsData = setPoints.map((p, i) => ({
+  const repsData = adjustedSetPoints.map((p, i) => ({
     x: i + 1,
     y: p.reps,
   }));
@@ -428,7 +456,7 @@ export default function SelectedExerciseScreen() {
   // 2. Domains
   // =====================
 
-  const paceData = setPoints.map((p, i) => {
+  const paceData = adjustedSetPoints.map((p, i) => {
       const time = p.weight;   // durationSeconds
       const dist = p.reps;     // distance
 
@@ -445,6 +473,12 @@ export default function SelectedExerciseScreen() {
   // Select correct Y dataset
   const primaryData = isCardio ? paceData : weightData;
 
+  const MIN_POINTS_FOR_CARDIO_GRAPH = 2;
+
+  const hasEnoughCardioData =
+    !isCardio || primaryData.length >= MIN_POINTS_FOR_CARDIO_GRAPH;
+  
+
   // ---------- PRIMARY AXIS (Weight OR Pace) ----------
   const wMinRaw = Math.min(...primaryData.map(d => d.y));
   const wMaxRaw = Math.max(...primaryData.map(d => d.y));
@@ -452,17 +486,20 @@ export default function SelectedExerciseScreen() {
   let wMin: number;
   let wMax: number;
 
-  if (wMinRaw === wMaxRaw) {
-    const padding = Math.max(1, Math.abs(wMinRaw) * 0.2);
+  const yRange = wMaxRaw - wMinRaw;
 
-    wMin = Math.max(0, wMinRaw - padding);
-    wMax = wMaxRaw + padding;
+  // Define a minimum visible range
+  const MIN_RANGE = isCardio ? 30 : 5; 
+  // (30 sec pace window OR 5 lbs weight window; tweak as needed)
 
+  if (yRange < MIN_RANGE) {
+    const center = (wMaxRaw + wMinRaw) / 2;
+
+    wMin = Math.max(0, center - MIN_RANGE / 2);
+    wMax = center + MIN_RANGE / 2;
   } else {
-    const range = wMaxRaw - wMinRaw;
-
-    const paddingTop = range * 0.2;
-    const paddingBottom = range * 0.05;
+    const paddingTop = yRange * 0.2;
+    const paddingBottom = yRange * 0.05;
 
     wMin = Math.max(0, wMinRaw - paddingBottom);
     wMax = wMaxRaw + paddingTop;
@@ -521,60 +558,60 @@ export default function SelectedExerciseScreen() {
 
 
   // Weight / Pace ticks
+  
   const weightTickValues = (() => {
-    const range = wMax - wMin;
+    const targetTicks = isCardio ? 4 : 6;
+    const rawRange = wMax - wMin;
 
-    // =====================
-    // CARDIO (PACE)
-    // =====================
-    if (isCardio) {
-      let step: number;
+    if (rawRange === 0) return [wMin];
 
-      if (range <= 120) step = 15;        // 0:15
-      else if (range <= 300) step = 30;   // 0:30
-      else if (range <= 600) step = 60;   // 1:00
-      else step = 120;                    // 2:00+
+    // Step
+    const roughStep = rawRange / (targetTicks - 1);
+    const magnitude = Math.pow(10, Math.floor(Math.log10(roughStep)));
+    const residual = roughStep / magnitude;
 
-      const start = Math.floor(wMin / step) * step;
-      const end = Math.ceil(wMax / step) * step;
+    let step: number;
 
-      const ticks = [];
-      for (let v = start; v <= end; v += step) {
-        ticks.push(v);
-      }
-
-      return ticks;
+    if (roughStep < 1) {
+      if (roughStep <= 0.1) step = 0.1;
+      else if (roughStep <= 0.25) step = 0.25;
+      else if (roughStep <= 0.5) step = 0.5;
+      else step = 1;
+    } else {
+      // existing logic
+      step =
+        residual >= 5 ? 5 * magnitude :
+        residual >= 2 ? 2 * magnitude :
+        1 * magnitude;
     }
 
-    // =====================
-    // STRENGTH (WEIGHT)
-    // =====================
-    let step = 1;
-    if (range > 100) step = 20;
-    else if (range > 50) step = 10;
-    else if (range > 20) step = 5;
-    else if (range > 10) step = 2;
 
-    const start = Math.floor(wMin / step) * step;
-    const end = Math.ceil(wMax / step) * step;
+    const niceMin = Math.floor(wMin / step) * step;
+    const niceMax = Math.ceil(wMax / step) * step;
 
+    // Generate ticks
     const ticks = [];
-    for (let v = start; v <= end; v += step) {
+    for (let v = niceMin; v <= niceMax + step / 2; v += step) {
       ticks.push(v);
     }
+
+    // Update domain to match ticks
+    wMin = niceMin;
+    wMax = niceMax;
 
     return ticks;
   })();
 
-    // Maps time from duration_seconds
-    const formatTime = (seconds: number) => {
-      const h = Math.floor(seconds / 3600);
-      const m = Math.floor((seconds % 3600) / 60);
-      const s = seconds % 60;
-      return `${h}:${m.toString().padStart(2, "0")}:${s
-        .toString()
-        .padStart(2, "0")}`;
-    };
+
+  // Maps time from duration_seconds
+  const formatTime = (seconds: number) => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    return `${h}:${m.toString().padStart(2, "0")}:${s
+      .toString()
+      .padStart(2, "0")}`;
+  };
 
     
 
@@ -637,7 +674,7 @@ export default function SelectedExerciseScreen() {
           <View style={s.centeredRow}>
             <ActivityIndicator color={colors.primary} />
           </View>
-        ) : primaryData.length > 0 ? (
+        ) : hasEnoughCardioData && primaryData.length > 0 ? (
           
           <View style={{ position: "relative" }}>
             <View style={{ flexDirection: "row", gap: 12, marginBottom: 6, justifyContent: "center", alignItems: "center" }}>
@@ -652,9 +689,9 @@ export default function SelectedExerciseScreen() {
                 </>
               )}
            </View>
-            {/* ===================== */}
+            {/* ========================= */}
             {/* CARDIO MODE (SINGLE LINE) */}
-            {/* ===================== */}
+            {/* ========================= */}
             {isCardio ? (
               <VictoryChart
                 width={width - 40}
@@ -671,6 +708,7 @@ export default function SelectedExerciseScreen() {
                     isCardio
                       ? formatPace(t)
                       : Math.round(t)}
+                  invertAxis
                   style={{
                     axis: { stroke: colors.border },
                     grid: { stroke: "rgba(255,255,255,0.1)" },
@@ -803,9 +841,17 @@ export default function SelectedExerciseScreen() {
             )}
           </View>
         ) : (
-          <View style={{ height: 220, justifyContent: "center", alignItems: "center" }}>
+          <View
+            style={{
+              height: dynamicHeight - 100,
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
             <Text style={{ color: colors.textSecondary, fontSize: fontSize.sm }}>
-              No history data yet
+              {isCardio && primaryData.length === 1
+                ? "Add one more workout to see your pace trend"
+                : "No history data yet"}
             </Text>
           </View>
         )}

@@ -378,34 +378,48 @@ router.delete("/sets/:setId", async (req, res) => {
   }
 });
 
-/** 
+/**
  * @openapi
  * /workouts/{exerciseId}/history:
  *   get:
- *     summary: Get historical workout data grouped by date
+ *     summary: Get historical workout data grouped by date (excluding today)
+ *     description: |
+ *       Returns workout history grouped by the user's local date.
+ *       Dates are normalized to YYYY-MM-DD format and sorted from oldest to newest.
+ *       Each date contains an array of sets (strength) or laps (cardio).
+ *
+ *       - Strength entries include `weight` and `reps`
+ *       - Cardio entries include `duration_seconds` and `distance`
  *     tags:
  *       - Workout
  *     parameters:
  *       - in: path
  *         name: exerciseId
  *         required: true
- *         description: The exercise identifier
+ *         description: Encoded exercise identifier
  *         schema:
  *           type: string
  *       - in: query
  *         name: userId
  *         required: true
- *         description: The ID of the user
+ *         description: ID of the user
  *         schema:
  *           type: integer
+ *       - in: query
+ *         name: tz
+ *         required: false
+ *         description: IANA timezone string (e.g., "America/New_York"). Defaults to UTC.
+ *         schema:
+ *           type: string
+ *           example: America/New_York
  *     responses:
- *       200:
+ *       '200':
  *         description: Workout history grouped by date
  *         content:
  *           application/json:
  *             schema:
  *               type: object
- *               description: Object where keys are ISO date strings (YYYY-MM-DD)
+ *               description: Object keyed by date (YYYY-MM-DD), sorted oldest to newest
  *               additionalProperties:
  *                 type: array
  *                 items:
@@ -414,26 +428,26 @@ router.delete("/sets/:setId", async (req, res) => {
  *                     weight:
  *                       type: number
  *                       nullable: true
+ *                       description: Weight used (strength only)
  *                       example: 135
- *                       description: Weight used for strength exercises
  *                     reps:
  *                       type: integer
  *                       nullable: true
+ *                       description: Number of repetitions (strength only)
  *                       example: 10
- *                       description: Number of repetitions
  *                     duration_seconds:
  *                       type: integer
  *                       nullable: true
+ *                       description: Duration in seconds (cardio only)
  *                       example: 600
- *                       description: Duration of the exercise in seconds
  *                     distance:
  *                       type: number
  *                       nullable: true
+ *                       description: Distance covered (cardio only)
  *                       example: 1.25
- *                       description: Distance covered (e.g., miles)
- *       400:
+ *       '400':
  *         description: Invalid exerciseId or userId
- *       500:
+ *       '500':
  *         description: Database error
  */
 
@@ -442,9 +456,6 @@ router.get("/:exerciseId/history", async (req, res) => {
   const exerciseReference = parseExerciseId(req.params.exerciseId);
   const userId = parseNumber(req.query.userId);
   const tz = req.query.tz || "UTC";
-  const today = new Date().toLocaleDateString("en-CA", {
-      timeZone: tz,
-    });
 
   if (!exerciseReference) {
     return res.status(400).json({ error: "Exercise id is invalid" });
@@ -460,21 +471,27 @@ router.get("/:exerciseId/history", async (req, res) => {
     await ensureExerciseCatalogTables();
 
     const result = await pool.query(
-      `SELECT reps, weight, duration_seconds, distance, created_at
+      `
+      SELECT 
+        reps,
+        weight,
+        duration_seconds,
+        distance,
+        created_at,
+        TO_CHAR(created_at AT TIME ZONE $3, 'YYYY-MM-DD') AS local_date
       FROM workout_log
       WHERE ${referenceConfig.whereClause}
         AND user_id = $2
-        AND DATE(created_at AT TIME ZONE $3) < $4
-      ORDER BY created_at DESC`,
-      [exerciseReference.id, userId, tz, today]
+        AND DATE(created_at AT TIME ZONE $3) < DATE(NOW() AT TIME ZONE $3)
+      ORDER BY created_at ASC
+      `,
+      [exerciseReference.id, userId, tz]
     );
 
-    // Group by USER LOCAL DATE (not UTC)
     const grouped = {};
 
     for (const row of result.rows) {
-      const date = new Date(row.created_at)
-        .toLocaleDateString("en-CA", { timeZone: tz });
+      const date = row.local_date; // already YYYY-MM-DD
 
       if (!grouped[date]) grouped[date] = [];
 
@@ -486,10 +503,13 @@ router.get("/:exerciseId/history", async (req, res) => {
       });
     }
 
-    res.json(grouped);
+    const sorted = Object.fromEntries(
+      Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b))
+    );
+
+    res.json(sorted);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Database error" });
   }
 });
-module.exports = router;
