@@ -39,6 +39,7 @@ const buildApiError = async (
   error.message = message;
   return error;
 };
+
 export async function getToken(): Promise<string | null> {
   if (Platform.OS === "web") {
     return typeof window !== "undefined"
@@ -123,12 +124,19 @@ export async function createExercise(
   return (await res.json()) as Exercise;
 }
 
-export async function fetchCurrentSets(exerciseId: string, userId: number, date: string) {
+export async function fetchCurrentSets(exerciseId: string, userId: number) {
+  
   const url = new URL(buildApiUrl(`/workouts/${exerciseId}/current`));
+  console.log("FETCHING CURRENT SETS:", url.toString());
+
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
   url.searchParams.set("userId", userId.toString());
-  url.searchParams.set("date", date);
+  url.searchParams.set("tz", tz);
+
   const res = await fetch(url.toString());
   if (!res.ok) throw new Error("Failed to fetch sets");
+
   return res.json();
 }
 
@@ -182,10 +190,17 @@ export async function deleteSet(setId: number, userId: number) {
 
 export async function fetchExerciseHistory(exerciseId: string, userId: number) {
   const url = new URL(buildApiUrl(`/workouts/${exerciseId}/history`));
+
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
   url.searchParams.set("userId", userId.toString());
+  url.searchParams.set("tz", tz);
+
   const res = await fetch(url.toString());
+
   if (!res.ok) {
     throw await buildApiError(res, "Failed to fetch history");
   }
+
   return res.json();
 }

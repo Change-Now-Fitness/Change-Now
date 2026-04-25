@@ -113,7 +113,8 @@ mountApiRouter("/user", userRouter);
 // API contract without changing its object shape later.
 app.use("/exercises", exerciseRoutes);
 
-app.use("/workouts", workoutRouter)
+app.use("/workouts", workoutRouter);
+
 
 
 /**
