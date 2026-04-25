@@ -94,46 +94,54 @@ export default function SelectedExerciseScreen() {
     loadUserId();
   }, []);
 
+  /**
+ * Converts raw API row into a consistent WorkoutSet format.
+ * Handles both cardio and strength data.
+ */
+  const mapRowToWorkoutSet = (row: any, index: number): WorkoutSet => {
+    const isCardioRow = row.duration_seconds != null;
+
+    const durationSeconds = isCardioRow
+      ? Number(row.duration_seconds)
+      : undefined;
+
+    const distance = isCardioRow
+      ? Number(row.distance)
+      : undefined;
+
+    return {
+      id: row.id != null ? Number(row.id) : undefined,
+      set: index + 1,
+
+      // Normalize so chart logic doesn't care about mode
+      weight: isCardioRow ? durationSeconds! : Number(row.weight),
+      reps: isCardioRow ? distance! : Number(row.reps),
+
+      durationSeconds,
+      distance,
+    };
+  };
+
+  /**
+   * Loads today's sets for the selected exercise.
+   */
   const loadCurrentSets = async () => {
     if (!exerciseId || !userId) return;
 
-      setLoadingCurrent(true);
-      try {
-        const data = await fetchCurrentSets(exerciseId, userId);
-        const mapped: WorkoutSet[] = data.map((row: any, index: number) => {
-          const isCardioRow = row.duration_seconds != null;
+    setLoadingCurrent(true);
 
-          const durationSeconds = isCardioRow
-            ? Number(row.duration_seconds)
-            : undefined;
+    try {
+      const data = await fetchCurrentSets(exerciseId, userId);
 
-          const distance = isCardioRow
-            ? Number(row.distance)
-            : undefined;
+      const mapped: WorkoutSet[] = data.map(mapRowToWorkoutSet);
 
-          return {
-            id: typeof row.id === "number" ? row.id : Number(row.id),
-            set: index + 1,
-
-            weight: isCardioRow
-              ? durationSeconds!
-              : Number(row.weight),
-
-            reps: isCardioRow
-              ? distance!
-              : Number(row.reps),
-
-            durationSeconds,
-            distance,
-          };
-        });
-        setCurrentSets(mapped);
-      } catch (err: any) {
-        console.error("Error fetching sets:", err.message);
-        setError(err.message || "Failed to load today's sets");
-      } finally {
-        setLoadingCurrent(false);
-      }
+      setCurrentSets(mapped);
+    } catch (err: any) {
+      console.error("Error fetching sets:", err.message);
+      setError(err.message || "Failed to load today's sets");
+    } finally {
+      setLoadingCurrent(false);
+    }
   };
 
   // Fetch today's sets
@@ -144,8 +152,9 @@ export default function SelectedExerciseScreen() {
   }, [exerciseId, userId]);
 
   
-
-  // Fetch previous workouts grouped by date
+  /**
+   * Loads historical workouts grouped by date.
+   */
   useEffect(() => {
     if (!exerciseId || !userId) return;
 
@@ -154,6 +163,7 @@ export default function SelectedExerciseScreen() {
 
       try {
         const grouped = await fetchExerciseHistory(exerciseId, userId);
+
         if (!grouped || typeof grouped !== "object") {
           setPreviousWorkouts([]);
           return;
@@ -162,25 +172,11 @@ export default function SelectedExerciseScreen() {
         const shaped: PreviousWorkout[] = Object.entries(grouped).map(
           ([date, sets]: [string, any]) => ({
             date,
-            sets: (Array.isArray(sets) ? sets : []).map((setRow: any, i: number) => {
-              const isCardioRow = setRow.duration_seconds != null;
-              const durationSeconds = isCardioRow
-                ? Number(setRow.duration_seconds)
-                : undefined;
-              const distance = isCardioRow ? Number(setRow.distance) : undefined;
-
-              return {
-                set: i + 1,
-                weight: isCardioRow ? durationSeconds! : Number(setRow.weight),
-                reps: isCardioRow ? distance! : Number(setRow.reps),
-                durationSeconds,
-                distance,
-              };
-            }),
+            sets: (Array.isArray(sets) ? sets : []).map(mapRowToWorkoutSet),
           })
         );
 
-        // Sort oldest to newest
+        // Ensure chronological order
         shaped.sort(
           (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
         );
@@ -196,114 +192,89 @@ export default function SelectedExerciseScreen() {
     void loadHistory();
   }, [exerciseId, userId]);
 
+  /**
+   * Adds a new set (or lap for cardio).
+   * Uses optimistic UI update for responsiveness.
+   */
   const handleAddSet = async () => {
-  if (!userId || !exerciseId) return;
+    if (!userId || !exerciseId) return;
 
-  let weight: number | null = null;
-  let durationSeconds: number | null = null;
-  let distance: number | null = null;
-  let reps: number | null = null;
+    let weight: number | null = null;
+    let reps: number | null = null;
+    let durationSeconds: number | null = null;
+    let distance: number | null = null;
 
-  if (isCardio) {
-    // Build duration
-    const h = parseInt(hoursText || "0", 10);
-    const m = Math.min(parseInt(minutesText || "0", 10), 59);
-    const s = Math.min(parseInt(secondsText || "0", 10), 59);
+    if (isCardio) {
+      // Build duration safely
+      const h = Number(hoursText || 0);
+      const m = Math.min(Number(minutesText || 0), 59);
+      const s = Math.min(Number(secondsText || 0), 59);
 
-    durationSeconds = h * 3600 + m * 60 + s;
+      durationSeconds = h * 3600 + m * 60 + s;
+      distance = Number(repsText);
 
-    // Distance (reuse repsText)
-    distance = parseFloat(repsText);
+      if (!durationSeconds || isNaN(distance)) return;
+    } else {
+      weight = Number(weightText);
+      reps = Number(repsText);
 
-    // Validation
-    if (!durationSeconds || isNaN(distance)) return;
+      if (!weight || !reps) return;
 
-  } else {
-    // Strength mode
-    weight = parseFloat(weightText);
-    reps = parseInt(repsText, 10);
+      if (weight <= 0 || weight > MAX_WEIGHT) {
+        setError(`Weight must be between 0.01 and ${MAX_WEIGHT}`);
+        return;
+      }
 
-    if (isNaN(weight) || isNaN(reps)) return;
-
-    if (weight <= 0 || weight > MAX_WEIGHT) {
-      setError(`Weight must be between 0.01 and ${MAX_WEIGHT} lbs`);
-      return;
+      if (reps <= 0 || reps > MAX_REPS) {
+        setError(`Reps must be between 1 and ${MAX_REPS}`);
+        return;
+      }
     }
 
-    if (reps <= 0 || reps > MAX_REPS) {
-      setError(`Reps must be between 1 and ${MAX_REPS}`);
-      return;
-    }
-  }
+    setError("");
 
-  // Optimistic UI update
-  setError("");
+    // -----------------------
+    // Optimistic UI update
+    // -----------------------
+    const optimisticIndex = currentSets.length;
 
-  const optimisticSet: WorkoutSet = {
-    set: currentSets.length + 1,
-    weight: isCardio ? durationSeconds! : weight!,
-    reps: isCardio ? distance! : reps!,
+    const optimisticSet: WorkoutSet = {
+      set: optimisticIndex + 1,
+      weight: isCardio ? durationSeconds! : weight!,
+      reps: isCardio ? distance! : reps!,
+      durationSeconds: isCardio ? durationSeconds! : undefined,
+      distance: isCardio ? distance! : undefined,
+    };
 
-    // Cardio values
-    durationSeconds: isCardio ? durationSeconds! : undefined,
-    distance: isCardio? distance! : undefined,
+    setCurrentSets(prev => [...prev, optimisticSet]);
 
-  };
-
-  const optimisticIndex = currentSets.length;
-
-  setCurrentSets((prev) => [...prev, optimisticSet]);
-
-  // Reset inputs
-  if (isCardio) {
+    // Reset inputs
+    setWeightText("");
+    setRepsText("");
     setHoursText("");
     setMinutesText("");
     setSecondsText("");
-  } else {
-    setWeightText("");
-  }
-  setRepsText("");
 
-  
+    try {
+      const created = isCardio
+        ? await addLap(exerciseId, userId, durationSeconds!, distance!)
+        : await addSet(exerciseId, userId, weight!, reps!);
 
-  try {
-    const created = isCardio
-    ? await addLap(exerciseId, userId, durationSeconds!, distance!)
-    : await addSet(exerciseId, userId, weight!, reps!);
+      const normalized = mapRowToWorkoutSet(created, optimisticIndex);
 
-    const normalizedSet: WorkoutSet = {
-      id: created.id,
-      set: optimisticIndex + 1,
+      // Replace optimistic with real data
+      setCurrentSets(prev => {
+        const copy = [...prev];
+        copy[optimisticIndex] = normalized;
+        return copy;
+      });
 
-      weight: isCardio
-        ? Number(created.duration_seconds)
-        : Number(created.weight),
-
-      reps: isCardio
-        ? Number(created.distance)
-        : Number(created.reps),
-
-      durationSeconds: created.duration_seconds != null
-        ? Number(created.duration_seconds)
-        : undefined,
-
-      distance: created.distance != null
-        ? Number(created.distance)
-        : undefined,
-    };
-
-    // Replace optimistic update with real, so delete and ordering behavior still works
-    setCurrentSets(prev => {
-      const copy = [...prev];
-      copy[optimisticIndex] = normalizedSet;
-      return copy;
-    });
-
-  } catch (err: any) {
-    setCurrentSets((prev) => prev.slice(0, -1));
-    setError(err.message || "Failed to save set");
-  }
-};
+    } catch (err: any) {
+      // Rollback on failure
+      setCurrentSets(prev => prev.slice(0, -1));
+      setError(err.message || "Failed to save set");
+    }
+  };
 
   const handleDeleteSet = async (targetSet: WorkoutSet) => {
     const previous = currentSets;
