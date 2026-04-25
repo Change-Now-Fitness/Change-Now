@@ -96,7 +96,7 @@ export default function LoginScreen() {
     }
 
     const handleSignup = async () => {
-        router.push("./screens/signup")
+        router.push("/screens/signup")
     };
  
     

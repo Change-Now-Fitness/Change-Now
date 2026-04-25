@@ -4,6 +4,15 @@ describe("fetchCurrentSets", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     global.fetch = jest.fn() as jest.Mock;
+
+    // Make tz deterministic for CI
+    jest.spyOn(Intl, "DateTimeFormat").mockReturnValue({
+      resolvedOptions: () => ({ timeZone: "America/New_York" }),
+    } as any);
+  });
+
+  afterEach(() => {
+    (Intl.DateTimeFormat as unknown as jest.Mock | undefined)?.mockRestore?.();
   });
 
   it("should call current sets endpoint and return rows", async () => {
@@ -17,11 +26,14 @@ describe("fetchCurrentSets", () => {
       json: jest.fn().mockResolvedValue(mockRows),
     });
 
-    const result = await fetchCurrentSets("template:1", 2, "2026-04-07");
+    const result = await fetchCurrentSets("template:1", 2);
 
-    expect(global.fetch).toHaveBeenCalledWith(
-      expect.stringContaining("/workouts/template:1/current?userId=2&date=2026-04-07")
-    );
+    const calledUrl = (global.fetch as jest.Mock).mock.calls[0][0] as string;
+
+    expect(calledUrl).toContain("/workouts/template:1/current");
+    expect(calledUrl).toContain("userId=2");
+    expect(calledUrl).toContain("tz=America%2FNew_York"); // URLSearchParams encodes the slash
+
     expect(result).toEqual(mockRows);
   });
 
@@ -31,8 +43,8 @@ describe("fetchCurrentSets", () => {
       json: jest.fn(),
     });
 
-    await expect(
-      fetchCurrentSets("custom:3", 1, "2026-01-15")
-    ).rejects.toThrow("Failed to fetch sets");
+    await expect(fetchCurrentSets("custom:3", 1)).rejects.toThrow(
+      "Failed to fetch sets"
+    );
   });
 });
