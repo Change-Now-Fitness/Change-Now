@@ -1,20 +1,26 @@
 # Android Testing Backend Setup
 
-Use this checklist before sending any Android build to testers.
+Use this checklist before sending Android or web builds to testers.
 
-## 1. Deploy the backend somewhere public
+## Target backend URL
 
-- AWS EC2, Render, Railway, Fly.io, or another public host is fine.
-- The server must run the `backend/` app, not a local-only dev process.
-- The API must be reachable over HTTPS for real testing builds.
+The hosted API target for this repo is:
+
+- `https://api.changenow.fit`
+
+## 1. Finish hosting the backend publicly
+
+- The public host must run the `backend/` app, not a local-only dev process.
+- The API must stay reachable over HTTPS.
+- The deployed backend should answer at `https://api.changenow.fit`.
 
 ## 2. Set backend environment variables
 
 At minimum, the deployed backend needs:
 
 - `DATABASE_URL`
-- `JWT_SECRET`
-- `PUBLIC_API_URL`
+- `JWT_SECRET` or `JWT_KEY`
+- `PUBLIC_API_URL=https://api.changenow.fit`
 - `PORT`
 
 Recommended for hosted environments:
@@ -26,7 +32,7 @@ Recommended for hosted environments:
 
 Notes:
 
-- `PUBLIC_API_URL` should be the real public HTTPS URL for the backend.
+- `CORS_ALLOWED_ORIGINS` must include the real web frontend origin plus any local web origin you still want during development.
 - `SUPABASE_SECRET_KEY` is not required by the current backend runtime.
 - Run `npm run validate:env` inside `backend/` before starting the hosted server.
 
@@ -44,24 +50,26 @@ pm2 start ecosystem.config.js
 pm2 save
 ```
 
+If you deploy with Docker instead of PM2, use [backend/Dockerfile](/c:/Change-Now/backend/Dockerfile:1).
+
 ## 4. Verify the backend manually
 
 These must work from a browser or curl:
 
-- `https://your-backend-url/health`
-- `https://your-backend-url/api/health`
-- `https://your-backend-url/ready`
-- `https://your-backend-url/api/ready`
-- `https://your-backend-url/api-docs`
+- `https://api.changenow.fit/health`
+- `https://api.changenow.fit/api/health`
+- `https://api.changenow.fit/ready`
+- `https://api.changenow.fit/api/ready`
+- `https://api.changenow.fit/api-docs`
 
 If `/ready` fails, the deployed server cannot reach the database yet.
 
-## 5. Point the mobile app at the deployed backend
+## 5. Point the app and website at the hosted backend
 
-Set the frontend build env:
+Set the frontend env:
 
 ```env
-EXPO_PUBLIC_API_URL=https://your-backend-url
+EXPO_PUBLIC_API_URL=https://api.changenow.fit
 ```
 
 See [frontend/.env.example](/c:/Change-Now/frontend/.env.example:1).
@@ -75,9 +83,8 @@ For EAS:
 ```bash
 cd frontend
 eas build --platform android --profile preview
+eas build --platform android --profile production
 ```
-
-If you deploy with Docker instead of PM2, use [backend/Dockerfile](/c:/Change-Now/backend/Dockerfile:1).
 
 ## 7. Sanity-check the full flow
 
@@ -88,4 +95,4 @@ If you deploy with Docker instead of PM2, use [backend/Dockerfile](/c:/Change-No
 - Add workout set
 - Load history
 
-If any of those fail, check backend logs first before assuming the Android app is broken.
+If any of those fail, check backend logs first before assuming the Android app or website is broken.

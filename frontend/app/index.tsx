@@ -4,7 +4,6 @@ import { useRouter } from "expo-router";
 import { useFonts, BebasNeue_400Regular } from '@expo-google-fonts/bebas-neue';
 
 import { checkLogin, login } from "@/services/auth";
-import { log } from "node:console";
 
 
 
@@ -20,6 +19,7 @@ export default function LoginScreen() {
     
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [loginMessage, setLoginMessage] = useState<string>("");
 
 
     const [loginHovered, setLoginHovered] = useState(false);
@@ -74,19 +74,24 @@ export default function LoginScreen() {
     //uses auth/login helper function to log user into dashboard or return error
     const handleLogin = async () => {
         console.log('log in clicked');
-        if ( !setEmail || !setPassword ) {
-            return console.log('Error with credentails');
-        };
+        setLoginMessage("");
+        if (!email.trim() || !password) {
+            setLoginMessage("Please enter your email and password.");
+            return;
+        }
 
         try {
             const attemptLogin = await login(email, password);
-            if (attemptLogin) {
+            if (attemptLogin?.success) {
                 router.replace('/(tabs)/exerciselibrary');
                 return;
             } 
+            setLoginMessage(attemptLogin?.message || "Incorrect email or password.");
             return;
         } catch (error) {
-            return console.log(`error in frontend auth: ${error}`);
+            console.log(`error in frontend auth: ${error}`);
+            setLoginMessage("We couldn’t log you in right now. Please try again.");
+            return;
         };
     }
 
@@ -120,6 +125,17 @@ export default function LoginScreen() {
                 secureTextEntry/>
         </View>   
         
+            <Text
+                style={[
+                    styles.loginMessageText,
+                    { opacity: loginMessage ? 1 : 0 },
+                ]}
+                accessibilityLiveRegion="polite"
+                testID="login-message"
+            >
+                {loginMessage || " "}
+            </Text>
+
             <Animated.View style={{ transform: [{ scale: loginScaleAnim }] }}>
                 <Pressable
                     style={({ pressed }) => [
@@ -217,5 +233,14 @@ const styles = StyleSheet.create({
     loginButtonPressed: {
         backgroundColor: "#333333",
         transform: [{ scale: 0.95 }],
+    },
+    loginMessageText: {
+        color: "#4ade80",
+        marginTop: 6,
+        marginBottom: 8,
+        fontSize: 14,
+        textAlign: "center",
+        maxWidth: "80%",
+        minHeight: 18,
     },
 });

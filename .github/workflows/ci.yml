@@ -75,7 +75,7 @@ jobs:
 
       - name: Run unit tests (Jest)
         run: npm test --prefix frontend
-
+        
       - name: Run end-to-end tests (Playwright)
         working-directory: frontend
         run: npm run test:e2e 

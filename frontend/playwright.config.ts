@@ -1,5 +1,11 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const PLAYWRIGHT_API_URL =
+  process.env.EXPO_PUBLIC_API_URL || "https://api.changenow.fit";
+const USE_LOCAL_BACKEND_FOR_E2E =
+  PLAYWRIGHT_API_URL.startsWith("http://localhost") ||
+  PLAYWRIGHT_API_URL.startsWith("http://127.0.0.1");
+
 export default defineConfig({
   testDir: "./test/e2e",
   fullyParallel: true,
@@ -15,25 +21,28 @@ export default defineConfig({
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
 
   webServer: [
-    {
-      name: "backend",
-      cwd: "../backend",
-      command: "npm start",
-      url: "http://localhost:4000/health",
-      reuseExistingServer: !process.env.CI,
-      timeout: 180_000,
-      env: {
-        NODE_ENV: "development",
-        PORT: "4000",
-        PUBLIC_API_URL: "http://localhost:4000",
+    ...(USE_LOCAL_BACKEND_FOR_E2E
+      ? [
+          {
+            name: "backend",
+            cwd: "../backend",
+            command: "npm start",
+            url: "http://localhost:4000/health",
+            reuseExistingServer: !process.env.CI,
+            timeout: 180_000,
+            env: {
+              NODE_ENV: "development",
+              PORT: "4000",
+              PUBLIC_API_URL: "http://localhost:4000",
 
-        // Cookie/CORS settings that work for localhost web + localhost API
-        COOKIE_SECURE: "false",
-        COOKIE_SAME_SITE: "lax",
-        CORS_ALLOWED_ORIGINS: "http://localhost:8081",
-
-      },
-    },
+              // Cookie/CORS settings that work for localhost web + localhost API
+              COOKIE_SECURE: "false",
+              COOKIE_SAME_SITE: "lax",
+              CORS_ALLOWED_ORIGINS: "http://localhost:8081",
+            },
+          },
+        ]
+      : []),
     {
       name: "expo-web",
       command: "npx expo start --web --port 8081",
@@ -41,7 +50,7 @@ export default defineConfig({
       reuseExistingServer: !process.env.CI,
       timeout: 180_000,
       env: {
-        EXPO_PUBLIC_API_URL: "http://localhost:4000",
+        EXPO_PUBLIC_API_URL: PLAYWRIGHT_API_URL,
       },
     },
   ],

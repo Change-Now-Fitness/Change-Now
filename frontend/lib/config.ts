@@ -1,4 +1,4 @@
-const DEV_FALLBACK_API_BASE_URL = "http://localhost:4000";
+const DEV_FALLBACK_API_BASE_URL = "https://api.changenow.fit";
 const MISSING_API_BASE_URL_MESSAGE =
   "EXPO_PUBLIC_API_URL is required for release builds.";
 

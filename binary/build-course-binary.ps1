@@ -13,7 +13,7 @@ $backendZipPath = Join-Path $serverDir "ChangeNow-backend-server.zip"
 $backendZipTempPath = Join-Path $PSScriptRoot "ChangeNow-backend-server-$Version.zip"
 $releaseZipPath = Join-Path $PSScriptRoot "ChangeNow-Binary-Release-$Version.zip"
 $releaseApkSource = Join-Path $repoRoot "frontend\android\app\build\outputs\apk\release\app-release.apk"
-$releaseApkDest = Join-Path $androidDir "ChangeNow-1.0-local-emulator-release.apk"
+$releaseApkDest = Join-Path $androidDir "ChangeNow-1.0-release.apk"
 
 if (-not (Test-Path $releaseApkSource)) {
     throw "Release APK not found at $releaseApkSource. Build it before packaging."
@@ -37,6 +37,7 @@ New-Item -ItemType Directory -Path $backendExportDir | Out-Null
 
 Copy-Item $releaseApkSource $releaseApkDest
 Copy-Item (Join-Path $PSScriptRoot "course-release-notes.md") (Join-Path $packageRoot "RELEASE_NOTES.md")
+Copy-Item (Join-Path $PSScriptRoot "product-documentation.md") (Join-Path $packageRoot "PRODUCT_DOCUMENTATION.md")
 Copy-Item (Join-Path $PSScriptRoot "course-staff-access.md") (Join-Path $packageRoot "COURSE_STAFF_ACCESS.md")
 
 $backendFiles = @(
