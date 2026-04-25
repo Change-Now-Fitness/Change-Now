@@ -354,7 +354,7 @@ export default function SelectedExerciseScreen() {
   const todayEntry: PreviousWorkout | null =
     currentSets.length > 0
       ? {
-          date: new Date().toISOString().split("T")[0],
+          date:  new Date().toLocaleDateString("en-CA"),
           sets: currentSets,
         }
       : null;

@@ -125,7 +125,9 @@ export async function createExercise(
 }
 
 export async function fetchCurrentSets(exerciseId: string, userId: number) {
+  
   const url = new URL(buildApiUrl(`/workouts/${exerciseId}/current`));
+  console.log("FETCHING CURRENT SETS:", url.toString());
 
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 

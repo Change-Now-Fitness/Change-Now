@@ -111,6 +111,7 @@ const buildWorkoutReferenceConfig = (exerciseReference) => {
  *         description: Database error
  */
 router.get("/:exerciseId/current", async (req, res) => {
+  console.log("HIT CURRENT ENDPOINT");
   const exerciseReference = parseExerciseId(req.params.exerciseId);
   const userId = parseNumber(req.query.userId);
   const tz = req.query.tz || "UTC";
@@ -128,19 +129,41 @@ router.get("/:exerciseId/current", async (req, res) => {
   try {
     await ensureExerciseCatalogTables();
 
-    // Compute today in the user's timezone
-    const today = new Date().toLocaleDateString("en-CA", {
-      timeZone: tz,
+    const { DateTime } = require("luxon");
+
+    // "now" in user's timezone
+    const now = DateTime.now().setZone(tz);
+
+    // start of today in that timezone
+    const startOfDay = now.startOf("day");
+
+    // start of tomorrow
+    const endOfDay = startOfDay.plus({ days: 1 });
+
+    // convert BOTH to UTC for Postgres
+    const startUTC = startOfDay.toUTC().toISO();
+    const endUTC = endOfDay.toUTC().toISO();
+
+    console.log({
+      tz,
+      start: startOfDay.toString(),
+      startUTC,
     });
 
     const result = await pool.query(
       `SELECT id, reps, weight, duration_seconds, distance
-         FROM workout_log
+        FROM workout_log
         WHERE ${referenceConfig.whereClause}
           AND user_id = $2
-          AND DATE(created_at AT TIME ZONE $3) = $4
+          AND created_at >= $3
+          AND created_at < $4
         ORDER BY created_at ASC`,
-      [exerciseReference.id, userId, tz, today]
+      [
+        exerciseReference.id,
+        userId,
+        startUTC,
+        endUTC,
+      ]
     );
 
     res.json(result.rows);
@@ -513,3 +536,5 @@ router.get("/:exerciseId/history", async (req, res) => {
     res.status(500).json({ error: "Database error" });
   }
 });
+
+module.exports = router;
