@@ -6,6 +6,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  useWindowDimensions,
   View,
   StyleSheet,
 } from "react-native";
@@ -14,23 +15,12 @@ import { fetchCurrentSets, fetchExerciseHistory, addSet, deleteSet, addLap } fro
 import React, { useState, useEffect } from "react";
 import { checkLogin } from "../../services/auth";
 import { colors, spacing, fontSize, borderRadius } from "@/lib/theme";
-import { useWindowDimensions } from "react-native";
 import {
   VictoryChart,
   VictoryLine,
   VictoryAxis,
   VictoryScatter,
-} from "victory-native";
-
-import Svg from "react-native-svg";
-
-console.log("Svg:", Svg);
-console.log("VictoryChart:", VictoryChart);
-console.log("VictoryLine:", VictoryLine);
-console.log("VictoryAxis:", VictoryAxis);
-console.log("VictoryScatter:", VictoryScatter);
-
-
+} from "@/lib/victoryComponents";
 
 type WorkoutSet = {
   id?: number;
