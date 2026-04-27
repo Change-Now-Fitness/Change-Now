@@ -20,7 +20,15 @@ import {
   VictoryLine,
   VictoryAxis,
   VictoryScatter,
-} from "victory";
+} from "victory-native";
+
+import Svg from "react-native-svg";
+
+console.log("Svg:", Svg);
+console.log("VictoryChart:", VictoryChart);
+console.log("VictoryLine:", VictoryLine);
+console.log("VictoryAxis:", VictoryAxis);
+console.log("VictoryScatter:", VictoryScatter);
 
 
 
@@ -510,7 +518,10 @@ export default function SelectedExerciseScreen() {
   // Reps ticks (ONLY for strength)
   const repsTickValues = !isCardio
     ? (() => {
-        const range = rMax - rMin;
+        const repsValues = repsData.map((d) => d.y);
+        const minRep = Math.min(...repsValues);
+        const maxRep = Math.max(...repsValues);
+        const range = maxRep - minRep;
 
         let step = 1;
         if (range > 50) step = 10;
@@ -519,7 +530,7 @@ export default function SelectedExerciseScreen() {
         else step = 1;
 
         const ticks = [];
-        for (let v = Math.floor(rMin); v <= rMax; v += step) {
+        for (let v = Math.floor(minRep); v <= maxRep + step / 2; v += step) {
           ticks.push(v);
         }
 
@@ -572,6 +583,24 @@ export default function SelectedExerciseScreen() {
 
     return ticks;
   })();
+
+  const scaleRepsToWeightDomain = (value: number) => {
+    if (rMax === rMin) return (wMin + wMax) / 2;
+    return wMin + ((value - rMin) / (rMax - rMin)) * (wMax - wMin);
+  };
+
+  const formatScaledRepsTick = (value: number) => {
+    if (wMax === wMin) return "";
+    const repsValue = rMin + ((value - wMin) / (wMax - wMin)) * (rMax - rMin);
+    return Math.round(repsValue);
+  };
+
+  const scaledRepsData = repsData.map((point) => ({
+    ...point,
+    y: scaleRepsToWeightDomain(point.y),
+  }));
+
+  const scaledRepsTickValues = repsTickValues.map(scaleRepsToWeightDomain);
 
 
   // Maps time from duration_seconds
@@ -640,193 +669,176 @@ export default function SelectedExerciseScreen() {
       </View>
 
       {/* Chart */}
-      <View style={s.historyCard}>
-        {loadingHistory ? (
-          <View style={s.centeredRow}>
-            <ActivityIndicator color={colors.primary} />
+     <View style={s.historyCard}>
+       {loadingHistory ? (
+         <View style={s.centeredRow}>
+           <ActivityIndicator color={colors.primary} />
+         </View>
+       ) : hasEnoughCardioData && primaryData.length > 0 ? (
+
+         <View style={{ position: "relative" }}>
+           <View style={{ flexDirection: "row", gap: 12, marginBottom: 6, justifyContent: "center", alignItems: "center" }}>
+             {isCardio ? (
+               <Text style={{ color: colors.primary }}>
+                 ● Pace (Time/Distance)
+               </Text>
+             ) : (
+               <>
+                 <Text style={{ color: colors.primary }}>● Weight</Text>
+                 <Text style={{ color: "#FF9800" }}>● Reps</Text>
+               </>
+             )}
           </View>
-        ) : hasEnoughCardioData && primaryData.length > 0 ? (
-          
-          <View style={{ position: "relative" }}>
-            <View style={{ flexDirection: "row", gap: 12, marginBottom: 6, justifyContent: "center", alignItems: "center" }}>
-              {isCardio ? (
-                <Text style={{ color: colors.primary }}>
-                  ● Pace (Time/Distance)
-                </Text>
-              ) : (
-                <>
-                  <Text style={{ color: colors.primary }}>● Weight</Text>
-                  <Text style={{ color: "#FF9800" }}>● Reps</Text>
-                </>
-              )}
-           </View>
-            {/* ========================= */}
-            {/* CARDIO MODE (SINGLE LINE) */}
-            {/* ========================= */}
-            {isCardio ? (
-              <VictoryChart
-                width={width - 40}
-                height={dynamicHeight}
-                domain={{ y: [wMin, wMax] }}
-                domainPadding={{ y: 10 }}
-                padding={{ top: 10, bottom: 30, left: 70, right: 20 }}
-              >
-                {/* Y AXIS (PACE) */}
-                <VictoryAxis
-                  dependentAxis
-                  tickValues={weightTickValues}
-                  tickFormat={(t) =>
-                    isCardio
-                      ? formatPace(t)
-                      : Math.round(t)}
-                  invertAxis
-                  style={{
-                    axis: { stroke: colors.border },
-                    grid: { stroke: "rgba(255,255,255,0.1)" },
-                    tickLabels: { fill: colors.primary },
-                  }}
-                />
+           {/* ========================= */}
+           {/* CARDIO MODE (SINGLE LINE) */}
+           {/* ========================= */}
+           {isCardio ? (
+             <VictoryChart
+               width={width - 40}
+               height={dynamicHeight}
+               domain={{ y: [wMin, wMax] }}
+               domainPadding={{ y: 10 }}
+               padding={{ top: 10, bottom: 30, left: 70, right: 20 }}
+             >
+               {/* Y AXIS (PACE) */}
+               <VictoryAxis
+                 dependentAxis
+                 tickValues={weightTickValues}
+                 tickFormat={(t) =>
+                   isCardio
+                     ? formatPace(t)
+                     : Math.round(t)}
+                 invertAxis
+                 style={{
+                   axis: { stroke: colors.border },
+                   grid: { stroke: "rgba(255,255,255,0.1)" },
+                   tickLabels: { fill: colors.primary },
+                 }}
+               />
 
-                {/* X AXIS */}
-                <VictoryAxis
-                  crossAxis={false}
-                  tickValues={primaryData.map(d => d.x)}
-                  tickFormat={(t) => labels[t - 1] || ""}
-                  style={{
-                    axis: { stroke: colors.border },
-                    tickLabels: { fill: colors.textSecondary, fontSize: 10 },
-                  }}
-                />
+               {/* X AXIS */}
+               <VictoryAxis
+                 crossAxis={false}
+                 tickValues={primaryData.map(d => d.x)}
+                 tickFormat={(t) => labels[t - 1] || ""}
+                 style={{
+                   axis: { stroke: colors.border },
+                   tickLabels: { fill: colors.textSecondary, fontSize: 10 },
+                 }}
+               />
 
-                {/* PACE LINE */}
-                <VictoryLine
-                  data={primaryData}
-                  interpolation="monotoneX"
-                  style={{
-                    data: { stroke: colors.primary, strokeWidth: 3 },
-                  }}
-                />
+               {/* PACE LINE */}
+               <VictoryLine
+                 data={primaryData}
+                 interpolation="monotoneX"
+                 style={{
+                   data: { stroke: colors.primary, strokeWidth: 3 },
+                 }}
+               />
 
-                <VictoryScatter
-                  data={primaryData}
-                  size={4}
-                  style={{ data: { fill: colors.primary } }}
-                />
-              </VictoryChart>
-            ) : (
-              
-              /* ===================== */
-              /* STRENGTH MODE (DUAL AXIS) */
-              /* ===================== */
-              <>
-                {/* BASE (WEIGHT) */}
-                <VictoryChart
-                  width={width - 40}
-                  height={dynamicHeight}
-                  domain={{ y: [wMin, wMax] }}
-                  domainPadding={{ y: 10 }}
-                  padding={{ top: 10, bottom: 30, left: 50, right: 60 }}
-                >
-                  <VictoryAxis
-                    dependentAxis
-                    tickValues={weightTickValues}
-                    tickFormat={(t) => Math.round(t)}
-                    style={{
-                      axis: { stroke: colors.border },
-                      grid: { stroke: "rgba(255,255,255,0.1)" },
-                      tickLabels: { fill: colors.primary },
-                    }}
-                  />
+               <VictoryScatter
+                 data={primaryData}
+                 size={4}
+                 style={{ data: { fill: colors.primary } }}
+               />
+             </VictoryChart>
+           ) : (
 
-                  <VictoryAxis
-                    crossAxis={false}
-                    tickValues={weightData.map(d => d.x)}
-                    tickFormat={(t) => labels[t - 1] || ""}
-                    style={{
-                      axis: { stroke: colors.border },
-                      tickLabels: { fill: colors.textSecondary, fontSize: 10 },
-                    }}
-                  />
+             /* ===================== */
+             /* STRENGTH MODE (DUAL AXIS) */
+             /* ===================== */
+             <>
+               <VictoryChart
+                 width={width - 40}
+                 height={dynamicHeight}
+                 domain={{ y: [wMin, wMax] }}
+                 domainPadding={{ y: 10 }}
+                 padding={{ top: 10, bottom: 30, left: 50, right: 60 }}
+               >
+                 <VictoryAxis
+                   dependentAxis
+                   tickValues={weightTickValues}
+                   tickFormat={(t) => Math.round(t)}
+                   style={{
+                     axis: { stroke: colors.border },
+                     grid: { stroke: "rgba(255,255,255,0.1)" },
+                     tickLabels: { fill: colors.primary },
+                   }}
+                 />
 
-                  <VictoryLine
-                    data={weightData}
-                    interpolation="monotoneX"
-                    style={{
-                      data: { stroke: colors.primary, strokeWidth: 3 },
-                    }}
-                  />
+                 <VictoryAxis
+                   dependentAxis
+                   orientation="right"
+                   tickValues={scaledRepsTickValues}
+                   tickFormat={(t) => formatScaledRepsTick(Number(t))}
+                   style={{
+                     axis: { stroke: colors.border },
+                     tickLabels: { fill: "#FF9800" },
+                     grid: { stroke: "transparent" },
+                   }}
+                 />
 
-                  <VictoryScatter
-                    data={weightData}
-                    size={4}
-                    style={{ data: { fill: colors.primary } }}
-                  />
-                </VictoryChart>
+                 <VictoryAxis
+                   crossAxis={false}
+                   tickValues={weightData.map(d => d.x)}
+                   tickFormat={(t) => labels[t - 1] || ""}
+                   style={{
+                     axis: { stroke: colors.border },
+                     tickLabels: { fill: colors.textSecondary, fontSize: 10 },
+                   }}
+                 />
 
-                {/* OVERLAY (REPS) */}
-                <VictoryChart
-                  width={width - 40}
-                  height={dynamicHeight}
-                  domain={{ y: [rMin, rMax] }}
-                  domainPadding={{ y: 0 }}
-                  padding={{ top: 25, bottom: 18, left: 50, right: 60 }}
-                  style={{
-                    parent: {
-                      position: "absolute",
-                      top: 0,
-                      left: 0,
-                    },
-                  }}
-                >
-                  <VictoryAxis
-                    dependentAxis
-                    orientation="right"
-                    tickValues={repsTickValues}
-                    tickFormat={(t) => t}
-                    style={{
-                      axis: { stroke: colors.border },
-                      tickLabels: { fill: "#FF9800" },
-                      grid: { stroke: "transparent" },
-                    }}
-                  />
+                 <VictoryLine
+                   data={weightData}
+                   interpolation="monotoneX"
+                   style={{
+                     data: { stroke: colors.primary, strokeWidth: 3 },
+                   }}
+                 />
 
-                  <VictoryLine
-                    data={repsData}
-                    interpolation="monotoneX"
-                    style={{
-                      data: {
-                        stroke: "#FF9800",
-                        strokeWidth: 3,
-                        strokeDasharray: "6,4",
-                      },
-                    }}
-                  />
+                 <VictoryScatter
+                   data={weightData}
+                   size={4}
+                   style={{ data: { fill: colors.primary } }}
+                 />
 
-                  <VictoryScatter
-                    data={repsData}
-                    size={4}
-                    style={{ data: { fill: "#FF9800" } }}
-                  />
-                </VictoryChart>
-              </>
-            )}
-          </View>
-        ) : (
-          <View
-            style={{
-              height: dynamicHeight - 100,
-              justifyContent: "center",
-              alignItems: "center",
-            }}
-          >
-            <Text style={{ color: colors.textSecondary, fontSize: fontSize.sm }}>
-              {isCardio && primaryData.length === 1
-                ? "Add one more workout to see your pace trend"
-                : "No history data yet"}
-            </Text>
-          </View>
-        )}
-      </View>
+                 <VictoryLine
+                   data={scaledRepsData}
+                   interpolation="monotoneX"
+                   style={{
+                     data: {
+                       stroke: "#FF9800",
+                       strokeWidth: 3,
+                       strokeDasharray: "6,4",
+                     },
+                   }}
+                 />
+
+                 <VictoryScatter
+                   data={scaledRepsData}
+                   size={4}
+                   style={{ data: { fill: "#FF9800" } }}
+                 />
+               </VictoryChart>
+             </>
+           )}
+         </View>
+       ) : (
+         <View
+           style={{
+             height: dynamicHeight - 100,
+             justifyContent: "center",
+             alignItems: "center",
+           }}
+         >
+           <Text style={{ color: colors.textSecondary, fontSize: fontSize.sm }}>
+             {isCardio && primaryData.length === 1
+               ? "Add one more workout to see your pace trend"
+               : "No history data yet"}
+           </Text>
+         </View>
+       )}
+     </View>
 
       {/* Current Workout */}
       <Text style={s.sectionTitle}>Current Workout</Text>
