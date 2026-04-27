@@ -20,8 +20,12 @@ import {
   VictoryLine,
   VictoryAxis,
   VictoryScatter,
-} from "victory";
+} from "@/lib/chart";
 
+console.log("VictoryChart:", VictoryChart);
+console.log("VictoryLine:", VictoryLine);
+console.log("VictoryAxis:", VictoryAxis);
+console.log("VictoryScatter:", VictoryScatter);
 
 
 type WorkoutSet = {
