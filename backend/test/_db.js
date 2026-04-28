@@ -1,14 +1,17 @@
 const { Pool } = require("pg");
 const argon2 = require("argon2");
 
-function requireDatabaseUrl() {
+function getDatabaseUrl() {
   const url = process.env.DATABASE_URL;
-  if (!url) throw new Error("DATABASE_URL is required for backend tests");
-  return url;
+  return url && url.trim().length > 0 ? url : null;
 }
 
 function createTestPool() {
-  return new Pool({ connectionString: requireDatabaseUrl() });
+  const databaseUrl = getDatabaseUrl();
+  if (!databaseUrl) {
+    return null;
+  }
+  return new Pool({ connectionString: databaseUrl });
 }
 
 async function ensureUser(pool, { email, password, firstName, lastName }) {
@@ -40,6 +43,7 @@ async function deleteUserByEmail(pool, email) {
 }
 
 module.exports = {
+  getDatabaseUrl,
   createTestPool,
   ensureUser,
   deleteUserByEmail,

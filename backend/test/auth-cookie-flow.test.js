@@ -1,16 +1,31 @@
 const request = require("supertest");
 const app = require("../server");
-const { createTestPool, ensureUser, deleteUserByEmail } = require("./_db");
+const {
+  createTestPool,
+  ensureUser,
+  deleteUserByEmail,
+  getDatabaseUrl,
+} = require("./_db");
 
 const TEST_EMAIL = "e2e.user@local.test";
 const TEST_PASSWORD = "e2e-password";
 const FIRST = "E2E";
 const LAST = "User";
 
-describe("auth cookie flow (web)", () => {
+const shouldRun =
+  process.env.RUN_INTEGRATION === "1" || process.env.RUN_INTEGRATION === "true";
+const shouldRunWithDb = shouldRun && Boolean(getDatabaseUrl());
+const describeIfDb = shouldRun ? describe : describe.skip;
+
+describeIfDb("auth cookie flow (web)", () => {
   const pool = createTestPool();
 
   beforeAll(async () => {
+    if (!shouldRunWithDb) {
+      throw new Error(
+        "Integration tests require RUN_INTEGRATION=1 and DATABASE_URL"
+      );
+    }
     await ensureUser(pool, {
       email: TEST_EMAIL,
       password: TEST_PASSWORD,
@@ -20,8 +35,10 @@ describe("auth cookie flow (web)", () => {
   });
 
   afterAll(async () => {
-    await deleteUserByEmail(pool, TEST_EMAIL);
-    await pool.end();
+    if (pool) {
+      await deleteUserByEmail(pool, TEST_EMAIL);
+      await pool.end();
+    }
   });
 
   test("login sets token cookie; /user/getName works; logout clears", async () => {
