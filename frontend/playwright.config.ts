@@ -1,4 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
+import path from "node:path";
 
 const PLAYWRIGHT_API_URL =
   process.env.EXPO_PUBLIC_API_URL || "https://api.changenow.fit";
@@ -11,6 +12,7 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
+  globalSetup: path.join(__dirname, "test/e2e/global-setup"),
 
   use: {
     // IMPORTANT: when webServer is an array, set baseURL explicitly

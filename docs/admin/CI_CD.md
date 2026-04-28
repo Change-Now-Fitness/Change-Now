@@ -30,6 +30,14 @@ Required GitHub secrets (typical):
 
 EC2_INSTANCE_ID (deploy target)
 Test-only secrets if tests need them (DB/JWT, etc)
+
+Testing note (important):
+
+CI runs Playwright end-to-end tests that seed a known test user into Postgres before running.
+That means the CI DATABASE_URL must point to a dedicated test database (not production), because the seed script creates/updates rows.
+
+CI also runs backend integration tests via:
+- backend: npm run test:integration (sets RUN_INTEGRATION=1)
 IAM requirements (summary):
 
 GitHub Actions role needs:

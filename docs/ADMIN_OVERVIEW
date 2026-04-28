@@ -1,7 +1,7 @@
 Admin overview (Frontend, Backend, CI/CD, Cloud) 
 
 Author: Samuel Mount
-Date Updated: 4/22/26
+Date Updated: 4/28/26
 
 This project has:
 
@@ -16,6 +16,19 @@ Code is built in GitHub Actions.
 Artifacts are Docker images in Amazon ECR tagged by git commit SHA.
 EC2 pulls the exact SHA tag and restarts the backend container.
 Nginx routes internet traffic to the backend container on the server.
+
+Testing overview (high-level):
+
+There are 3 types of tests:
+
+1) Frontend unit tests (Jest): fast tests that mock API + navigation (do not hit the network).
+2) Backend tests (Jest + Supertest): health checks always, plus opt-in integration tests that talk to Postgres.
+3) End-to-end tests (Playwright): runs Expo Web in a real browser; uses a global setup step to seed a known test user into the database so login tests are deterministic.
+
+Important safety note about seeding:
+
+Playwright global setup runs a seed script that writes to the database pointed to by DATABASE_URL.
+CI must use a dedicated test database (not production) for DATABASE_URL, because seeding creates/updates rows.
 
 What to read next (more technical):
 
