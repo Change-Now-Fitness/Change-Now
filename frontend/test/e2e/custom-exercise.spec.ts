@@ -42,6 +42,8 @@ test("web: user can add a custom exercise", async ({ page }) => {
   await page.getByTestId("custom-exercise-save").click();
 
   await expect(page.getByText(exerciseName)).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByText("Custom")).toBeVisible();
+  await expect(
+    page.getByText("Custom", { exact: true }).first()
+  ).toBeVisible({ timeout: 30_000 });
 });
 
