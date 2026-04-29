@@ -39,6 +39,12 @@ npm run start
 - **Backend**: `http://localhost:4000`
 - **Expo dev server**: printed by Expo (often `http://localhost:8081`)
 
+## Local dev from zero (new developers)
+
+If you want a step-by-step guide (macOS + Windows) that includes installing dependencies, setting up `.env` files, and sanity-checking the app, start here:
+
+- `docs/admin/LOCAL_DEV_FROM_ZERO.md`
+
 ## Current hosted API target
 
 The app and web client are now being prepared to use:
