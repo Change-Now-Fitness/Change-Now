@@ -1,5 +1,4 @@
 import {
-  Alert,
   ScrollView,
   Text,
   TextInput,

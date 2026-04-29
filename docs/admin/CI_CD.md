@@ -35,9 +35,11 @@ Testing note (important):
 
 CI runs Playwright end-to-end tests that seed a known test user into Postgres before running.
 That means the CI DATABASE_URL must point to a dedicated test database (not production), because the seed script creates/updates rows.
+The seed script also includes a schema-repair step for legacy `exercise_templates` tables missing an auto-increment default on `id`.
 
 CI also runs backend integration tests via:
 - backend: npm run test:integration (sets RUN_INTEGRATION=1)
+CI lint also runs for frontend/backend; backend ESLint includes Jest globals for `backend/test/*.test.js`.
 IAM requirements (summary):
 
 GitHub Actions role needs:

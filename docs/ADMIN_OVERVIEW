@@ -29,6 +29,7 @@ Important safety note about seeding:
 
 Playwright global setup runs a seed script that writes to the database pointed to by DATABASE_URL.
 CI must use a dedicated test database (not production) for DATABASE_URL, because seeding creates/updates rows.
+The seed script also repairs an older schema edge case where `exercise_templates.id` is missing auto-increment behavior.
 
 What to read next (more technical):
 

@@ -43,6 +43,8 @@ Run backend tests:
 
 Opt-in integration tests (cross-platform):
 - cd backend && npm run test:integration
+- Single-line from repo root (Windows/Linux/macOS):
+  - npm run test:integration --prefix backend
 
 Notes:
 - In CI, DATABASE_URL comes from GitHub Secrets.
@@ -72,6 +74,7 @@ That setup runs:
 The seed script:
 - Connects to Postgres using DATABASE_URL
 - Ensures catalog tables exist
+- Repairs legacy `exercise_templates.id` schemas when the table exists but is missing an auto-increment default
 - Creates/updates a known test user (E2E_EMAIL / E2E_PASSWORD defaults if not set)
 - Writes the resulting credentials to:
   - frontend/test/e2e/.e2e-env.json
@@ -85,10 +88,20 @@ CI expectations
 
 CI job order (see .github/workflows/ci.yml):
 - backend smoke import
+- backend lint
 - backend unit tests
 - backend integration tests (opt-in script)
+- frontend lint
 - frontend unit tests
 - Playwright E2E tests
+
+Lint behavior and recent fixes
+
+- Backend ESLint is configured with Jest globals for `backend/test/*.test.js`, so `describe/test/expect` are recognized in test files.
+- Frontend lint enforces React hook dependency rules (`react-hooks/exhaustive-deps`). Effects that call async loaders should either:
+  - define the async loader inside the effect, or
+  - use `useCallback` and include it in deps.
+- CI lint warnings should be treated as actionable because `expo lint` can fail CI on unresolved warnings depending on config/version.
 
 Secrets needed
 

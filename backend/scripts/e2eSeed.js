@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 require("dotenv").config();
 
 const { Pool } = require("pg");
@@ -28,6 +27,33 @@ async function main() {
       exercise_category VARCHAR NOT NULL,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
+  `);
+
+  // Repair legacy schemas where id exists but is missing a default sequence.
+  await pool.query(`
+    DO $$
+    BEGIN
+      IF EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'exercise_templates'
+          AND column_name = 'id'
+          AND column_default IS NULL
+      ) THEN
+        IF to_regclass('public.exercise_templates_id_seq') IS NULL THEN
+          CREATE SEQUENCE public.exercise_templates_id_seq;
+        END IF;
+
+        ALTER TABLE public.exercise_templates
+          ALTER COLUMN id SET DEFAULT nextval('public.exercise_templates_id_seq');
+
+        PERFORM setval(
+          'public.exercise_templates_id_seq',
+          COALESCE((SELECT MAX(id) FROM public.exercise_templates), 0)
+        );
+      END IF;
+    END $$;
   `);
 
   await pool.query(`
