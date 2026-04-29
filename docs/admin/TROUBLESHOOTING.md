@@ -1,6 +1,14 @@
 Troubleshooting
 Deploy failures (GitHub Actions):
 
+Before you run anything (tools you’ll need)
+
+- Local CI/debug:
+  - Node + npm installed
+- On EC2 host:
+  - Docker installed/running (for `docker ps/logs/exec/inspect`)
+  - Nginx installed/running (for `/var/log/nginx/*`)
+
 Check Actions logs under the deploy step.
 If SSM errors:
 InvalidInstanceId: wrong instance id, wrong region, instance stopped, not online in Fleet Manager

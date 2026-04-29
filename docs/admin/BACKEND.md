@@ -1,6 +1,13 @@
 Backend (API)
 What it is:
 
+Before you run anything (dependencies)
+
+- From repo root (recommended):
+  - npm run ci:all
+- Or just the backend:
+  - cd backend && npm ci
+
 Node/Express API in backend/
 Runs locally via node, runs in production via Docker on EC2
 Connects to Supabase Postgres via DATABASE_URL
