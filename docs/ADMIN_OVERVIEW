@@ -33,6 +33,7 @@ The seed script also repairs an older schema edge case where `exercise_templates
 
 What to read next (more technical):
 
+docs/admin/LOCAL_DEV_FROM_ZERO.md
 docs/admin/FRONTEND.md
 docs/admin/BACKEND.md
 docs/admin/CI_CD.md
@@ -43,6 +44,7 @@ docs/admin/TESTING.md
 Quick “where is stuff” map:
 
 GitHub Actions workflow: .github/workflows/ci.yml
+Local dev from zero guide: docs/admin/LOCAL_DEV_FROM_ZERO.md
 Backend Dockerfile: backend/Dockerfile
 Backend server entry: backend/server.js
 Backend runtime config helper (if present): backend/config/runtime.js
