@@ -5,6 +5,13 @@ import { useRouter } from 'expo-router';
 import { apiRequest } from '@/services/middleware';
 import { logOut } from '@/services/auth';
 
+/**
+ * Profile tab screen (web + native).
+ *
+ * How it fits:
+ * - Fetches profile data via `services/middleware.ts` (auth-aware requests).
+ * - Logs out via `services/auth.ts` which clears cookie (web) or token (native).
+ */
 export default function UserScreen() {
   const router = useRouter();
 

@@ -3,6 +3,17 @@ require("dotenv").config({ quiet: true });
 const { Pool } = require("pg");
 const argon2 = require("argon2");
 
+/**
+ * CI/E2E database seeding script.
+ *
+ * How it fits:
+ * - Called by Playwright global setup (`frontend/test/e2e/global-setup.ts`).
+ * - Ensures the test database has a known login user + baseline catalog rows.
+ * - Prints a single-line JSON payload (credentials/userId) for Playwright to consume.
+ *
+ * Safety:
+ * - Must run against a dedicated test DB (never production).
+ */
 const EMAIL = process.env.E2E_EMAIL || "e2e.user@local.test";
 const PASSWORD = process.env.E2E_PASSWORD || "e2e-password";
 const FIRST = process.env.E2E_FIRST_NAME || "E2E";

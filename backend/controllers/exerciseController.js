@@ -9,6 +9,16 @@ const {
   serializeExerciseId,
 } = require("../services/exerciseIdentifiers");
 
+/**
+ * Exercise controller layer.
+ *
+ * How it fits:
+ * - Mounted by `backend/routes/exerciseRoutes.js`.
+ * - Provides the Exercise Library contract used by `frontend/app/(tabs)/exerciselibrary.tsx`.
+ * - Unifies template exercises (`exercise_templates`) and user custom exercises (`user_custom_exercises`)
+ *   into a single response shape for the frontend.
+ */
+
 const LEGACY_MUSCLE_GROUPS = {
   back: "lats",
   core: "abs",

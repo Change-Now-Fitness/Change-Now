@@ -22,6 +22,14 @@ import {
   VictoryScatter,
 } from "@/lib/victoryComponents";
 
+/**
+ * Selected Exercise detail screen.
+ *
+ * How it fits:
+ * - Opened from Exercise Library when a user taps an exercise card.
+ * - Uses `lib/api.ts` to fetch today's sets + history and to add/delete sets (or laps for cardio).
+ * - Uses `services/auth.ts` to resolve the active user id for requests.
+ */
 type WorkoutSet = {
   id?: number;
   set: number;

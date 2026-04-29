@@ -5,6 +5,13 @@ const {
   deleteExercise,
 } = require("../controllers/exerciseController");
 
+/**
+ * Exercise API router.
+ *
+ * How it fits:
+ * - Mounted by `backend/server.js` at `/exercises`.
+ * - Serves the Exercise Library data used by the frontend.
+ */
 const router = express.Router();
 
 /**

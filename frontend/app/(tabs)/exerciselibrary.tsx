@@ -21,6 +21,14 @@ import { useRouter } from 'expo-router';
 import { ApiError, Exercise, createExercise, fetchExercises } from "../../lib/api";
 import { checkLogin } from '../../services/auth';
 
+/**
+ * Exercise Library screen (main app hub).
+ *
+ * How it fits:
+ * - Loads the current user via `services/auth.ts` and fetches exercises via `lib/api.ts`.
+ * - Exercises come from the backend unified catalog: templates + per-user custom exercises.
+ * - From here users can add a custom exercise and navigate into `screens/selectedexercise`.
+ */
 type ExerciseForm = {
   name: string;
   type: string;
