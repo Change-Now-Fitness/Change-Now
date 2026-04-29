@@ -1,4 +1,4 @@
-require("dotenv").config();
+require("dotenv").config({ quiet: true });
 
 const { Pool } = require("pg");
 const argon2 = require("argon2");
@@ -102,7 +102,7 @@ async function main() {
     userId = inserted.rows[0].id;
   }
 
-  console.log(JSON.stringify({ email: EMAIL, password: PASSWORD, userId }, null, 2));
+  console.log(JSON.stringify({ email: EMAIL, password: PASSWORD, userId }));
 
   await pool.end();
 }

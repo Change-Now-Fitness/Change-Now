@@ -14,7 +14,11 @@ export default async function globalSetup() {
     stdio: ["ignore", "pipe", "inherit"],
   }).toString("utf8");
 
-  const seed = JSON.parse(stdout) as SeedOut;
+  const trimmed = stdout.trim();
+  const candidate = trimmed.lastIndexOf("\n") >= 0
+    ? trimmed.slice(trimmed.lastIndexOf("\n") + 1)
+    : trimmed;
+  const seed = JSON.parse(candidate) as SeedOut;
 
   const outPath = path.join(__dirname, ".e2e-env.json");
   fs.writeFileSync(outPath, JSON.stringify(seed), "utf8");
