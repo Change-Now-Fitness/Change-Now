@@ -491,6 +491,9 @@ export default function ExerciseLibrary() {
                   ]}
                   onPress={handleSaveExercise}
                   disabled={isSaveDisabled}
+                  testID="custom-exercise-save"
+                  accessibilityRole="button"
+                  accessibilityLabel="Save custom exercise"
                 >
                   {isSavingExercise ? (
                     <ActivityIndicator color="#ffffff" />

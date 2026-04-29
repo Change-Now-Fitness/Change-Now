@@ -39,7 +39,7 @@ test("web: user can add a custom exercise", async ({ page }) => {
   await expect(page.getByText("Add Custom Exercise")).toBeVisible();
 
   await page.getByPlaceholder(/e\.g\./i).fill(exerciseName);
-  await page.getByRole("button", { name: /^Save$/i }).click();
+  await page.getByTestId("custom-exercise-save").click();
 
   await expect(page.getByText(exerciseName)).toBeVisible({ timeout: 30_000 });
   await expect(page.getByText("Custom")).toBeVisible();
