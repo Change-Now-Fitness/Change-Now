@@ -2,6 +2,15 @@ import { Platform } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import { buildApiUrl } from "@/lib/config";
 
+/**
+ * Frontend API client helpers.
+ *
+ * How it fits:
+ * - Used by screens to call the backend with a stable URL + consistent error handling.
+ * - `buildApiUrl()` centralizes the API base (via `EXPO_PUBLIC_API_URL`).
+ * - For native auth, helpers can attach SecureStore JWT via Authorization header.
+ * - Some older code paths use cookie auth on web via `services/auth.ts` and `services/middleware.ts`.
+ */
 
 const TOKEN_KEY = "user_token";
 

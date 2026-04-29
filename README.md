@@ -1,6 +1,15 @@
-# Welcome to ChangeNow 
+# ChangeNow
 
-ChangeNow is a fitness logging & Visualization mobile/web application built with:
+ChangeNow is a fitness logging + visualization app for tracking workouts (sets/laps) and viewing progress over time.
+
+## What we are (and what we solve)
+
+ChangeNow helps people who lift or do cardio **log workouts quickly** and **see progress clearly**, without keeping notes across multiple apps/spreadsheets. It’s built to make “what did I do last time?” and “am I improving?” easy to answer.
+
+- **Web app (hosted)**: `https://changenow-ashy.vercel.app`
+- **Mobile apps**: not yet available in the App Store / Play Store (see build instructions below)
+
+Tech stack:
 
 **Frontend:** Expo (React Native)
 
@@ -82,6 +91,13 @@ cd frontend
 npm install
 npm start
 ```
+
+## Building mobile apps (not in stores yet)
+
+Android build steps (EAS) live in:
+
+- `docs/deployment/android-testing-backend.md`
+
 ---
 ## Testing
 ### Frontend unit tests (Jest)
@@ -92,8 +108,7 @@ npm test --prefix frontend
 ```bash
 npm run test:e2e --prefix frontend
 ```
-### Manual testing checklist
-See `docs/testing/manual.md`.
+For the full automated testing setup (unit, integration opt-in, E2E), see `docs/admin/TESTING.md`.
 ---
 ## Hosted Android testing checklist
 See `docs/deployment/android-testing-backend.md`.
@@ -108,9 +123,11 @@ Highlights:
 ## Production deployment (current)
 Backend is deployed as a **Docker container on EC2**, behind **Nginx**, deployed via **GitHub Actions → ECR → SSM → EC2**.
 Key docs:
+- `docs/ADMIN_OVERVIEW` (start here)
 - `docs/admin/CI_CD.md`
-- `docs/admin/CLOUD_EC2_NGINX`
+- `docs/admin/CLOUD_EC2_NGINX.md`
 - `docs/admin/RUNETIME_SECRETS.md`
+- `docs/admin/TESTING.md`
 - `docs/admin/TROUBLESHOOTING.md`
 Notes:
 - Production runtime env on EC2: `/opt/change-now/backend.env`

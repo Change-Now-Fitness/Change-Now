@@ -8,6 +8,15 @@ import { checkLogin, login } from "@/services/auth";
 
 
 
+/**
+ * Web/mobile login entry screen.
+ *
+ * How it fits:
+ * - Default route for unauthenticated users.
+ * - Delegates auth/session checks to `frontend/services/auth.ts`.
+ * - On success navigates into the main tabbed experience (Exercise Library, Profile, etc).
+ */
+
 export default function LoginScreen() {
 
     /**

@@ -7,6 +7,13 @@ const {
   getDatabaseUrl,
 } = require("./_db");
 
+/**
+ * Backend integration test for the cookie-auth web flow.
+ *
+ * How it fits:
+ * - Opt-in only (`RUN_INTEGRATION=1`) because it talks to Postgres via `DATABASE_URL`.
+ * - Exercises the same endpoints the web UI uses: login cookie → protected profile → logout.
+ */
 const TEST_EMAIL = "e2e.user@local.test";
 const TEST_PASSWORD = "e2e-password";
 const FIRST = "E2E";

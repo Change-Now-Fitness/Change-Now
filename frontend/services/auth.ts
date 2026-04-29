@@ -2,6 +2,16 @@ import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { apiRequest } from './middleware';
 import { buildApiUrl } from '@/lib/config';
+
+/**
+ * Auth client for both web + native.
+ *
+ * How it fits:
+ * - Used by login/signup/profile screens to start/verify/end a session.
+ * - Web uses an httpOnly cookie set by backend (`credentials: include`).
+ * - Native stores a JWT in SecureStore and sends it as `Authorization: Bearer`.
+ * - Uses `buildApiUrl()` so all calls respect `EXPO_PUBLIC_API_URL`.
+ */
 /**
  * User authentication functions and middleware
  * 

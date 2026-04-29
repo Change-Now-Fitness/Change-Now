@@ -2,6 +2,14 @@ import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 
+/**
+ * Playwright global setup hook.
+ *
+ * How it fits:
+ * - Runs once before `frontend/test/e2e/*.spec.ts`.
+ * - Calls `backend/scripts/e2eSeed.js` to seed a known test user + baseline data in the test DB.
+ * - Writes the resulting credentials to `.e2e-env.json` for the specs to read.
+ */
 type SeedOut = { email: string; password: string; userId: number };
 
 export default async function globalSetup() {

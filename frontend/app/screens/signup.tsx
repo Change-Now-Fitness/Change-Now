@@ -4,6 +4,13 @@ import { useRouter } from "expo-router";
 import { useFonts, BebasNeue_400Regular } from '@expo-google-fonts/bebas-neue';
 import { signUp } from '../../services/auth';
 
+/**
+ * Account creation screen.
+ *
+ * How it fits:
+ * - Calls `services/auth.ts` to create an account and establish a session.
+ * - On success routes into the main tabbed experience (same destination as login).
+ */
 export default function SignupScreen() {
   const router = useRouter();
   const [email, setEmail] = useState("");

@@ -1,10 +1,11 @@
 /**
- * Standardized API function that wraps
- * a request to an endpoint with the 
- * user's tokens, ensuring protected endpoints
- * have credentials supplied to them
- * returns data
- * @author Samuel Mount
+ * Auth-aware request wrapper used by screens/services.
+ *
+ * How it fits:
+ * - Central place that attaches auth for protected backend endpoints.
+ * - Web: sends cookies via `credentials: include` (backend uses httpOnly `token` cookie).
+ * - Native: reads SecureStore JWT and sends `Authorization: Bearer ...`.
+ * - Uses `buildApiUrl()` so all calls respect `EXPO_PUBLIC_API_URL`.
  */
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
