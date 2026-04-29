@@ -1,6 +1,13 @@
 Frontend (dev + runtime)
 What it is:
 
+Before you run anything (dependencies)
+
+- From repo root (recommended):
+  - npm run ci:all
+- Or just the frontend:
+  - cd frontend && npm ci
+
 Expo/React Native frontend located in frontend/
 It calls the backend via a base API URL.
 Key paths:

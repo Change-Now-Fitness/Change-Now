@@ -1,5 +1,13 @@
 Testing (Admin / CI / E2E)
 
+Before you run anything (dependencies)
+
+- From repo root (recommended, installs both apps):
+  - npm run ci:all
+- Or install only what you need:
+  - Backend: cd backend && npm ci
+  - Frontend: cd frontend && npm ci
+
 Goal
 
 Make sure changes do not break:

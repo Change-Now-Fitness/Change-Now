@@ -1,6 +1,15 @@
 Cloud runtime (EC2 + Docker + Nginx + SSM + ECR)
 Components:
 
+Before you run anything (tools you’ll need)
+
+- On your local machine:
+  - AWS console access (ECR + SSM) or AWS CLI if you prefer
+- On the EC2 host:
+  - Docker installed/running
+  - Nginx installed/running
+  - SSM agent online
+
 EC2 instance runs:
 Docker (backend container)
 Nginx (public entrypoint / reverse proxy)
