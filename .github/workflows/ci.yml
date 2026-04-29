@@ -68,6 +68,12 @@ jobs:
       #Test if we have all dependencies in server.js smoke test
       - name: Backend smoke import
         run: node -e "require('./backend/server.js'); console.log('backend imports ok')"
+
+      - name: Run backend tests (Jest)
+        run: npm test --prefix backend
+
+      - name: Run backend integration tests (DB)
+        run: npm run test:integration --prefix backend
         
       - name: Install Playwright browsers
         working-directory: frontend

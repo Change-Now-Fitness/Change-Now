@@ -7,6 +7,11 @@ GitHub secrets (examples):
 
 EC2_INSTANCE_ID (SSM deploy target)
 Optional: test DB/JWT secrets if the CI test job needs them
+
+CI testing note:
+
+CI runs backend integration tests and Playwright E2E tests that can write to the database (seeding a test user and exercise template rows).
+For safety, DATABASE_URL stored in GitHub Secrets should point to a dedicated test database (not the production database).
 EC2 runtime env:
 
 /opt/change-now/backend.env is the production env file.

@@ -10,7 +10,7 @@ For local development, copy values from [backend/.env.example](/c:/Change-Now/ba
 
 For hosted Android testing, follow [docs/deployment/android-testing-backend.md](/c:/Change-Now/docs/deployment/android-testing-backend.md:1).
 
-## Main Files
+## Main Files: 
 
 - [server.js](/c:/Change-Now/backend/server.js:1): Express server, route mounting, health checks, Swagger
 - [routes/auth.js](/c:/Change-Now/backend/routes/auth.js:1): signup, login, auth validation

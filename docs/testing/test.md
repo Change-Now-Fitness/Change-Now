@@ -45,3 +45,40 @@ fetchExerciseHistory.test.ts:
 This file unit-tests fetchExerciseHistory() in frontend/lib/api.ts. It verifies that the request URL includes exerciseId and userId, returns grouped history data on success, and throws on failed responses.  
 How: fetch is mocked to simulate both successful and failed API responses.  
 What we expect: correct endpoint call, expected history object returned, and thrown error message "Failed to fetch history" when response is not ok.
+
+---
+
+Backend tests (new)
+
+backend/test/health.test.js:
+
+This checks the backend process is responding. It calls GET /health and expects a 200 “ok” response.  
+How: Supertest sends a request directly to the Express app without running a real server.  
+What we expect: status ok and service backend.
+
+backend/test/auth-cookie-flow.test.js (integration / opt-in):
+
+This checks the real login flow for web cookies:
+- log in with a known user
+- confirm backend sets a token cookie
+- call /user/getName using that cookie
+- log out
+
+How: this test talks to the database to ensure the user exists, so it only runs when you opt in.  
+How to run it:
+- cd backend && npm run test:integration
+
+---
+
+End-to-end tests (Playwright) (new)
+
+These run a real browser against Expo Web and (optionally) a local backend.
+
+Determinism:
+- Playwright runs a “global setup” step that seeds a known test user into the database and writes credentials to a local JSON file used by the tests.
+
+Where:
+- frontend/test/e2e/*.spec.ts
+
+Run:
+- cd frontend && npm run test:e2e

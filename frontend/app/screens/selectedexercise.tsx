@@ -120,33 +120,27 @@ export default function SelectedExerciseScreen() {
     };
   };
 
-  /**
-   * Loads today's sets for the selected exercise.
-   */
-  const loadCurrentSets = async () => {
-    if (!exerciseId || !userId) return;
-
-    setLoadingCurrent(true);
-
-    try {
-      const data = await fetchCurrentSets(exerciseId, userId);
-
-      const mapped: WorkoutSet[] = data.map(mapRowToWorkoutSet);
-
-      setCurrentSets(mapped);
-    } catch (err: any) {
-      console.error("Error fetching sets:", err.message);
-      setError(err.message || "Failed to load today's sets");
-    } finally {
-      setLoadingCurrent(false);
-    }
-  };
-
   // Fetch today's sets
   useEffect(() => {
     if (!exerciseId || !userId) return;
+    const loadCurrentSets = async () => {
+      setLoadingCurrent(true);
 
-    loadCurrentSets();
+      try {
+        const data = await fetchCurrentSets(exerciseId, userId);
+
+        const mapped: WorkoutSet[] = data.map(mapRowToWorkoutSet);
+
+        setCurrentSets(mapped);
+      } catch (err: any) {
+        console.error("Error fetching sets:", err.message);
+        setError(err.message || "Failed to load today's sets");
+      } finally {
+        setLoadingCurrent(false);
+      }
+    };
+
+    void loadCurrentSets();
   }, [exerciseId, userId]);
 
   

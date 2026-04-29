@@ -60,6 +60,7 @@ const toLabel = (value: string) =>
 
 export default function ExerciseLibrary() {
   const router = useRouter();
+  const replace = router.replace;
   const { width } = useWindowDimensions();
   const scrollRef = useRef<ScrollView | null>(null);
   const sectionOffsets = useRef<Record<string, number>>({});
@@ -76,43 +77,43 @@ export default function ExerciseLibrary() {
   const [loadError, setLoadError] = useState("");
   const [saveError, setSaveError] = useState("");
 
-  const loadExercises = async () => {
-    setIsLoadingExercises(true);
-    setLoadError("");
-    try {
-      console.log("checking login on library");
-      const loginStatus = await checkLogin();
-      if (loginStatus.success !== true) {
-        console.log("check login returned false");
-        router.replace('/');
-        return;
-      }
-
-      const nextUserId = Number.parseInt(loginStatus.user_id, 10);
-      if (Number.isNaN(nextUserId)) {
-        throw new Error("Unable to resolve the current user");
-      }
-
-      console.log("exercise library user id:", nextUserId);
-      setUserId(nextUserId);
-
-      const fetchedExercises = await fetchExercises(nextUserId);
-      setExercises(fetchedExercises);
-    } catch (error) {
-      const apiError = error as ApiError;
-      const message =
-        (error instanceof Error ? error.message : apiError.message) ||
-        "Failed to load exercises";
-      console.log(`error loading exercise library ${message}`);
-      setLoadError(message);
-    } finally {
-      setIsLoadingExercises(false);
-    }
-  };
-
   useEffect(() => {
+    const loadExercises = async () => {
+      setIsLoadingExercises(true);
+      setLoadError("");
+      try {
+        console.log("checking login on library");
+        const loginStatus = await checkLogin();
+        if (loginStatus.success !== true) {
+          console.log("check login returned false");
+          replace("/");
+          return;
+        }
+
+        const nextUserId = Number.parseInt(loginStatus.user_id, 10);
+        if (Number.isNaN(nextUserId)) {
+          throw new Error("Unable to resolve the current user");
+        }
+
+        console.log("exercise library user id:", nextUserId);
+        setUserId(nextUserId);
+
+        const fetchedExercises = await fetchExercises(nextUserId);
+        setExercises(fetchedExercises);
+      } catch (error) {
+        const apiError = error as ApiError;
+        const message =
+          (error instanceof Error ? error.message : apiError.message) ||
+          "Failed to load exercises";
+        console.log(`error loading exercise library ${message}`);
+        setLoadError(message);
+      } finally {
+        setIsLoadingExercises(false);
+      }
+    };
+
     void loadExercises();
-  }, []);
+  }, [replace]);
 
   const showTwoColumnCards = width >= 960;
   const allExercises = exercises;
@@ -490,6 +491,9 @@ export default function ExerciseLibrary() {
                   ]}
                   onPress={handleSaveExercise}
                   disabled={isSaveDisabled}
+                  testID="custom-exercise-save"
+                  accessibilityRole="button"
+                  accessibilityLabel="Save custom exercise"
                 >
                   {isSavingExercise ? (
                     <ActivityIndicator color="#ffffff" />

@@ -6,9 +6,11 @@
  * - Mounts API routers (auth/user/exercises/workouts)
  * - Serves OpenAPI docs at `/api-docs`
  * - Provides simple health/readiness endpoints used by deploy tooling and ops
+ * x
  */
 
 require('dotenv').config();
+
 const express = require('express');
 const authRouter = require("./routes/auth");
 const exerciseRoutes = require("./routes/exerciseRoutes");
